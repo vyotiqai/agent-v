@@ -1,6 +1,9 @@
 import type {
   ActionStatus,
   AmountConvention,
+  ConnectorAuth,
+  ConnectorStatus,
+  ConnectorTool,
   Evidence,
   FinanceReport,
   GoalStatus,
@@ -9,17 +12,21 @@ import type {
   MonitorCondition,
   MonitorOutcome,
   MonitorStatus,
+  NotificationCategory,
+  NotificationPreferences,
   PdfField,
   PlanStep,
   TaskEventKind,
   TaskStatus,
   ToolCall,
+  ToolPolicy,
   Transaction,
 } from "@agent-v/shared";
 import { sql } from "drizzle-orm";
 import {
   bigint,
   boolean,
+  customType,
   index,
   integer,
   jsonb,
@@ -115,6 +122,13 @@ export const settings = pgTable("settings", {
   agentName: text("agent_name").notNull().default("Agent V"),
   tone: text("tone").notNull().default("warm and concise"),
   ideasRefreshedAt: timestamp("ideas_refreshed_at", { withTimezone: true }),
+  /** Learn durable facts from conversations (shown in Memory, deletable). */
+  learnMemories: boolean("learn_memories").notNull().default(true),
+  /** Which notification categories are pushed to devices (missing keys use the defaults). */
+  pushPreferences: jsonb("push_preferences")
+    .$type<Partial<NotificationPreferences>>()
+    .notNull()
+    .default(sql`'{}'::jsonb`),
   updatedAt: updatedAt(),
 });
 
@@ -219,6 +233,13 @@ export const actions = pgTable(
   (t) => [index("actions_user_status_idx").on(t.userId, t.status)],
 );
 
+/** pgvector column without fixed dimensions: rows from different embedding models coexist. */
+const vector = customType<{ data: number[]; driverData: string }>({
+  dataType: () => "vector",
+  toDriver: (value) => JSON.stringify(value),
+  fromDriver: (value) => JSON.parse(value) as number[],
+});
+
 export const memories = pgTable(
   "memories",
   {
@@ -226,6 +247,9 @@ export const memories = pgTable(
     userId: owner(),
     text: text("text").notNull(),
     source: text("source").notNull(),
+    origin: text("origin").$type<"manual" | "chat" | "task">().notNull().default("manual"),
+    embedding: vector("embedding"),
+    embeddingModel: text("embedding_model"),
     createdAt: createdAt(),
   },
   (t) => [index("memories_user_idx").on(t.userId, t.createdAt.desc())],
@@ -241,6 +265,7 @@ export const notifications = pgTable(
     taskId: text("task_id").references(() => tasks.id, { onDelete: "set null" }),
     /** An app path to open, for notifications about something other than a task. */
     link: text("link"),
+    category: text("category").$type<NotificationCategory>().notNull().default("results"),
     dedupeKey: text("dedupe_key"),
     readAt: timestamp("read_at", { withTimezone: true }),
     createdAt: createdAt(),
@@ -471,6 +496,58 @@ export const financeReports = pgTable(
   (t) => [index("finance_reports_user_idx").on(t.userId, t.createdAt.desc())],
 );
 
+/** A user's MCP server. Credentials (bearer token or OAuth state) are sealed with the vault. */
+export const connectors = pgTable(
+  "connectors",
+  {
+    id: text("id").primaryKey(),
+    userId: owner(),
+    name: text("name").notNull(),
+    url: text("url").notNull(),
+    auth: text("auth").$type<ConnectorAuth>().notNull(),
+    /** Sealed JSON: { bearer } or { client, tokens }. */
+    secret: text("secret"),
+    status: text("status").$type<ConnectorStatus>().notNull().default("connecting"),
+    error: text("error"),
+    transport: text("transport").$type<"http" | "sse">(),
+    serverInfo: jsonb("server_info").$type<{
+      name: string;
+      version: string;
+      instructions?: string;
+    }>(),
+    tools: jsonb("tools").$type<ConnectorTool[]>().notNull().default(sql`'[]'::jsonb`),
+    /** Per tool: run automatically, ask first, or never offer it to the agent. */
+    policies: jsonb("policies")
+      .$type<Record<string, ToolPolicy>>()
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+    toolsRefreshedAt: timestamp("tools_refreshed_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex("connectors_user_name_idx").on(t.userId, t.name)],
+);
+
+/** Phones (Expo push tokens) and browsers (Web Push subscriptions) that receive pushes. */
+export const pushDevices = pgTable(
+  "push_devices",
+  {
+    id: text("id").primaryKey(),
+    userId: owner(),
+    kind: text("kind").$type<"expo" | "webpush">().notNull(),
+    /** The Expo token or the Web Push endpoint; one device belongs to one account. */
+    address: text("address").notNull(),
+    keys: jsonb("keys").$type<{ p256dh: string; auth: string }>(),
+    label: text("label").notNull(),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("push_devices_address_idx").on(t.address),
+    index("push_devices_user_idx").on(t.userId),
+  ],
+);
+
 export const schema = {
   user,
   session,
@@ -496,4 +573,6 @@ export const schema = {
   demoPages,
   ideas,
   financeReports,
+  connectors,
+  pushDevices,
 };

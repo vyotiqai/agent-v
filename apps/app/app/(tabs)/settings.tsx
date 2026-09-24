@@ -1,15 +1,10 @@
-import type {
-  BrowserSession,
-  Memory,
-  ModelOption,
-  Settings,
-  WorkspaceStatus,
-} from "@agent-v/shared";
+import type { BrowserSession, Memory, Settings, WorkspaceStatus } from "@agent-v/shared";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Switch, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { NotificationSettings } from "../../src/components/NotificationSettings";
 import {
   Button,
   Card,
@@ -23,18 +18,12 @@ import {
 } from "../../src/components/ui";
 import { API_URL, api } from "../../src/lib/api";
 import { useAuth } from "../../src/lib/auth";
+import { useMe } from "../../src/lib/me";
 import { useResource } from "../../src/lib/resource";
-
-interface Me {
-  user: { name: string; email: string };
-  settings: Settings;
-  models: ModelOption[];
-  features: { browser: boolean; computer: boolean };
-}
 
 export default function SettingsScreen() {
   const { signOut } = useAuth();
-  const me = useResource<Me>("/api/me", ["settings"]);
+  const me = useMe();
   const memories = useResource<Memory[]>("/api/memories", ["memory"]);
   const browsers = useResource<BrowserSession[]>(
     me.data?.features.browser ? "/api/browsers" : null,
@@ -132,12 +121,28 @@ export default function SettingsScreen() {
         <View>
           <Label>Memory</Label>
           <Card className="gap-3">
-            <Muted>What your agent knows about you. It only saves what you tell it to.</Muted>
+            <View className="flex-row items-center justify-between gap-3">
+              <View className="flex-1">
+                <Text className="text-[15px] text-zinc-800 dark:text-zinc-200">
+                  Learn from conversations
+                </Text>
+                <Muted className="text-xs">
+                  Saves lasting facts you mention, like preferences. You can delete any of them.
+                </Muted>
+              </View>
+              <Switch
+                accessibilityLabel="Learn from conversations"
+                value={me.data?.settings.learnMemories ?? true}
+                onValueChange={(learnMemories) => void save({ learnMemories })}
+              />
+            </View>
             {(memories.data ?? []).map((m) => (
               <View key={m.id} className="flex-row items-center gap-2">
                 <View className="flex-1">
                   <Text className="text-[15px] text-zinc-800 dark:text-zinc-200">{m.text}</Text>
-                  <Muted className="text-xs">{m.source}</Muted>
+                  <Muted className="text-xs">
+                    {m.origin === "manual" ? m.source : `Learned from ${m.origin}`}
+                  </Muted>
                 </View>
                 <IconButton
                   name="trash-2"
@@ -167,6 +172,26 @@ export default function SettingsScreen() {
               />
             </View>
           </Card>
+        </View>
+
+        <NotificationSettings />
+
+        <View>
+          <Label>Connectors</Label>
+          <Pressable onPress={() => router.push("/connectors")}>
+            <Card className="flex-row items-center gap-3">
+              <Icon name="box" size={18} />
+              <View className="flex-1">
+                <Text className="text-[15px] font-medium text-zinc-900 dark:text-zinc-100">
+                  MCP servers
+                </Text>
+                <Muted className="text-xs">
+                  Give your agent tools from any MCP server. You decide which tools ask first.
+                </Muted>
+              </View>
+              <Icon name="chevron-right" size={16} />
+            </Card>
+          </Pressable>
         </View>
 
         {me.data?.features.computer ? (

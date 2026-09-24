@@ -1,7 +1,8 @@
 import type { ChatMessage, ToolCall } from "@agent-v/shared";
 import { router } from "expo-router";
-import { memo } from "react";
+import { memo, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { speak, speakingId, stopSpeaking } from "../lib/speech";
 import { ActionCard } from "./ActionReview";
 import { BrowserCard } from "./BrowserCard";
 import { Markdown } from "./Markdown";
@@ -137,7 +138,18 @@ function describe(
       return { icon: "bookmark", text: done ? "Saved to memory" : "Saving to memory" };
     case "task_status":
       return { icon: "list", text: done ? "Checked your tasks" : "Checking your tasks" };
+    case "recall_memory":
+      return { icon: "bookmark", text: done ? "Checked your memories" : "Checking your memories" };
     default:
+      if (call.function.name.startsWith("mcp_")) {
+        const pending = typeof output.actionId === "string";
+        return {
+          icon: "box",
+          text: done
+            ? `${pending ? "Prepared" : "Used"} ${String(output.title ?? call.function.name.replace(/^mcp_/, "").replace(/_/g, " "))}`
+            : `Using ${call.function.name.replace(/^mcp_/, "").replace(/_/g, " ")}`,
+        };
+      }
       return { icon: "tool", text: call.function.name.replace(/_/g, " ") };
   }
 }
@@ -180,7 +192,8 @@ function ToolRow({ call, result }: { call: ToolCall; result?: Result }) {
 
 /** The action id a propose_* tool created, so chat can show its approval card. */
 function proposalOf(call: ToolCall, result: Result | undefined) {
-  if (!call.function.name.startsWith("propose_")) return null;
+  if (!call.function.name.startsWith("propose_") && !call.function.name.startsWith("mcp_"))
+    return null;
   const output = parse(result?.content);
   return typeof output.actionId === "string" ? output.actionId : null;
 }
@@ -197,8 +210,11 @@ export const MessageView = memo(function MessageView({
   message,
   results,
   liveCallId,
+  streaming = false,
 }: {
   message: ChatMessage;
+  /** This reply is still arriving. */
+  streaming?: boolean;
   results: Map<string, Result>;
   /** The newest browser tool call in the chat; it shows the live browser card. */
   liveCallId?: string | null;
@@ -229,7 +245,32 @@ export const MessageView = memo(function MessageView({
           </View>
         );
       })}
-      {message.content ? <Markdown text={message.content} /> : null}
+      {message.content ? <Markdown text={message.content} streaming={streaming} /> : null}
+      {message.content && !streaming ? <ReadAloud id={message.id} text={message.content} /> : null}
     </View>
   );
 });
+
+/** Read a reply aloud with the device's voice; tap again to stop. */
+function ReadAloud({ id, text }: { id: string; text: string }) {
+  const [speaking, setSpeaking] = useState(false);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={speaking ? "Stop reading" : "Read aloud"}
+      hitSlop={8}
+      onPress={() => {
+        if (speaking && speakingId() === id) {
+          stopSpeaking();
+          setSpeaking(false);
+          return;
+        }
+        setSpeaking(true);
+        void speak(text, id).then(() => setSpeaking(false));
+      }}
+      className="h-7 w-7 items-center justify-center self-start rounded-full opacity-60 active:bg-zinc-100 dark:active:bg-zinc-800"
+    >
+      <Icon name={speaking ? "square" : "volume-2"} size={14} className="text-zinc-500" />
+    </Pressable>
+  );
+}

@@ -444,6 +444,7 @@ export async function recordCheck(
   if (alert)
     await notify(ctx, userId, {
       title: alert.title,
+      category: "watches",
       body: alert.body,
       link: `/watches/${id}`,
       dedupeKey: alert.key,

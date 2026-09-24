@@ -2,6 +2,7 @@ import { DBOS } from "@dbos-inc/dbos-sdk";
 import { and, eq } from "drizzle-orm";
 import type { Context } from "../context.ts";
 import { monitors } from "../db/schema.ts";
+import { enqueue } from "../queue.ts";
 import { dueMonitors, readSource, recordCheck } from "./service.ts";
 
 export const monitorQueue = "monitors";
@@ -42,12 +43,10 @@ export const monitorCheckWorkflow = DBOS.registerWorkflow(checkFunction, { name:
 
 const checkId = (id: string, slot: string) => `monitor:${id}:${slot}`;
 
+/** Queue the check for a due time. Safe to call from requests, steps and repeated calls. */
 export async function enqueueCheck(userId: string, id: string, slot: Date) {
   const at = slot.toISOString();
-  await DBOS.startWorkflow(monitorCheckWorkflow, {
-    workflowID: checkId(id, at),
-    queueName: monitorQueue,
-  })(userId, id, at);
+  await enqueue(monitorQueue, "monitor-check", checkId(id, at), userId, id, at);
 }
 
 /** Runs every minute on every server; the per-slot workflow ids keep checks from doubling. */

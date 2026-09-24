@@ -1,7 +1,7 @@
 # Local infrastructure. `docker compose up -d` then `pnpm --filter @agent-v/server db:migrate`.
 services:
   postgres:
-    image: postgres:18
+    image: pgvector/pgvector:pg18
     restart: unless-stopped
     environment:
       POSTGRES_USER: agentv

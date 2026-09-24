@@ -1,7 +1,7 @@
 import type { ChatMessage, Thread } from "@agent-v/shared";
 import { LegendList } from "@legendapp/list/react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Composer } from "../../src/components/Composer";
@@ -9,6 +9,9 @@ import { browserSessionOf, browserTools, MessageView } from "../../src/component
 import { ErrorText, IconButton } from "../../src/components/ui";
 import { api } from "../../src/lib/api";
 import { useChat } from "../../src/lib/chat";
+import { useDictation } from "../../src/lib/dictation";
+import { useMe } from "../../src/lib/me";
+import { speak, stopSpeaking } from "../../src/lib/speech";
 
 const suggestions = [
   "Plan a weekend trip to Lisbon",
@@ -40,16 +43,71 @@ export default function ChatScreen() {
     return { visible, results, liveCallId };
   }, [chat.messages]);
 
-  const send = async (text: string) => {
-    let id = threadId;
-    if (!id) {
-      const thread = await api<Thread>("/api/threads", { body: {} });
-      id = thread.id;
-      setThreadId(id);
-      router.setParams({ thread: id });
-    }
-    chat.send(id, text);
+  const send = useCallback(
+    async (text: string) => {
+      let id = threadId;
+      if (!id) {
+        const thread = await api<Thread>("/api/threads", { body: {} });
+        id = thread.id;
+        setThreadId(id);
+        router.setParams({ thread: id });
+      }
+      chat.send(id, text);
+    },
+    [threadId, chat.send],
+  );
+
+  // Voice: the mic dictates into the draft; voice mode listens, sends, reads the reply aloud,
+  // and listens again until it is turned off.
+  const me = useMe();
+  const [draft, setDraft] = useState("");
+  const [voiceMode, setVoiceMode] = useState<"off" | "listening" | "thinking" | "speaking">("off");
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const mode = useRef(voiceMode);
+  mode.current = voiceMode;
+  const dictation = useDictation({
+    serverTranscription: Boolean(me.data?.features.transcription),
+    onText: (text) => {
+      if (mode.current === "off") setDraft((d) => (d.trim() ? `${d.trim()} ${text}` : text));
+      else {
+        setVoiceMode("thinking");
+        void send(text);
+      }
+    },
+    onError: (message) => {
+      setVoiceError(message);
+      setVoiceMode("off");
+    },
+  });
+  const listen = useCallback(() => {
+    setVoiceError(null);
+    setVoiceMode("listening");
+    void dictation.start({ autoStop: true });
+  }, [dictation.start]);
+  const endVoice = () => {
+    setVoiceMode("off");
+    stopSpeaking();
+    void dictation.cancel();
   };
+  // A reply finished while in voice mode: read it, then listen again.
+  const lastReply = [...visible].reverse().find((m) => m.role === "assistant" && m.content);
+  useEffect(() => {
+    if (voiceMode !== "thinking" || chat.running) return;
+    const text = lastReply?.role === "assistant" ? (lastReply.content ?? "") : "";
+    setVoiceMode("speaking");
+    void speak(text).then(() => {
+      if (mode.current === "speaking") listen();
+    });
+  }, [voiceMode, chat.running, lastReply, listen]);
+  // A dictation that ends without words (silence, cancel) leaves voice mode.
+  useEffect(() => {
+    if (voiceMode === "listening" && dictation.state === "idle") {
+      const timer = setTimeout(() => {
+        if (mode.current === "listening") setVoiceMode("off");
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [voiceMode, dictation.state]);
 
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-white dark:bg-zinc-950">
@@ -57,6 +115,13 @@ export default function ChatScreen() {
         <IconButton name="menu" label="Chats" onPress={() => router.push("/chats")} />
         <Text className="text-[15px] font-semibold text-zinc-900 dark:text-zinc-100">Agent V</Text>
         <View className="flex-row">
+          {dictation.available ? (
+            <IconButton
+              name={voiceMode === "off" ? "headphones" : "mic-off"}
+              label={voiceMode === "off" ? "Voice mode" : "End voice mode"}
+              onPress={voiceMode === "off" ? listen : endVoice}
+            />
+          ) : null}
           <IconButton
             name="terminal"
             label="Linux computer"
@@ -99,9 +164,14 @@ export default function ChatScreen() {
             data={visible}
             keyExtractor={(m) => m.id}
             renderItem={({ item }) => (
-              <MessageView message={item} results={results} liveCallId={liveCallId} />
+              <MessageView
+                message={item}
+                results={results}
+                liveCallId={liveCallId}
+                streaming={chat.running && item.id === lastReply?.id}
+              />
             )}
-            extraData={`${results.size}:${liveCallId}`}
+            extraData={`${results.size}:${liveCallId}:${chat.running}`}
             estimatedItemSize={72}
             alignItemsAtEnd
             initialScrollAtEnd
@@ -121,13 +191,46 @@ export default function ChatScreen() {
             ))}
           </View>
         ) : null}
-        {chat.error ? (
+        {chat.error || voiceError ? (
           <View className="px-5 pb-1">
-            <ErrorText>{chat.error}</ErrorText>
+            <ErrorText>{chat.error ?? voiceError}</ErrorText>
+          </View>
+        ) : null}
+        {voiceMode === "thinking" || voiceMode === "speaking" ? (
+          <View className="w-full max-w-[760px] flex-row items-center justify-between self-center px-5 pb-1">
+            <Text className="text-sm text-zinc-500">
+              {voiceMode === "thinking" ? "Thinking…" : "Speaking… tap to interrupt"}
+            </Text>
+            <Pressable accessibilityRole="button" onPress={endVoice} hitSlop={8}>
+              <Text className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                End voice
+              </Text>
+            </Pressable>
           </View>
         ) : null}
         <View className="w-full max-w-[760px] self-center">
-          <Composer running={chat.running} onSend={(t) => void send(t)} onStop={chat.stop} />
+          <Composer
+            draft={draft}
+            onDraft={setDraft}
+            running={chat.running}
+            onSend={(t) => void send(t)}
+            onStop={chat.stop}
+            voice={{
+              available: dictation.available,
+              state: dictation.state,
+              level: dictation.level,
+              start: () => {
+                setVoiceError(null);
+                stopSpeaking();
+                void dictation.start();
+              },
+              stop: () => void dictation.stop(),
+              cancel: () => {
+                if (mode.current !== "off") endVoice();
+                else void dictation.cancel();
+              },
+            }}
+          />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

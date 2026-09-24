@@ -96,6 +96,8 @@ export interface Memory {
   id: string;
   text: string;
   source: string;
+  /** How it was saved: by the owner, or learned from a chat or task. */
+  origin: "manual" | "chat" | "task";
   createdAt: string;
 }
 
@@ -106,6 +108,7 @@ export interface Notification {
   taskId: string | null;
   /** App path to open when the notification is not about a task. */
   link: string | null;
+  category: "needs_you" | "results" | "watches" | "ideas";
   readAt: string | null;
   createdAt: string;
 }
@@ -132,6 +135,7 @@ export interface Settings {
   model: string;
   agentName: string;
   tone: string;
+  learnMemories: boolean;
 }
 
 /** Pushed on GET /api/events whenever something the user owns changes. */
@@ -152,7 +156,9 @@ export interface WorkspaceEvent {
     | "goal"
     | "monitor"
     | "idea"
-    | "finance";
+    | "finance"
+    | "connector"
+    | "device";
   id: string;
 }
 
@@ -195,6 +201,7 @@ export const settingsInputSchema = z.object({
   model: z.string().min(3).max(200).optional(),
   agentName: text(60).optional(),
   tone: text(60).optional(),
+  learnMemories: z.boolean().optional(),
 });
 
 export type CreateThreadInput = z.infer<typeof createThreadSchema>;

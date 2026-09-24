@@ -153,6 +153,22 @@ function chatTurn(input: string, results: ToolOutcome[], tools: Set<string>) {
       );
     }
     if (done.toolName === "finance_summary") return say(describeSpending(output));
+    if (done.toolName === "recall_memory") {
+      const found = (Array.isArray(done.output) ? done.output : []) as { text: string }[];
+      return say(
+        found.length
+          ? `Here's what I know:\n\n${found
+              .slice(0, 3)
+              .map((m) => `- ${m.text}`)
+              .join("\n")}`
+          : "You haven't told me anything about that yet.",
+      );
+    }
+    if (done.toolName.startsWith("mcp_")) {
+      if (typeof output.actionId === "string")
+        return say(`**${String(output.title)}** is ready for your approval.`);
+      return say(String(output.result ?? "Done."));
+    }
     if (done.toolName === "search_mail") {
       const mail = (Array.isArray(done.output) ? done.output : []) as MailRow[];
       const reply = replyIntent(input);
@@ -209,6 +225,11 @@ function chatTurn(input: string, results: ToolOutcome[], tools: Set<string>) {
       );
     return say("Done.");
   }
+  const connector = connectorIntent(input, tools);
+  if (connector) return [connector];
+  const recall = /^what do you (?:know|remember) about (.+?)\??$/i.exec(input.trim());
+  if (recall?.[1] && tools.has("recall_memory"))
+    return [call("recall_memory", { query: recall[1] })];
   const goal = /^(?:set (?:a |my )?goal(?: to)?|new goal:?|my goal is(?: to)?)\s+(.{3,})$/i.exec(
     input.trim(),
   );
@@ -305,6 +326,33 @@ function taskTurn(prompt: string, results: ToolOutcome[], tools: Set<string>) {
               : money
                 ? ["Read your spending summary", "Suggest what to cut"]
                 : ["Understand the request", "Gather what's needed", "Write up the result"],
+      }),
+    ];
+  const watch = tools.has("watch_page") ? watchIntent(prompt) : null;
+  if (watch && !called.has("watch_page")) return [call("watch_page", watch)];
+  if (watch) {
+    const made = results.findLast((r) => r.toolName === "watch_page")?.output as
+      | Record<string, unknown>
+      | undefined;
+    return [
+      call("finish_task", {
+        summary: made?.error
+          ? `Could not start the watch: ${String(made.error)}`
+          : `Watching ${String(made?.title)}: ${describeWatch(made ?? {})}.`,
+      }),
+    ];
+  }
+  const connector = connectorIntent(prompt, tools);
+  if (connector && !results.some((r) => r.toolName.startsWith("mcp_"))) return [connector];
+  const used = results.findLast((r) => r.toolName.startsWith("mcp_"))?.output as
+    | { result?: string; status?: string; error?: string }
+    | undefined;
+  if (connector && used)
+    return [
+      call("finish_task", {
+        summary: used.error
+          ? `The connector call failed: ${used.error}`
+          : (used.result ?? `The connector call ${used.status ?? "finished"}.`),
       }),
     ];
   if (planGoal) {
@@ -586,4 +634,24 @@ function replyTaskTurn(name: string, results: ToolOutcome[], called: Set<string>
           : `The reply to ${name} was ${sent?.status ?? "not sent"}.`,
     }),
   ];
+}
+
+/** Sample-connector phrases → their tools, when the owner has the sample connector. */
+function connectorIntent(input: string, tools: Set<string>) {
+  const find = (suffix: string) =>
+    [...tools].find((t) => t.startsWith("mcp_") && t.endsWith(suffix));
+  const convert = /\bconvert ([\d.]+) ?([a-z]+) (?:to|in|into) ([a-z]+)\b/i.exec(input);
+  if (convert && find("_convert_units"))
+    return call(find("_convert_units") as string, {
+      value: Number(convert[1]),
+      from: convert[2],
+      to: convert[3],
+    });
+  const weather = /\bweather (?:in|for) ([\p{L} .'-]{2,40}?)[?.!]*$/iu.exec(input.trim());
+  if (weather && find("_weather")) return call(find("_weather") as string, { city: weather[1] });
+  const note = /\bsave (?:a )?note:?\s+(.{1,500})$/is.exec(input.trim());
+  if (note && find("_save_note")) return call(find("_save_note") as string, { text: note[1] });
+  if (/\b(list|show|read) my notes\b/i.test(input) && find("_list_notes"))
+    return call(find("_list_notes") as string, {});
+  return null;
 }

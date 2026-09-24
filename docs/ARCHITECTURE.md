@@ -170,6 +170,46 @@ debit/credit columns) into integer cents. It infers the sign convention and says
 used, categorizes by keyword when the file has no categories, and finds recurring charges
 (one charge a month at a steady amount).
 
+### Connectors (MCP)
+
+`mcp/` uses the official MCP TypeScript SDK as a client. Each operation opens a short-lived
+Streamable HTTP session through `guardedFetch` (DNS pinned, private networks refused, redirects
+refused) and closes it; nothing is shared between users. OAuth follows the MCP authorization
+spec through the SDK's `auth()` with a provider backed by the database: the client registration,
+tokens and PKCE verifier are sealed in the connector row, and the redirect's `state` is a
+single-use row bound to the user and connector. Tools are listed once and cached on the row with
+their read-only and destructive hints. The agent sees them as `mcp_<connector>_<tool>`: read-only
+tools run directly; others become `mcp.call` actions that the owner approves (in a task, the
+workflow waits for the decision like any other action). Once a call has been sent, only an
+answer from the server settles it; a dropped connection is an unknown outcome.
+
+### Memory
+
+Memories carry a pgvector embedding and the id of the model that made it, so vectors from
+different models are never compared; after a model change, older rows are re-embedded lazily.
+Retrieval is an exact cosine scan of one user's rows (small sets; an HNSW index can come later),
+returning the closest few plus the newest few. After each chat turn a `learn-memories` workflow
+extracts durable facts from the owner's own message (the model, or rules for the demo model),
+drops near-duplicates, and saves the rest as learned memories.
+
+### Push
+
+`notify()` stores a notification and enqueues `push-notification:<id>` for owners with devices.
+The workflow checks the category preference, sends to Expo (batched tickets) and Web Push
+(payload encrypted by `web-push`, then posted through the network guard), removes devices the
+services report as gone, and retries only the devices that hit a transient failure. Work is
+enqueued with the DBOS client rather than `startWorkflow`, because DBOS refuses to start
+workflows from inside a step, and notifications are usually created inside steps.
+
+### Voice and streaming Markdown
+
+`POST /api/voice/transcribe` takes a recording (10 MB) and runs the configured transcription
+model through the AI SDK. The app records with expo-audio (phones) or MediaRecorder (web), falls
+back to the browser's speech recognition when the server has no model, and speaks replies with
+expo-speech. Chat Markdown is parsed by `@agent-v/shared/markdown`: while a reply streams, the
+last block's unfinished syntax is closed, and blocks are memoized by source so only the growing
+block re-renders.
+
 ### Realtime
 
 Mutations call `publish(userId, event)`, which runs `pg_notify`. Every server process listens

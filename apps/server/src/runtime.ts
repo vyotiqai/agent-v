@@ -6,6 +6,8 @@ import { recoverCommands } from "./computer/service.ts";
 import type { Config } from "./config.ts";
 import type { Context } from "./context.ts";
 import { createDatabase, runMigrations } from "./db/client.ts";
+import { createEmbedder } from "./memory/embed.ts";
+import { learnQueue, setMemoryContext } from "./memory/service.ts";
 import { createModels, type Models } from "./models/registry.ts";
 import {
   enqueueCheck,
@@ -13,9 +15,13 @@ import {
   setMonitorContext,
   startMonitorSchedule,
 } from "./monitors/workflow.ts";
+import { enqueueDelivery, pushQueue, setPushContext } from "./push/service.ts";
+import { startQueueClient, stopQueueClient } from "./queue.ts";
 import { Realtime } from "./realtime.ts";
 import { Signer } from "./signing.ts";
 import { setTaskContext, taskQueue } from "./tasks/workflow.ts";
+
+const appName = "agent-v";
 
 /** Build and start everything one server process needs. Used by the entry point and tests. */
 export async function startRuntime(config: Config, options: { models?: Models } = {}) {
@@ -27,6 +33,7 @@ export async function startRuntime(config: Config, options: { models?: Models } 
     config,
     db: database.db,
     models: options.models ?? createModels(config),
+    embedder: createEmbedder(config),
     realtime,
     browser: config.browser
       ? new BrowserClient(config.browser.url, config.browser.token)
@@ -35,9 +42,11 @@ export async function startRuntime(config: Config, options: { models?: Models } 
   };
   setTaskContext(ctx);
   setMonitorContext(ctx);
+  setPushContext(ctx);
+  setMemoryContext(ctx);
   await recoverCommands(ctx);
   DBOS.setConfig({
-    name: "agent-v",
+    name: appName,
     systemDatabaseUrl: config.databaseUrl,
     logLevel: config.env === "test" ? "error" : "info",
   });
@@ -52,8 +61,20 @@ export async function startRuntime(config: Config, options: { models?: Models } 
     minPollingIntervalMs: 500,
     onConflict: "always_update",
   });
+  await DBOS.registerQueue(learnQueue, {
+    workerConcurrency: 2,
+    minPollingIntervalMs: 1000,
+    onConflict: "always_update",
+  });
+  await DBOS.registerQueue(pushQueue, {
+    workerConcurrency: 8,
+    minPollingIntervalMs: 500,
+    onConflict: "always_update",
+  });
   if (config.monitorSchedule) await startMonitorSchedule();
+  await startQueueClient(config.databaseUrl, appName);
   ctx.monitors = { enqueue: enqueueCheck };
+  ctx.push = { deliver: (userId, id) => enqueueDelivery(ctx, userId, id) };
   const auth = createAuth(config, database.db);
   const { app, injectWebSocket } = createApp(ctx, auth);
   return {
@@ -62,6 +83,7 @@ export async function startRuntime(config: Config, options: { models?: Models } 
     ctx,
     auth,
     async close() {
+      await stopQueueClient();
       await DBOS.shutdown();
       await realtime.close();
       await database.close();

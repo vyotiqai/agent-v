@@ -8,17 +8,18 @@ Agent V is a from-scratch rebuild of the ideas in
 [CopilotKit/OpenMuse](https://github.com/CopilotKit/openmuse), designed for many users and with
 no required hosted service apart from your model provider.
 
-> **Status: phases 1–5 of 7.** Chat, durable background tasks, approvals, memory, live updates,
-> a cloud browser you can watch and take over, Gmail/Calendar, PDF documents, a private Linux
-> computer, goals, page watches, ideas and spending reports work end to end. MCP connectors,
-> push and voice follow; see the [roadmap](docs/ROADMAP.md).
+> **Status: phases 1–6 of 7.** Chat, durable background tasks, approvals, a cloud browser you can
+> take over, Gmail/Calendar, PDF documents, a private Linux computer, goals, page watches, ideas,
+> spending, MCP connectors, semantic memory, push notifications and voice work end to end.
+> SaaS hardening (organisations, quotas, billing, observability) is next; see the
+> [roadmap](docs/ROADMAP.md).
 
 ## What works today
 
 | Area | Details |
 | --- | --- |
 | **Accounts** | Multi-user email/password sign-in (Better Auth). Bearer tokens on mobile. Every row is scoped to its owner. |
-| **Chat** | Streams [AG-UI 1.0](https://docs.ag-ui.com) events over SSE. Tool activity shows inline. Send becomes Stop while a reply streams, and typed follow-ups queue. Chats are stored, renamable and archivable. |
+| **Chat** | Streams [AG-UI 1.0](https://docs.ag-ui.com) events over SSE, rendered as Markdown (tables, code, lists) that never flashes half-written syntax and re-renders only the block that is still growing. Tool activity shows inline. Send becomes Stop while a reply streams, and typed follow-ups queue. Chats are stored, renamable and archivable. |
 | **Models** | OpenAI, Anthropic, Google, and any OpenAI-compatible endpoint (Ollama, vLLM, LM Studio, OpenRouter…). An offline demo model makes everything work with no key. |
 | **Background tasks** | Durable DBOS workflows. Every model call and tool call is checkpointed, so restarts resume. Tasks have plans, progress, questions for you, cancel, resume, and retry from the failed step. |
 | **Approvals** | External writes (emails, calendar events, webhooks) run only after you approve that exact payload (hash-bound, expiring, run at most once, `outcome_unknown` on crashes). |
@@ -30,18 +31,22 @@ no required hosted service apart from your model provider.
 | **Watches** | Recurring checks of a public page: any change (with what changed), text appearing, or a price dropping below a threshold in a chosen currency. One scheduler per minute enqueues each due check exactly once, even with several servers. Failures back off exponentially and pause the watch after five in a row. You get one alert per change, not one per check. Built-in demo pages let you try it offline. |
 | **Ideas** | Suggestions with their evidence: forms to fill from your mail, questions waiting for a reply (with your calendar for that day), goals without a plan, recurring charges, broken watches. Edit what the agent will do, then accept (one task, however often you tap) or dismiss (it never comes back). Suggestions retire themselves once handled. |
 | **Money** | Import a bank or card CSV: comma, semicolon or tab; debit/credit or signed amounts; US, European and ISO dates and numbers. Get spending by category and month, top merchants and recurring charges, and turn a report into a savings goal with a plan. The agent answers spending questions from it. |
+| **Connectors (MCP)** | Add any MCP server (Streamable HTTP) with no auth, a token, or sign-in (the MCP authorization spec: discovery, dynamic client registration, PKCE, resource indicators, refresh). Its tools become the agent's tools in chat and in background tasks. Per tool: run, ask first, or off; read-only tools run by default and everything else asks, through the same hash-bound approvals as email. A call whose connection drops mid-flight is reported as an unknown outcome, never retried. Built-in sample tools to try it. |
+| **Memory** | Memories are embedded (any embedding model, or an offline one) and stored in pgvector. Each reply sees the memories relevant to the message plus the newest few, not everything; `recall_memory` searches the rest. After a chat turn, lasting facts you state ("I'm vegetarian", "my sister's name is Ana") are learned in the background and shown in Settings, where you can delete them or turn learning off. Repeats are recognised and not saved twice. |
+| **Push notifications** | Phones through Expo (APNs/FCM) and browsers through Web Push (VAPID, encrypted per browser). Choose categories: questions and approvals, finished tasks, watch alerts. Delivery is a durable workflow that retries outages and removes devices the push services no longer know. Tapping opens what it is about. |
+| **Voice** | Tap the mic to dictate (recorded on the device, transcribed on your server by any OpenAI-compatible speech model, or by the browser's own recognition when none is set). Voice mode is hands-free: it listens, stops when you pause, sends, reads the reply aloud with the device's voice, and listens again. Any reply can be read aloud. |
 | **Web reading** | Without a browser worker, `web_fetch` reads static pages. It pins DNS and blocks private, loopback, link-local and metadata addresses, including after redirects. |
 | **Memory and inbox** | Facts you ask the agent to remember, and notifications for results, questions, reviews and watch alerts (each opens what it is about). |
 | **Live updates** | One SSE stream per device, fed by Postgres LISTEN/NOTIFY. No polling. |
 
 ## Quick start
 
-Requirements: Node 22.12+ (24 LTS recommended), pnpm 10+, and Postgres 16+ (or Docker).
+Requirements: Node 22.12+ (24 LTS recommended), pnpm 10+, and Postgres 16+ with the pgvector extension (or Docker).
 
 ```sh
 git clone https://github.com/vyotiqai/agent-v.git && cd agent-v
 pnpm install
-docker compose up -d                  # Postgres 18 on 127.0.0.1:5432
+docker compose up -d                  # Postgres 18 with pgvector on 127.0.0.1:5432
 cp .env.example .env
 # Set BETTER_AUTH_SECRET (openssl rand -base64 32). Add provider keys if you have them.
 pnpm dev:server                       # API on http://localhost:8787 (runs migrations on start)

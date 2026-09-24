@@ -144,11 +144,12 @@ export const accounts = {
 /** Upload a picked file as multipart form data (web File or native { uri, name, type }). */
 export async function upload<T>(
   path: string,
-  file: File | { uri: string; name: string; type: string },
+  file: File | Blob | { uri: string; name: string; type: string },
+  fallbackName = "upload.pdf",
 ) {
   await ready;
   const form = new FormData();
-  form.append("file", file as unknown as Blob, "name" in file ? file.name : "upload.pdf");
+  form.append("file", file as unknown as Blob, "name" in file ? file.name : fallbackName);
   const response = await fetch(`${API_URL}${path}`, {
     method: "POST",
     headers: headers(false),

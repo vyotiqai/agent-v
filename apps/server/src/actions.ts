@@ -7,6 +7,7 @@ import { type Context, newId } from "./context.ts";
 import { actions } from "./db/schema.ts";
 import { AppError, notFound } from "./errors.ts";
 import { getFileRow, readFileBytes } from "./files/service.ts";
+import { callConnectorTool, getConnectorRow, policyOf } from "./mcp/service.ts";
 import { safeFetch } from "./net/safe-fetch.ts";
 import { workspaceFor } from "./providers/index.ts";
 
@@ -53,7 +54,31 @@ async function providerFor(ctx: Context, userId: string, pinned: string | undefi
   return provider;
 }
 
+const mcpPayload = z.object({
+  connectorId: z.string().min(1).max(64),
+  connector: z.string().max(60),
+  tool: z.string().min(1).max(128),
+  arguments: z.record(z.string(), z.unknown()),
+});
+
 export const executors = {
+  "mcp.call": {
+    schema: mcpPayload,
+    title: (p) => `${p.connector}: ${p.tool}`,
+    async prepare(ctx, userId, p) {
+      const row = await getConnectorRow(ctx, userId, p.connectorId);
+      const tool = row.tools.find((t) => t.name === p.tool);
+      if (!tool) throw new AppError(`${row.name} has no tool named ${p.tool}`, 404);
+      if (policyOf(row, tool) === "off")
+        throw new AppError(`${p.tool} is turned off for ${row.name}`, 409);
+      return { ...p, connector: row.name };
+    },
+    async run(ctx, userId, p) {
+      const result = await callConnectorTool(ctx, userId, p.connectorId, p.tool, p.arguments);
+      if (result.isError) throw new Error(result.text.slice(0, 2000));
+      return result.text.slice(0, 8000);
+    },
+  } satisfies Executor<z.infer<typeof mcpPayload>>,
   "webhook.post": {
     schema: webhookPayload,
     title: (p) => `POST to ${new URL(p.url).host}`,

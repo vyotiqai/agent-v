@@ -27,7 +27,9 @@ import { computerRoutes } from "./computer/routes.ts";
 import type { Context } from "./context.ts";
 import { AppError } from "./errors.ts";
 import { lifeRoutes } from "./goals/routes.ts";
+import { connectorRoutes, publicConnectorRoutes } from "./mcp/routes.ts";
 import { publicWorkspaceRoutes, workspaceRoutes } from "./providers/routes.ts";
+import { pushRoutes } from "./push/routes.ts";
 import {
   answerTask,
   cancelTask,
@@ -37,6 +39,7 @@ import {
   listTasks,
   retryTask,
 } from "./tasks/service.ts";
+import { transcriptionAvailable, voiceRoutes } from "./voice.ts";
 import {
   addMemory,
   getSettings,
@@ -82,7 +85,7 @@ export function createApp(ctx: Context, auth: Auth) {
   );
   const smallBodies = bodyLimit({ maxSize: 1024 * 1024 });
   // Uploads and CSV imports carry their own, larger limit on the route.
-  const ownLimit = new Set(["/api/files", "/api/finance/import"]);
+  const ownLimit = new Set(["/api/files", "/api/finance/import", "/api/voice/transcribe"]);
   app.use("/api/*", (c, next) =>
     c.req.method === "POST" && ownLimit.has(c.req.path) ? next() : smallBodies(c, next),
   );
@@ -108,6 +111,7 @@ export function createApp(ctx: Context, auth: Auth) {
 
   signedBrowserRoutes(app, ctx, ws.upgradeWebSocket);
   publicWorkspaceRoutes(app, ctx);
+  publicConnectorRoutes(app, ctx);
 
   app.use("/api/*", async (c, next) => {
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
@@ -127,7 +131,12 @@ export function createApp(ctx: Context, auth: Auth) {
       user: session?.user,
       settings: await getSettings(ctx, userId),
       models: ctx.models.options(),
-      features: { browser: Boolean(ctx.browser), computer: Boolean(ctx.config.computer) },
+      features: {
+        browser: Boolean(ctx.browser),
+        computer: Boolean(ctx.config.computer),
+        sampleConnector: ctx.config.mcpDemo,
+        transcription: transcriptionAvailable(ctx),
+      },
     });
   });
   app.patch("/api/settings", async (c) =>
@@ -230,6 +239,9 @@ export function createApp(ctx: Context, auth: Auth) {
   workspaceRoutes(app, ctx);
   computerRoutes(app, ctx);
   lifeRoutes(app, ctx);
+  connectorRoutes(app, ctx);
+  pushRoutes(app, ctx);
+  voiceRoutes(app, ctx);
 
   // Live workspace changes: one SSE stream per device replaces polling.
   app.get("/api/events", (c) => {

@@ -20,7 +20,7 @@ import { workspaceFor, workspaceStatus } from "./index.ts";
 
 type Env = { Variables: { userId: string } };
 
-function page(title: string, message: string) {
+export function page(title: string, message: string) {
   return html`<!doctype html>
     <html lang="en">
       <head>

@@ -49,6 +49,16 @@ function Preview({ action }: { action: Action }) {
         {p.location ? <Row label="Where" value={String(p.location)} /> : null}
       </View>
     );
+  if (action.kind === "mcp.call")
+    return (
+      <View className="gap-1.5 rounded-xl bg-zinc-100 p-3 dark:bg-zinc-800">
+        <Row label="Connector" value={String(p.connector ?? "")} />
+        <Row label="Tool" value={String(p.tool ?? "")} />
+        <Text selectable className="pt-1 font-mono text-xs text-zinc-700 dark:text-zinc-300">
+          {JSON.stringify(p.arguments ?? {}, null, 2)}
+        </Text>
+      </View>
+    );
   return (
     <View className="rounded-xl bg-zinc-100 p-3 dark:bg-zinc-800">
       <Text selectable className="font-mono text-xs text-zinc-700 dark:text-zinc-300">

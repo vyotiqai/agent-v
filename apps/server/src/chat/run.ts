@@ -3,7 +3,9 @@ import type { ChatMessage, RunInput } from "@agent-v/shared";
 import { isStepCount, streamText } from "ai";
 import { type Context, newId } from "../context.ts";
 import { AppError } from "../errors.ts";
+import { enqueueLearning } from "../memory/service.ts";
 import { chatSystemPrompt } from "../prompts.ts";
+import { connectorChatTools } from "../tools/mcp.ts";
 import { getSettings } from "../workspace.ts";
 import { toAgUi } from "./agui.ts";
 import { toModelMessages } from "./convert.ts";
@@ -31,6 +33,7 @@ export async function* runChat(
   if (running.has(threadId)) throw new AppError("A reply is already in progress in this chat", 409);
   running.add(threadId);
   const collected: ChatMessage[] = [];
+  let userMessageId: string | null = null;
   try {
     const settings = await getSettings(ctx, userId);
     const modelId = input.model ?? settings.model;
@@ -41,6 +44,7 @@ export async function* runChat(
       content: input.content,
     };
     await appendMessages(ctx, userId, threadId, [userMessage]);
+    userMessageId = userMessage.id;
     await updateThread(ctx, userId, threadId, {
       touch: true,
       ...(thread.title === "New chat" ? { title: titleFrom(input.content) } : {}),
@@ -48,9 +52,9 @@ export async function* runChat(
     const history = await listMessages(ctx, userId, threadId);
     const result = streamText({
       model,
-      system: await chatSystemPrompt(ctx, userId),
+      system: await chatSystemPrompt(ctx, userId, input.content),
       messages: toModelMessages(history),
-      tools: chatTools(ctx, userId, threadId),
+      tools: { ...(await connectorChatTools(ctx, userId)), ...chatTools(ctx, userId, threadId) },
       stopWhen: isStepCount(8),
       abortSignal: signal,
       maxRetries: 1,
@@ -63,5 +67,10 @@ export async function* runChat(
       console.error("[chat] could not save messages:", (error as Error).message),
     );
     if (collected.length) await ctx.realtime.publish(userId, { type: "thread", id: threadId });
+    // Learn durable facts from what the owner said, in the background.
+    if (collected.length && userMessageId)
+      await enqueueLearning(userId, threadId, userMessageId).catch((error) =>
+        console.warn("[memory] could not queue learning:", (error as Error).message),
+      );
   }
 }

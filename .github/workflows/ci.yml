@@ -46,7 +46,7 @@ jobs:
     timeout-minutes: 15
     services:
       postgres:
-        image: postgres:18
+        image: pgvector/pgvector:pg18
         env:
           POSTGRES_USER: agentv
           POSTGRES_PASSWORD: agentv

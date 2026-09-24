@@ -2,14 +2,22 @@ import type { PlanStep } from "@agent-v/shared";
 import { DBOS } from "@dbos-inc/dbos-sdk";
 import { generateText, type ModelMessage, tool } from "ai";
 import { z } from "zod";
-import { executeAction, expireAction, getAction, proposeAction } from "../actions.ts";
+import {
+  type ActionKind,
+  executeAction,
+  expireAction,
+  getAction,
+  proposeAction,
+} from "../actions.ts";
 import { browseForAgent, scopedAgentAction } from "../browser/service.ts";
 import { type Context, newId } from "../context.ts";
 import { AppError } from "../errors.ts";
 import { recordGoalProgress } from "../goals/service.ts";
+import { connectorToolsFor } from "../mcp/service.ts";
 import { taskSystemPrompt } from "../prompts.ts";
 import { computerDescriptions, computerSchemas, runComputerTool } from "../tools/computer.ts";
 import { lifeDescriptions, lifeSchemas, runLifeTool } from "../tools/life.ts";
+import { proposalFor, runAutoTool, toolSchema } from "../tools/mcp.ts";
 import { readWebPage } from "../tools/web.ts";
 import { workspaceDescriptions, workspaceSchemas, workspaceTools } from "../tools/workspace.ts";
 
@@ -152,9 +160,21 @@ async function nextStep(
 ): Promise<ModelReply> {
   const result = await generateText({
     model: ctx().models.resolve(model),
-    system: await taskSystemPrompt(ctx(), userId),
+    system: await taskSystemPrompt(
+      ctx(),
+      userId,
+      messages[0] && typeof messages[0].content === "string" ? messages[0].content : "",
+    ),
     messages,
-    tools: taskTools(ctx()),
+    tools: {
+      ...Object.fromEntries(
+        (await connectorToolsFor(ctx(), userId)).map((t) => [
+          t.name,
+          tool({ description: t.description, inputSchema: toolSchema(t) }),
+        ]),
+      ),
+      ...taskTools(ctx()),
+    },
     maxRetries: 0,
   });
   return {
@@ -173,6 +193,113 @@ async function waitingFor<T>(topic: string, timeoutSeconds: number): Promise<T |
   return DBOS.recv<T>(topic, { timeoutSeconds });
 }
 
+/**
+ * Propose an external write, wait (durably) for the owner's decision, and run it if approved.
+ * Each phase is its own step, so a replay never proposes or executes twice.
+ */
+async function proposeAndWait(
+  userId: string,
+  taskId: string,
+  id: string,
+  kind: ActionKind,
+  payload: Record<string, unknown>,
+  summary?: string,
+) {
+  const c = ctx();
+  const proposal = await step(`propose:${id}`, async () => {
+    let proposed: Awaited<ReturnType<typeof proposeAction>>;
+    try {
+      proposed = await proposeAction(c, userId, {
+        id: `${taskId}:${id}`,
+        taskId,
+        kind,
+        payload,
+        summary,
+      });
+    } catch (error) {
+      return { error: (error as Error).message };
+    }
+    await updateTask(
+      c,
+      userId,
+      taskId,
+      { status: "waiting_approval", actionId: proposed.id },
+      { kind: "status", title: "Waiting for your approval", detail: proposed.summary },
+    );
+    await notify(c, userId, {
+      title: "Ready for your review",
+      category: "needs_you",
+      body: proposed.summary,
+      taskId,
+      dedupeKey: `review:${proposed.id}`,
+    });
+    return { action: proposed };
+  });
+  if ("error" in proposal) return proposal;
+  const action = proposal.action;
+  const seconds = Math.max(
+    1,
+    Math.ceil((Date.parse(action.expiresAt) - (await DBOS.now())) / 1000),
+  );
+  const decision = await waitingFor<{ actionId: string }>("approval", seconds);
+  const outcome = await step(`decided:${id}`, async () => {
+    const current = decision
+      ? await getAction(c, userId, action.id)
+      : await expireAction(c, userId, action.id);
+    const finished =
+      current.status === "approved" ? await executeAction(c, userId, action.id) : current;
+    await updateTask(
+      c,
+      userId,
+      taskId,
+      { status: "running", actionId: null },
+      {
+        kind: "tool",
+        title: `Action ${finished.status.replace("_", " ")}`,
+        detail: finished.result ?? finished.error ?? "",
+      },
+    );
+    return finished;
+  });
+  return { status: outcome.status, result: outcome.result, error: outcome.error };
+}
+
+/** A tool from one of the owner's MCP connectors: read-only tools run, others ask first. */
+async function runConnectorCall(userId: string, taskId: string, call: ModelCall) {
+  const c = ctx();
+  const id = call.toolCallId;
+  const found = await step(
+    `mcp-tool:${id}`,
+    async () => (await connectorToolsFor(c, userId)).find((t) => t.name === call.toolName) ?? null,
+  );
+  if (!found) return { error: `The connector tool ${call.toolName} is no longer available` };
+  if (found.policy === "ask") {
+    const { kind, payload } = proposalFor(found, call.input);
+    return proposeAndWait(
+      userId,
+      taskId,
+      id,
+      kind,
+      payload,
+      `${found.connectorName}: ${found.tool}`,
+    );
+  }
+  return step(`mcp:${id}`, async () => {
+    const result = await runAutoTool(c, userId, found, call.input);
+    await addEvent(
+      c,
+      userId,
+      taskId,
+      "tool",
+      "error" in result
+        ? `${found.connectorName}: ${found.tool} failed`
+        : `Used ${found.connectorName}: ${found.tool}`,
+      "error" in result ? result.error : "",
+    );
+    return result;
+  });
+}
+
 async function runTool(
   userId: string,
   taskId: string,
@@ -181,6 +308,8 @@ async function runTool(
 ): Promise<unknown> {
   const c = ctx();
   const name = call.toolName as TaskToolName;
+  if (!(name in allTaskTools) && call.toolName.startsWith("mcp_"))
+    return runConnectorCall(userId, taskId, call);
   const schema = allTaskTools[name]?.inputSchema as z.ZodType | undefined;
   if (!schema) return { error: `Unknown tool ${call.toolName}` };
   const parsed = schema.safeParse(call.input);
@@ -277,6 +406,7 @@ async function runTool(
         );
         await notify(c, userId, {
           title: "Your input is needed",
+          category: "needs_you",
           body: question,
           taskId,
           dedupeKey: `ask:${taskId}:${id}`,
@@ -299,61 +429,14 @@ async function runTool(
           : name === "propose_event"
             ? "calendar.create"
             : "webhook.post";
-      const proposal = await step(`propose:${id}`, async () => {
-        let proposed: Awaited<ReturnType<typeof proposeAction>>;
-        try {
-          proposed = await proposeAction(c, userId, {
-            id: `${taskId}:${id}`,
-            taskId,
-            kind,
-            payload: data,
-            summary: typeof data.summary === "string" ? data.summary : undefined,
-          });
-        } catch (error) {
-          return { error: (error as Error).message };
-        }
-        await updateTask(
-          c,
-          userId,
-          taskId,
-          { status: "waiting_approval", actionId: proposed.id },
-          { kind: "status", title: "Waiting for your approval", detail: proposed.summary },
-        );
-        await notify(c, userId, {
-          title: "Ready for your review",
-          body: proposed.summary,
-          taskId,
-          dedupeKey: `review:${proposed.id}`,
-        });
-        return { action: proposed };
-      });
-      if ("error" in proposal) return proposal;
-      const action = proposal.action;
-      const seconds = Math.max(
-        1,
-        Math.ceil((Date.parse(action.expiresAt) - (await DBOS.now())) / 1000),
+      return proposeAndWait(
+        userId,
+        taskId,
+        id,
+        kind,
+        data,
+        typeof data.summary === "string" ? data.summary : undefined,
       );
-      const decision = await waitingFor<{ actionId: string }>("approval", seconds);
-      const outcome = await step(`decided:${id}`, async () => {
-        const current = decision
-          ? await getAction(c, userId, action.id)
-          : await expireAction(c, userId, action.id);
-        const finished =
-          current.status === "approved" ? await executeAction(c, userId, action.id) : current;
-        await updateTask(
-          c,
-          userId,
-          taskId,
-          { status: "running", actionId: null },
-          {
-            kind: "tool",
-            title: `Action ${finished.status.replace("_", " ")}`,
-            detail: finished.result ?? finished.error ?? "",
-          },
-        );
-        return finished;
-      });
-      return { status: outcome.status, result: outcome.result, error: outcome.error };
     }
     case "computer_run":
     case "computer_list":
@@ -457,6 +540,7 @@ async function runTool(
         if (task)
           await notify(c, userId, {
             title: `Done: ${task.title}`,
+            category: "results",
             body: summary,
             taskId,
             dedupeKey: `done:${taskId}`,
@@ -544,6 +628,7 @@ async function taskWorkflowFunction(userId: string, taskId: string): Promise<voi
       if (failed)
         await notify(c, userId, {
           title: "A task needs attention",
+          category: "results",
           body: `${failed.title}: ${message}`,
           taskId,
           dedupeKey: `failed:${taskId}:${newId()}`,

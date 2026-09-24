@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createECDH, createHash, hkdfSync } from "node:crypto";
 import { resolve } from "node:path";
 import { z } from "zod";
 
@@ -72,6 +72,19 @@ const envSchema = z.object({
   MONITOR_SCHEDULE: bool.optional(),
   /** Allow web_fetch to reach private networks. Only for local development against local pages. */
   ALLOW_PRIVATE_NETWORK_FETCH: bool.default(false),
+  /** A built-in MCP server with sample tools, so connectors can be tried without setup. */
+  MCP_DEMO: bool.optional(),
+  /** Expo push service (iOS/Android). The token is optional unless push security is enabled. */
+  EXPO_ACCESS_TOKEN: z.string().optional(),
+  EXPO_PUSH_URL: z.url().default("https://exp.host/--/api/v2/push"),
+  /** Web Push VAPID keys (npx web-push generate-vapid-keys). Derived in development. */
+  WEB_PUSH_PUBLIC_KEY: z.string().optional(),
+  WEB_PUSH_PRIVATE_KEY: z.string().optional(),
+  WEB_PUSH_SUBJECT: z.string().default("mailto:admin@localhost"),
+  /** "provider/model" for memory embeddings; "demo/hash" works offline. */
+  EMBEDDING_MODEL: z.string().default("demo/hash"),
+  /** "openai/model" for voice transcription (uses OPENAI_API_KEY and OPENAI_BASE_URL). */
+  TRANSCRIPTION_MODEL: z.string().optional(),
 });
 
 export interface Config {
@@ -117,6 +130,26 @@ export interface Config {
   };
   trustProxy: boolean;
   allowPrivateNetworkFetch: boolean;
+  mcpDemo: boolean;
+  push: {
+    expo: { url: string; accessToken?: string };
+    webPush?: { publicKey: string; privateKey: string; subject: string };
+  };
+  embeddingModel: string;
+  transcriptionModel?: string;
+}
+
+/** Development convenience: a stable secret derived from the auth secret, never in production. */
+const derive = (secret: string, purpose: string) =>
+  Buffer.from(hkdfSync("sha256", secret, "agent-v", purpose, 32));
+
+function vapidKeys(secret: string) {
+  const ecdh = createECDH("prime256v1");
+  ecdh.setPrivateKey(derive(secret, "web-push vapid"));
+  return {
+    publicKey: ecdh.getPublicKey().toString("base64url"),
+    privateKey: ecdh.getPrivateKey().toString("base64url"),
+  };
 }
 
 export function readConfig(env: Record<string, string | undefined> = process.env): Config {
@@ -131,9 +164,18 @@ export function readConfig(env: Record<string, string | undefined> = process.env
   for (const provider of compat)
     if (reserved.has(provider.name))
       throw new Error(`OpenAI-compatible provider name "${provider.name}" is reserved`);
+  const production = e.NODE_ENV === "production";
   const encryptionKey = e.TOKEN_ENCRYPTION_KEY
     ? Buffer.from(e.TOKEN_ENCRYPTION_KEY, "base64")
-    : undefined;
+    : production
+      ? undefined
+      : derive(e.BETTER_AUTH_SECRET, "token encryption");
+  const webPush =
+    e.WEB_PUSH_PUBLIC_KEY && e.WEB_PUSH_PRIVATE_KEY
+      ? { publicKey: e.WEB_PUSH_PUBLIC_KEY, privateKey: e.WEB_PUSH_PRIVATE_KEY }
+      : production
+        ? undefined
+        : vapidKeys(e.BETTER_AUTH_SECRET);
   if (encryptionKey && encryptionKey.length !== 32)
     throw new Error("TOKEN_ENCRYPTION_KEY must be 32 bytes encoded as base64");
   if (e.GOOGLE_CLIENT_ID && !encryptionKey)
@@ -201,5 +243,12 @@ export function readConfig(env: Record<string, string | undefined> = process.env
         : undefined,
     trustProxy: e.TRUST_PROXY,
     allowPrivateNetworkFetch: e.ALLOW_PRIVATE_NETWORK_FETCH,
+    mcpDemo: e.MCP_DEMO ?? !production,
+    push: {
+      expo: { url: e.EXPO_PUSH_URL.replace(/\/$/, ""), accessToken: e.EXPO_ACCESS_TOKEN },
+      webPush: webPush && { ...webPush, subject: e.WEB_PUSH_SUBJECT },
+    },
+    embeddingModel: e.EMBEDDING_MODEL,
+    transcriptionModel: e.TRANSCRIPTION_MODEL,
   };
 }

@@ -3,8 +3,10 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "../src/lib/auth";
+import { usePushNavigation } from "../src/lib/push";
 
 export default function RootLayout() {
+  usePushNavigation();
   return (
     <SafeAreaProvider>
       <AuthProvider>
@@ -32,6 +34,14 @@ export default function RootLayout() {
           <Stack.Screen
             name="money/[id]"
             options={{ headerShown: true, title: "Spending", headerBackTitle: "Back" }}
+          />
+          <Stack.Screen
+            name="connectors/index"
+            options={{ headerShown: true, title: "Connectors", headerBackTitle: "Back" }}
+          />
+          <Stack.Screen
+            name="connectors/[id]"
+            options={{ headerShown: true, title: "Connector", headerBackTitle: "Back" }}
           />
           <Stack.Screen
             name="tasks/[id]"

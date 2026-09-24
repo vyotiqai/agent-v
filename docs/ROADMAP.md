@@ -105,13 +105,33 @@ OpenMuse plus multi-user SaaS, MCP connectors, push notifications and voice.
 - [ ] Next: watches through the cloud browser for pages that need JavaScript, CSS selectors
       for a part of a page, model-written ideas, bank connections (Plaid/GoCardless), budgets.
 
-## Phase 6 — Connectors, memory and reach
+## Phase 6 — Connectors, memory and reach (done)
 
-- MCP client: users add any MCP server (OAuth 2.1), tools appear to the agent.
-- pgvector semantic memory with extraction after turns.
-- Expo push (APNs/FCM) and Web Push; notification preferences.
-- Voice: on-device speech input, realtime voice conversations (OpenAI Realtime / Gemini Live).
-- Streaming markdown (react-native-enriched-markdown + streamdown).
+- [x] MCP client (official TypeScript SDK): Streamable HTTP, bearer tokens, and OAuth 2.1 per the
+      MCP authorization spec (protected-resource and authorization-server discovery, dynamic
+      client registration, PKCE, resource indicators, refresh), with single-use state and
+      credentials sealed with AES-256-GCM. Connections go through the network guard.
+- [x] Connector tools in chat and durable tasks; per-tool run / ask first / off (read-only tools
+      run by default); approvals through `mcp.call` actions; lost calls end as `outcome_unknown`.
+      A built-in sample server (in-memory transport) for trying it.
+- [x] pgvector memory: embeddings from OpenAI, Google, any OpenAI-compatible provider, or an
+      offline hashing embedder; relevant-plus-recent memories in prompts; `recall_memory`;
+      duplicate detection; re-embedding after a model change; learning from chat turns (model
+      extraction, or rules for the demo model) with an off switch.
+- [x] Push: Expo (APNs/FCM) and Web Push (VAPID, RFC 8291 encryption, sent through the network
+      guard), categories and preferences, a durable delivery workflow with retries and dead-device
+      cleanup, devices that move between accounts, a service worker that opens the right screen.
+- [x] Voice: dictation (expo-audio on phones, MediaRecorder or the browser's recognition on web),
+      server transcription (`TRANSCRIPTION_MODEL`), read-aloud (expo-speech), hands-free voice mode
+      with silence detection.
+- [x] Streaming Markdown: a tested parser in `@agent-v/shared` that closes unfinished syntax while
+      streaming, block memoization, tables, strikethrough and rules.
+- [x] Work can be queued from inside workflow steps (DBOS client), which also fixes starting a
+      watch from a background task.
+- [ ] Next: speech-to-speech realtime sessions (OpenAI Realtime / Gemini Live over WebRTC) with the
+      agent's tools, on-device recognition on phones (expo-speech-recognition, dev builds),
+      MCP resources and prompts, remote MCP servers over the legacy SSE transport, an HNSW index
+      once memories per user grow large, push receipts.
 
 ## Phase 7 — SaaS hardening
 

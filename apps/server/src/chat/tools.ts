@@ -4,6 +4,7 @@ import { z } from "zod";
 import { proposeAction } from "../actions.ts";
 import { type BrowserScope, browseForAgent, scopedAgentAction } from "../browser/service.ts";
 import type { Context } from "../context.ts";
+import { relevantMemories } from "../memory/service.ts";
 import { createTask, listTasks } from "../tasks/service.ts";
 import { computerDescriptions, computerSchemas, runComputerTool } from "../tools/computer.ts";
 import { type LifeTool, lifeDescriptions, lifeSchemas, runLifeTool } from "../tools/life.ts";
@@ -41,6 +42,16 @@ export function chatTools(ctx: Context, userId: string, threadId: string) {
             result: t.result?.slice(0, 1000) ?? null,
           }));
       },
+    }),
+    recall_memory: tool({
+      description:
+        "Search what the owner told you before (preferences, people, places). Returns the closest memories.",
+      inputSchema: z.object({ query: z.string().min(1).max(500) }),
+      execute: async ({ query }) =>
+        (await relevantMemories(ctx, userId, query, { limit: 10, recent: 0 })).map((m) => ({
+          text: m.text,
+          saved: m.createdAt.slice(0, 10),
+        })),
     }),
     remember_fact: tool({
       description: "Save a preference or fact the owner explicitly asked you to remember.",

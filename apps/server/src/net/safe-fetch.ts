@@ -117,6 +117,43 @@ export async function safeFetch(
   }
 }
 
+/**
+ * A streaming `fetch` for long-lived clients (MCP): the same DNS pinning and address checks as
+ * safeFetch, with the body left unread. Redirects are refused; call `close` when done.
+ */
+export function guardedFetch(options: { allowPrivate?: boolean; timeoutMs?: number } = {}) {
+  const { allowPrivate = false, timeoutMs = 30_000 } = options;
+  const lookup: LookupFunction = (hostname, lookupOptions, callback) => {
+    resolvePublic(hostname, { allowPrivate })
+      .then((addresses) => {
+        if (lookupOptions.all) callback(null, addresses);
+        else callback(null, addresses[0]?.address ?? "", addresses[0]?.family ?? 4);
+      })
+      .catch((error: Error) => callback((blocked(error) ?? error) as NodeJS.ErrnoException, ""));
+  };
+  const dispatcher = new Agent({ connect: { lookup, timeout: timeoutMs } });
+  const guarded = async (input: string | URL, init?: RequestInit): Promise<Response> => {
+    const url = validateUrl(String(input));
+    await resolvePublic(url.hostname, { allowPrivate }).catch((error) => {
+      throw blocked(error) ?? error;
+    });
+    const response = await undiciFetch(url, {
+      ...(init as Parameters<typeof undiciFetch>[1]),
+      dispatcher,
+      redirect: "manual",
+    });
+    if (response.status >= 300 && response.status < 400) {
+      await response.body?.cancel();
+      throw new AppError(
+        `The server redirected to ${response.headers.get("location") ?? "elsewhere"}`,
+        502,
+      );
+    }
+    return response as unknown as Response;
+  };
+  return { fetch: guarded, close: () => dispatcher.close() };
+}
+
 /** Turn HTML into readable text. Good enough for reading articles; the browser comes later. */
 export function htmlToText(html: string): { title: string; text: string } {
   const title = decodeEntities(/<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1] ?? "").trim();
