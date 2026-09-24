@@ -72,6 +72,7 @@ export default function Tasks() {
   const openNotification = async (n: Notification) => {
     await api("/api/notifications/read", { body: { id: n.id } }).catch(() => {});
     if (n.taskId) router.push(`/tasks/${n.taskId}`);
+    else if (n.link?.startsWith("/")) router.push(n.link as never);
   };
 
   return (

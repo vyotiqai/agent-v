@@ -6,6 +6,7 @@ import { type BrowserScope, browseForAgent, scopedAgentAction } from "../browser
 import type { Context } from "../context.ts";
 import { createTask, listTasks } from "../tasks/service.ts";
 import { computerDescriptions, computerSchemas, runComputerTool } from "../tools/computer.ts";
+import { type LifeTool, lifeDescriptions, lifeSchemas, runLifeTool } from "../tools/life.ts";
 import { readWebPage } from "../tools/web.ts";
 import { workspaceDescriptions, workspaceSchemas, workspaceTools } from "../tools/workspace.ts";
 import { addMemory } from "../workspace.ts";
@@ -51,8 +52,23 @@ export function chatTools(ctx: Context, userId: string, threadId: string) {
     }),
     ...(ctx.browser ? browserTools(ctx, userId, { threadId }) : webFetchTool(ctx)),
     ...mailAndCalendarTools(ctx, userId),
+    ...lifeTools(ctx, userId),
     ...(ctx.config.computer ? computerChatTools(ctx, userId, threadId) : {}),
   };
+}
+
+/** Goals, page watches and spending. */
+function lifeTools(ctx: Context, userId: string) {
+  return Object.fromEntries(
+    (Object.keys(lifeSchemas) as LifeTool[]).map((name) => [
+      name,
+      tool({
+        description: lifeDescriptions[name],
+        inputSchema: lifeSchemas[name] as z.ZodType,
+        execute: async (input) => runLifeTool(ctx, userId, name, input),
+      }),
+    ]),
+  );
 }
 
 function computerChatTools(ctx: Context, userId: string, threadId: string) {

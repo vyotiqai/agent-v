@@ -7,6 +7,12 @@ import type { Config } from "./config.ts";
 import type { Context } from "./context.ts";
 import { createDatabase, runMigrations } from "./db/client.ts";
 import { createModels, type Models } from "./models/registry.ts";
+import {
+  enqueueCheck,
+  monitorQueue,
+  setMonitorContext,
+  startMonitorSchedule,
+} from "./monitors/workflow.ts";
 import { Realtime } from "./realtime.ts";
 import { Signer } from "./signing.ts";
 import { setTaskContext, taskQueue } from "./tasks/workflow.ts";
@@ -28,6 +34,7 @@ export async function startRuntime(config: Config, options: { models?: Models } 
     signer: new Signer(config.authSecret),
   };
   setTaskContext(ctx);
+  setMonitorContext(ctx);
   await recoverCommands(ctx);
   DBOS.setConfig({
     name: "agent-v",
@@ -40,6 +47,13 @@ export async function startRuntime(config: Config, options: { models?: Models } 
     minPollingIntervalMs: 250,
     onConflict: "always_update",
   });
+  await DBOS.registerQueue(monitorQueue, {
+    workerConcurrency: config.monitorWorkers,
+    minPollingIntervalMs: 500,
+    onConflict: "always_update",
+  });
+  if (config.monitorSchedule) await startMonitorSchedule();
+  ctx.monitors = { enqueue: enqueueCheck };
   const auth = createAuth(config, database.db);
   const { app, injectWebSocket } = createApp(ctx, auth);
   return {

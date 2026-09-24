@@ -35,6 +35,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="goals"
+        options={{
+          title: "Goals",
+          tabBarIcon: ({ color }) => <Feather name="target" size={20} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="inbox"
         options={{
           title: "Inbox",

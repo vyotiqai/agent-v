@@ -22,6 +22,18 @@ export default function RootLayout() {
             options={{ headerShown: true, title: "File", headerBackTitle: "Back" }}
           />
           <Stack.Screen
+            name="goals/[id]"
+            options={{ headerShown: true, title: "Goal", headerBackTitle: "Back" }}
+          />
+          <Stack.Screen
+            name="watches/[id]"
+            options={{ headerShown: true, title: "Watch", headerBackTitle: "Back" }}
+          />
+          <Stack.Screen
+            name="money/[id]"
+            options={{ headerShown: true, title: "Spending", headerBackTitle: "Back" }}
+          />
+          <Stack.Screen
             name="tasks/[id]"
             options={{ headerShown: true, title: "Task", headerBackTitle: "Back" }}
           />

@@ -66,6 +66,7 @@ const toNotification = (row: typeof notifications.$inferSelect): Notification =>
   title: row.title,
   body: row.body,
   taskId: row.taskId,
+  link: row.link,
   readAt: iso(row.readAt),
   createdAt: row.createdAt.toISOString(),
 });
@@ -74,7 +75,7 @@ const toNotification = (row: typeof notifications.$inferSelect): Notification =>
 export async function notify(
   ctx: Context,
   userId: string,
-  input: { title: string; body: string; taskId?: string; dedupeKey?: string },
+  input: { title: string; body: string; taskId?: string; link?: string; dedupeKey?: string },
 ) {
   const [row] = await ctx.db
     .insert(notifications)
@@ -84,6 +85,7 @@ export async function notify(
       title: input.title.slice(0, 200),
       body: input.body.slice(0, 2000),
       taskId: input.taskId,
+      link: input.link,
       dedupeKey: input.dedupeKey,
     })
     .onConflictDoNothing()

@@ -15,6 +15,8 @@ export interface Context {
   browser?: BrowserClient;
   /** Signs short-lived links (screenshots, live view) that cannot carry a bearer token. */
   signer: Signer;
+  /** Queues a watch check for a due time. Set once the workflow engine is running. */
+  monitors?: { enqueue(userId: string, id: string, slot: Date): Promise<void> };
 }
 
 export const newId = () => crypto.randomUUID();

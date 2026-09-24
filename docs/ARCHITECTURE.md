@@ -144,6 +144,32 @@ of running the command again; a durable task uses its tool-call id, so a replaye
 runs a command twice. Commands that were running when the server stopped are marked
 `interrupted` at startup.
 
+### Goals, watches, ideas and money
+
+`goals/` stores goals with their milestones in one JSON column, changed under a row lock so a
+person editing and a task finishing never overwrite each other. Tasks carry an optional
+`goal_id` and `milestone_id`; the step that finishes a task records progress on its goal.
+
+`monitors/` runs watches without a workflow per watch. A DBOS schedule fires every minute on
+every server. It reads the watches that are due and starts one `monitor-check` workflow per
+watch and due time, with the workflow id `monitor:<id>:<due time>`, so each check runs once no
+matter how many servers fire. A check reads the page through the network guard, then records
+the result only if the watch is still active and still due at that time. A check that
+finishes after the owner paused or re-checked the watch changes nothing. Alerts are keyed by
+watch and state change (the new page hash, or the moment a condition became true), so a
+notification is never sent twice.
+
+`ideas/` recomputes suggestions from the mail provider, goals, spending reports and paused
+watches. Each idea's id is derived from its source, so inserting is idempotent and a
+dismissed idea stays dismissed. Open ideas whose source no longer asks for them (answered,
+planned) are retired, but only for sources that were read successfully. Accepting claims the
+idea and creates its task under an id derived from the idea, so a double tap starts one task.
+
+`finance/` parses CSV (RFC 4180, delimiter and date-order detection, European numbers,
+debit/credit columns) into integer cents. It infers the sign convention and says which one it
+used, categorizes by keyword when the file has no categories, and finds recurring charges
+(one charge a month at a steady amount).
+
 ### Realtime
 
 Mutations call `publish(userId, event)`, which runs `pg_notify`. Every server process listens

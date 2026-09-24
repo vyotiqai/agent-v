@@ -1,7 +1,7 @@
 import type { TaskDetail } from "@agent-v/shared";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import { ActionReview } from "../../src/components/ActionReview";
 import { Markdown } from "../../src/components/Markdown";
 import {
@@ -72,6 +72,17 @@ export default function TaskScreen() {
         </View>
         <Text className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">{task.title}</Text>
         {task.prompt !== task.title ? <Muted>{task.prompt}</Muted> : null}
+        {task.goalId ? (
+          <Pressable
+            accessibilityRole="link"
+            onPress={() => router.push(`/goals/${task.goalId}`)}
+            className="flex-row items-center gap-1.5 self-start active:opacity-60"
+          >
+            <Icon name="target" size={14} />
+            <Muted>Part of a goal</Muted>
+            <Icon name="chevron-right" size={14} />
+          </Pressable>
+        ) : null}
       </View>
 
       {task.status === "waiting_input" && task.question ? (

@@ -3,7 +3,7 @@
 Each phase ends with working software, tests, and CI green. Scope targets parity with
 OpenMuse plus multi-user SaaS, MCP connectors, push notifications and voice.
 
-## Phase 1 — Foundation (this change)
+## Phase 1 — Foundation (done)
 
 - [x] Monorepo: pnpm, Turborepo, Biome, TypeScript 7, Vitest, CI.
 - [x] Server: Hono, config validation, Postgres + Drizzle migrations.
@@ -19,7 +19,7 @@ OpenMuse plus multi-user SaaS, MCP connectors, push notifications and voice.
       follow-up queue, chat history, tasks with plan/answer/approve/cancel/retry, notifications,
       model choice, personality and memory.
 
-## Phase 2 — Agent browser (this change)
+## Phase 2 — Agent browser (done)
 
 - [x] Browser worker (`apps/browser`): persistent Chromium profiles per session, Playwright,
       token-protected HTTP + WebSocket API, idle recycling, one view per session (popups load in
@@ -36,7 +36,7 @@ OpenMuse plus multi-user SaaS, MCP connectors, push notifications and voice.
 - [ ] Next: WebRTC take-over (native dialogs, clipboard), one container per user for hard
       isolation, and agent form-filling behind approvals.
 
-## Phase 3 — Google workspace and documents (this change)
+## Phase 3 — Google workspace and documents (done)
 
 - [x] Google OAuth per user: PKCE, single-use state bound to the user, read or read+send scopes,
       refresh tokens sealed with AES-256-GCM (bound to owner), revoke on disconnect, automatic
@@ -59,7 +59,7 @@ OpenMuse plus multi-user SaaS, MCP connectors, push notifications and voice.
 - [ ] Next: S3-compatible storage (Garage/R2), embedded native PDF renderer (expo-pdf, dev
       build), calendar edits and recurrence, Gmail drafts, more PDF field types and OCR.
 
-## Phase 4 — Linux computer (this change)
+## Phase 4 — Linux computer (done)
 
 - [x] Docker provider (optional gVisor runtime): one container and volume per user, named from a
       hash of the user id; `--network none`, read-only root, all capabilities dropped,
@@ -82,12 +82,28 @@ OpenMuse plus multi-user SaaS, MCP connectors, push notifications and voice.
 - [ ] Next: interactive PTY terminal over WebSocket, allowlisted network egress, disk quotas,
       microVM provider (microsandbox / Firecracker) where KVM is available, desktop apps.
 
-## Phase 5 — Goals, tracking, ideas, finance
+## Phase 5 — Goals, tracking, ideas, finance (done)
 
-- Goals and milestones linked to tasks.
-- Page monitors as DBOS scheduled workflows (change, contains, price below), backoff, dedupe.
-- Ideas with evidence from mail, calendar and tasks.
-- CSV finance import and spending artifacts.
+- [x] Goals with milestones (edit, reorder by replacing, check off); tasks and watches link to a
+      goal. A task started for a milestone checks it off on success; other finished goal tasks
+      are added as done milestones. Planning tasks add milestones with `add_goal_milestones`.
+- [x] Watches on a DBOS schedule: every minute, each due watch gets one check workflow per due
+      time (exactly once across servers). Change (with a before/after summary), text appears,
+      price below a threshold (multi-currency, ignores "over $50"-style amounts). Exponential
+      backoff from the interval, pause after five failures, alerts deduplicated per state
+      change, bounded history, check now / pause / resume / stop. Demo pages for trying offline.
+- [x] Ideas with evidence from mail (forms to fill, unanswered questions plus that day's
+      calendar), goals without a plan, recurring charges, and paused watches. Dismissed ideas
+      stay dismissed; handled ones retire; accepting is idempotent and the prompt is editable.
+- [x] Finance: CSV import (delimiters, BOM, quotes, debit/credit, European and US formats, sign
+      detection), categories, months, merchants, recurring charges, a savings goal from a report,
+      and `finance_summary` for the agent.
+- [x] Agent tools in chat and tasks: `create_goal`, `add_goal_milestones`, `goal_status`,
+      `watch_page`, `finance_summary`. The demo model runs every flow offline.
+- [x] App: Goals tab (Ideas, Goals, Watches, Money), goal, watch and spending screens,
+      notifications that open what they are about.
+- [ ] Next: watches through the cloud browser for pages that need JavaScript, CSS selectors
+      for a part of a page, model-written ideas, bank connections (Plaid/GoCardless), budgets.
 
 ## Phase 6 — Connectors, memory and reach
 

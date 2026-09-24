@@ -128,6 +128,31 @@ function chatTurn(input: string, results: ToolOutcome[], tools: Set<string>) {
         `I've started **${String(output.title ?? "your task")}**. It keeps running in the background — follow it in Tasks, and I'll ask if I need anything.`,
       );
     if (done.toolName === "remember_fact") return say("Got it. I'll remember that.");
+    if (done.toolName === "create_goal")
+      return say(
+        `Saved your goal **${String(output.title)}**. Open **Goals** to add milestones, or tap **Make a plan** and I'll break it down.`,
+      );
+    if (done.toolName === "watch_page")
+      return say(
+        `I'm watching **${String(output.title)}** — ${describeWatch(output)}, checked every ${String(output.intervalMinutes)} minutes. You'll get a notification when it happens.`,
+      );
+    if (done.toolName === "goal_status") {
+      const goals = (output.goals ?? []) as { title: string; done: number; milestones: string[] }[];
+      const watches = (output.watches ?? []) as {
+        title: string;
+        status: string;
+        matched: boolean;
+      }[];
+      if (!goals.length && !watches.length)
+        return say("You have no goals or watches yet. Try **Set a goal to run a half marathon**.");
+      return say(
+        [
+          ...goals.map((g) => `- **${g.title}** — ${g.done}/${g.milestones.length} milestones`),
+          ...watches.map((w) => `- 👀 **${w.title}** — ${w.matched ? "condition met" : w.status}`),
+        ].join("\n"),
+      );
+    }
+    if (done.toolName === "finance_summary") return say(describeSpending(output));
     if (done.toolName === "search_mail") {
       const mail = (Array.isArray(done.output) ? done.output : []) as MailRow[];
       const reply = replyIntent(input);
@@ -184,6 +209,27 @@ function chatTurn(input: string, results: ToolOutcome[], tools: Set<string>) {
       );
     return say("Done.");
   }
+  const goal = /^(?:set (?:a |my )?goal(?: to)?|new goal:?|my goal is(?: to)?)\s+(.{3,})$/i.exec(
+    input.trim(),
+  );
+  if (goal?.[1] && tools.has("create_goal"))
+    return [call("create_goal", { title: capitalize(goal[1].replace(/[.!]$/, "")) })];
+  const watch = watchIntent(input);
+  if (watch && tools.has("watch_page")) return [call("watch_page", watch)];
+  if (
+    tools.has("goal_status") &&
+    /\b(my goals|goal progress|how are my goals|what am i (?:tracking|watching)|my watches)\b/i.test(
+      input,
+    )
+  )
+    return [call("goal_status", {})];
+  if (
+    tools.has("finance_summary") &&
+    /\b(spend|spent|spending|budget|subscriptions?|recurring charges)\b/i.test(input)
+  ) {
+    const on = /\bon ([\w .'&-]{2,40}?)\??$/i.exec(input.trim())?.[1];
+    return [call("finance_summary", on ? { filter: on } : {})];
+  }
   const remember = /^(?:please\s+)?remember(?:\s+that)?\s+(.{3,})$/i.exec(input.trim());
   if (remember?.[1] && tools.has("remember_fact"))
     return [call("remember_fact", { text: remember[1] })];
@@ -226,7 +272,10 @@ function chatTurn(input: string, results: ToolOutcome[], tools: Set<string>) {
       "- **Summarize https://example.com** → I read the page\n" +
       "- **What's in my inbox?** / **What's on my calendar?**\n" +
       "- **Reply to Sam: count me in!** → I prepare a reply for your approval\n" +
-      "- **Complete the permission slip** → I fill the PDF and prepare the reply\n\n" +
+      "- **Complete the permission slip** → I fill the PDF and prepare the reply\n" +
+      "- **Set a goal to run a half marathon** → I save a goal\n" +
+      "- **Watch demo://price and tell me when it's below $300** → I watch the page\n" +
+      "- **How much did I spend on dining?** → after importing transactions in Goals → Money\n\n" +
       "Choose a real model in Settings for open-ended work.",
   );
 }
@@ -234,6 +283,12 @@ function chatTurn(input: string, results: ToolOutcome[], tools: Set<string>) {
 function taskTurn(prompt: string, results: ToolOutcome[], tools: Set<string>) {
   const called = new Set(results.map((r) => r.toolName));
   const paperwork = /\b(permission|slip|form)\b/i.test(prompt) && tools.has("search_mail");
+  const planGoal = tools.has("add_goal_milestones")
+    ? /make a plan for my goal "([^"]+)"/i.exec(prompt)?.[1]
+    : undefined;
+  const replyTo = tools.has("search_mail") ? /^reply to (.+?) about “(.+?)”/i.exec(prompt) : null;
+  const money =
+    tools.has("finance_summary") && /\b(recurring charges|finance_summary)\b/i.test(prompt);
   if (!called.has("set_plan"))
     return [
       call("set_plan", {
@@ -243,9 +298,49 @@ function taskTurn(prompt: string, results: ToolOutcome[], tools: Set<string>) {
               "Fill it in with your details",
               "Send it back after your review",
             ]
-          : ["Understand the request", "Gather what's needed", "Write up the result"],
+          : planGoal
+            ? ["Break the goal into milestones", "Save them to the goal"]
+            : replyTo
+              ? ["Read the email", "Check your calendar", "Ask what to say", "Prepare the reply"]
+              : money
+                ? ["Read your spending summary", "Suggest what to cut"]
+                : ["Understand the request", "Gather what's needed", "Write up the result"],
       }),
     ];
+  if (planGoal) {
+    if (!called.has("add_goal_milestones"))
+      return [
+        call("add_goal_milestones", {
+          milestones: [
+            `Decide what success looks like for “${planGoal}”`,
+            "Choose a start date and a weekly routine",
+            "Do the first small step this week",
+            "Review progress after two weeks",
+          ],
+        }),
+      ];
+    const saved = results.findLast((r) => r.toolName === "add_goal_milestones")?.output as
+      | { milestones?: string[]; error?: string }
+      | undefined;
+    return [
+      call("finish_task", {
+        summary: saved?.error
+          ? `Could not save the plan: ${saved.error}`
+          : `Planned “${planGoal}” with ${saved?.milestones?.length ?? 0} milestones:\n${(saved?.milestones ?? []).map((m) => `- ${m}`).join("\n")}`,
+      }),
+    ];
+  }
+  if (replyTo) {
+    const flow = replyTaskTurn(replyTo[1] ?? "", results, called);
+    if (flow) return flow;
+  }
+  if (money) {
+    if (!called.has("finance_summary")) return [call("finance_summary", {})];
+    const output = results.findLast((r) => r.toolName === "finance_summary")?.output as
+      | Record<string, unknown>
+      | undefined;
+    return [call("finish_task", { summary: describeSpending(output ?? {}, true) })];
+  }
   if (paperwork) {
     const paperwork = paperworkTurn(results, called);
     if (paperwork) return paperwork;
@@ -391,4 +486,104 @@ function titleFrom(input: string) {
   const first = clean.split(/[.!?\n]/)[0] ?? clean;
   const title = first.length > 60 ? `${first.slice(0, 57).trimEnd()}…` : first;
   return title ? title[0]?.toUpperCase() + title.slice(1) : "New task";
+}
+
+function capitalize(text: string) {
+  return text ? text[0]?.toUpperCase() + text.slice(1) : text;
+}
+
+/** "Watch https://shop.example/x and tell me when it's below $300" → a watch_page call. */
+function watchIntent(input: string) {
+  if (!/\b(watch|track|monitor|alert me|let me know when|tell me when)\b/i.test(input)) return null;
+  const url = /(https?:\/\/[^\s)>"']+|demo:\/\/[a-z]+)/i.exec(input)?.[1]?.replace(/[.,]$/, "");
+  if (!url) return null;
+  const price =
+    /\b(?:below|under|less than|drops? (?:below|under|to))\s*(?:[$€£₹]|usd|eur|gbp|inr)?\s*(\d+(?:\.\d+)?)/i.exec(
+      input,
+    )?.[1];
+  const text = /["“]([^"”]{1,200})["”]/.exec(input)?.[1];
+  const every = /\bevery (\d+) (minute|hour)s?\b/i.exec(input);
+  const minutes = every ? Number(every[1]) * (/hour/i.test(every[2] ?? "") ? 60 : 1) : 60;
+  const host = url.startsWith("demo://") ? url : new URL(url).hostname.replace(/^www\./, "");
+  return {
+    title: price ? `Price on ${host}` : text ? `“${text}” on ${host}` : `Changes on ${host}`,
+    url,
+    condition: price ? "price_below" : text ? "contains" : "change",
+    ...(price ? { value: price } : text ? { value: text } : {}),
+    intervalMinutes: Math.min(Math.max(minutes, 5), 10_080),
+  };
+}
+
+function describeWatch(output: Record<string, unknown>) {
+  if (output.condition === "price_below")
+    return `alerting when the price drops below ${String(output.value)}`;
+  if (output.condition === "contains") return `alerting when “${String(output.value)}” appears`;
+  return "alerting when the page changes";
+}
+
+function describeSpending(output: Record<string, unknown>, suggest = false) {
+  if (typeof output.error === "string") return output.error;
+  const r = output.report as
+    | {
+        name: string;
+        currency: string | null;
+        period: { from: string; to: string };
+        income: number;
+        spending: number;
+        categories: { name: string; amount: number }[];
+        recurring: { merchant: string; amount: number }[];
+      }
+    | undefined;
+  if (!r) return "I couldn't read your spending.";
+  const money = (n: number) => `${r.currency ? `${r.currency} ` : ""}${n.toFixed(2)}`;
+  const filter = output.filter as { text: string; count: number; spent: number } | undefined;
+  if (filter && !suggest)
+    return `You spent **${money(filter.spent)}** on ${filter.text} across ${filter.count} transactions (${r.period.from} to ${r.period.to}).`;
+  const lines = [
+    `From **${r.name}** (${r.period.from} to ${r.period.to}): spent **${money(r.spending)}**, received **${money(r.income)}**.`,
+    `Top categories: ${r.categories
+      .slice(0, 3)
+      .map((c) => `${c.name} ${money(c.amount)}`)
+      .join(", ")}.`,
+  ];
+  if (r.recurring.length)
+    lines.push(
+      suggest
+        ? `Recurring charges to review:\n${r.recurring
+            .map((c) => `- ${c.merchant}: ${money(c.amount)} a month`)
+            .join(
+              "\n",
+            )}\nThe smaller subscriptions are the easiest to cancel; together they add up to ${money(
+            r.recurring.filter((c) => c.amount < 50).reduce((sum, c) => sum + c.amount, 0),
+          )} a month.`
+        : `${r.recurring.length} charges repeat monthly.`,
+    );
+  return lines.join("\n\n");
+}
+
+/** Read the email, check the calendar, ask the owner what to say, then prepare the reply. */
+function replyTaskTurn(name: string, results: ToolOutcome[], called: Set<string>) {
+  const output = (tool: string) => results.findLast((r) => r.toolName === tool)?.output;
+  if (!called.has("search_mail")) return [call("search_mail", { query: name })];
+  const mail = output("search_mail");
+  const source = Array.isArray(mail) ? (mail[0] as MailRow | undefined) : undefined;
+  if (!source) return [call("finish_task", { summary: `I couldn't find the email from ${name}.` })];
+  if (!called.has("list_events")) return [call("list_events", { days: 7 })];
+  if (!called.has("ask_user"))
+    return [
+      call("ask_user", {
+        question: `What should I tell ${name} about “${source.subject}”? I checked your calendar for the week.`,
+      }),
+    ];
+  const answer = String((output("ask_user") as { answer?: string } | undefined)?.answer ?? "");
+  if (!called.has("propose_email")) return [proposeReply(source, answer)];
+  const sent = output("propose_email") as { status?: string } | undefined;
+  return [
+    call("finish_task", {
+      summary:
+        sent?.status === "succeeded"
+          ? `Replied to ${name}: “${answer}”.`
+          : `The reply to ${name} was ${sent?.status ?? "not sent"}.`,
+    }),
+  ];
 }

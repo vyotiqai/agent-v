@@ -29,6 +29,13 @@
       "when": 1790258021018,
       "tag": "0003_computer",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790260877428,
+      "tag": "0004_goals",
+      "breakpoints": true
     }
   ]
 }

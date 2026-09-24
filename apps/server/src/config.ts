@@ -66,6 +66,10 @@ const envSchema = z.object({
   /** Trust X-Forwarded-For from a reverse proxy in front of the API. */
   TRUST_PROXY: bool.default(false),
   TASK_WORKERS: z.coerce.number().int().min(1).max(64).default(4),
+  /** Page checks run at once per server process. */
+  MONITOR_WORKERS: z.coerce.number().int().min(1).max(64).default(4),
+  /** Run the every-minute watch scheduler in this process (turn off for API-only replicas). */
+  MONITOR_SCHEDULE: bool.optional(),
   /** Allow web_fetch to reach private networks. Only for local development against local pages. */
   ALLOW_PRIVATE_NETWORK_FETCH: bool.default(false),
 });
@@ -88,6 +92,8 @@ export interface Config {
     compat: z.infer<typeof compatProvider>[];
   };
   taskWorkers: number;
+  monitorWorkers: number;
+  monitorSchedule: boolean;
   browser?: { url: string; token: string };
   dataDir: string;
   encryptionKey?: Buffer;
@@ -159,6 +165,8 @@ export function readConfig(env: Record<string, string | undefined> = process.env
       compat,
     },
     taskWorkers: e.TASK_WORKERS,
+    monitorWorkers: e.MONITOR_WORKERS,
+    monitorSchedule: e.MONITOR_SCHEDULE ?? true,
     browser:
       e.BROWSER_URL && e.BROWSER_TOKEN
         ? { url: e.BROWSER_URL.replace(/\/$/, ""), token: e.BROWSER_TOKEN }

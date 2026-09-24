@@ -11,7 +11,7 @@ import { DBOS } from "@dbos-inc/dbos-sdk";
 import { and, asc, count, desc, eq, inArray, notInArray } from "drizzle-orm";
 import { getAction } from "../actions.ts";
 import { type Context, newId } from "../context.ts";
-import { taskEvents, tasks, threads } from "../db/schema.ts";
+import { goals, taskEvents, tasks, threads } from "../db/schema.ts";
 import { AppError, notFound } from "../errors.ts";
 import { getSettings } from "../workspace.ts";
 import { taskQueue, taskWorkflow } from "./workflow.ts";
@@ -21,6 +21,7 @@ const maxActiveTasks = 50;
 export const toTask = (row: typeof tasks.$inferSelect): Task => ({
   id: row.id,
   threadId: row.threadId,
+  goalId: row.goalId,
   title: row.title,
   prompt: row.prompt,
   status: row.status,
@@ -85,7 +86,32 @@ function titleFor(prompt: string) {
   return first.length > 80 ? `${first.slice(0, 77).trimEnd()}…` : first || "New task";
 }
 
-export async function createTask(ctx: Context, userId: string, input: CreateTaskInput) {
+/**
+ * Create a task and start its workflow. With `options.id` the call is idempotent: creating the
+ * same id again returns the existing task instead of starting a second one.
+ */
+export async function createTask(
+  ctx: Context,
+  userId: string,
+  input: CreateTaskInput,
+  options: { id?: string } = {},
+) {
+  if (options.id) {
+    const [existing] = await ctx.db
+      .select()
+      .from(tasks)
+      .where(and(eq(tasks.id, options.id), eq(tasks.userId, userId)));
+    if (existing) {
+      // A crash may have come between saving the task and starting it; starting a workflow
+      // id that already exists is a no-op.
+      if (existing.status === "queued")
+        await DBOS.startWorkflow(taskWorkflow, {
+          workflowID: existing.workflowId,
+          queueName: taskQueue,
+        })(userId, existing.id);
+      return toTask(existing);
+    }
+  }
   const [active] = await ctx.db
     .select({ n: count() })
     .from(tasks)
@@ -99,21 +125,37 @@ export async function createTask(ctx: Context, userId: string, input: CreateTask
       .where(and(eq(threads.id, input.threadId), eq(threads.userId, userId)));
     if (!thread) throw notFound("Thread");
   }
+  if (input.goalId) {
+    const [goal] = await ctx.db
+      .select({ milestones: goals.milestones })
+      .from(goals)
+      .where(and(eq(goals.id, input.goalId), eq(goals.userId, userId)));
+    if (!goal) throw notFound("Goal");
+    if (input.milestoneId && !goal.milestones.some((m) => m.id === input.milestoneId))
+      throw notFound("Milestone");
+  } else if (input.milestoneId) throw new AppError("A milestone needs its goal", 422);
   const { model } = await getSettings(ctx, userId);
-  const id = newId();
+  const id = options.id ?? newId();
   const [row] = await ctx.db
     .insert(tasks)
     .values({
       id,
       userId,
       threadId: input.threadId,
+      goalId: input.goalId,
+      milestoneId: input.milestoneId,
       title: input.title ?? titleFor(input.prompt),
       prompt: input.prompt,
       model,
       workflowId: id,
     })
+    .onConflictDoNothing()
     .returning();
-  if (!row) throw new AppError("Task could not be created", 500);
+  if (!row) {
+    // Lost a race with an identical request; that request starts the workflow.
+    if (options.id) return toTask(await getTaskRow(ctx, userId, options.id));
+    throw new AppError("Task could not be created", 500);
+  }
   await addEvent(ctx, userId, id, "status", "Queued");
   await DBOS.startWorkflow(taskWorkflow, { workflowID: id, queueName: taskQueue })(userId, id);
   await ctx.realtime.publish(userId, { type: "task", id });

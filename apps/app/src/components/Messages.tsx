@@ -29,7 +29,7 @@ function host(url: unknown) {
 function describe(
   call: ToolCall,
   result?: Result,
-): { icon: IconName; text: string; taskId?: string } {
+): { icon: IconName; text: string; href?: string } {
   const args = parse(call.function.arguments);
   const output = parse(result?.content);
   const done = Boolean(result);
@@ -110,7 +110,28 @@ function describe(
         text: done
           ? `Started task · ${String(output.title ?? args.title ?? "")}`
           : "Starting a task",
-        taskId: typeof output.id === "string" ? output.id : undefined,
+        href: typeof output.id === "string" ? `/tasks/${output.id}` : undefined,
+      };
+    case "create_goal":
+      return {
+        icon: "target",
+        text: done ? `Saved goal · ${String(output.title ?? args.title ?? "")}` : "Saving a goal",
+        href: typeof output.id === "string" ? `/goals/${output.id}` : undefined,
+      };
+    case "add_goal_milestones":
+      return { icon: "list", text: done ? "Added milestones to the goal" : "Adding milestones" };
+    case "goal_status":
+      return { icon: "target", text: done ? "Checked your goals" : "Checking your goals" };
+    case "watch_page":
+      return {
+        icon: "eye",
+        text: done ? `Watching ${String(output.title ?? host(args.url))}` : "Setting up a watch",
+        href: typeof output.id === "string" ? `/watches/${output.id}` : undefined,
+      };
+    case "finance_summary":
+      return {
+        icon: "pie-chart",
+        text: done ? "Read your spending" : "Reading your spending",
       };
     case "remember_fact":
       return { icon: "bookmark", text: done ? "Saved to memory" : "Saving to memory" };
@@ -123,7 +144,7 @@ function describe(
 
 /** A compact inline row for one tool call: what the agent did, and whether it finished. */
 function ToolRow({ call, result }: { call: ToolCall; result?: Result }) {
-  const { icon, text, taskId } = describe(call, result);
+  const { icon, text, href } = describe(call, result);
   const error = result?.error ?? (parse(result?.content).error as string | undefined);
   const row = (
     <View className="flex-row items-center gap-2.5 py-1">
@@ -142,14 +163,14 @@ function ToolRow({ call, result }: { call: ToolCall; result?: Result }) {
       >
         {error ? `${text} — ${error}` : text}
       </Text>
-      {taskId ? <Icon name="chevron-right" size={15} className="text-zinc-400" /> : null}
+      {href ? <Icon name="chevron-right" size={15} className="text-zinc-400" /> : null}
     </View>
   );
-  if (!taskId) return row;
+  if (!href) return row;
   return (
     <Pressable
       accessibilityRole="link"
-      onPress={() => router.push(`/tasks/${taskId}`)}
+      onPress={() => router.push(href as never)}
       className="active:opacity-60"
     >
       {row}

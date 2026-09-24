@@ -8,10 +8,10 @@ Agent V is a from-scratch rebuild of the ideas in
 [CopilotKit/OpenMuse](https://github.com/CopilotKit/openmuse), designed for many users and with
 no required hosted service apart from your model provider.
 
-> **Status: phases 1–4 of 7.** Chat, durable background tasks, approvals, memory, live updates,
-> a cloud browser you can watch and take over, Gmail/Calendar, PDF documents and a private Linux
-> computer work end to end. Goals/tracking, MCP connectors, push and voice follow; see the
-> [roadmap](docs/ROADMAP.md).
+> **Status: phases 1–5 of 7.** Chat, durable background tasks, approvals, memory, live updates,
+> a cloud browser you can watch and take over, Gmail/Calendar, PDF documents, a private Linux
+> computer, goals, page watches, ideas and spending reports work end to end. MCP connectors,
+> push and voice follow; see the [roadmap](docs/ROADMAP.md).
 
 ## What works today
 
@@ -21,13 +21,17 @@ no required hosted service apart from your model provider.
 | **Chat** | Streams [AG-UI 1.0](https://docs.ag-ui.com) events over SSE. Tool activity shows inline. Send becomes Stop while a reply streams, and typed follow-ups queue. Chats are stored, renamable and archivable. |
 | **Models** | OpenAI, Anthropic, Google, and any OpenAI-compatible endpoint (Ollama, vLLM, LM Studio, OpenRouter…). An offline demo model makes everything work with no key. |
 | **Background tasks** | Durable DBOS workflows. Every model call and tool call is checkpointed, so restarts resume. Tasks have plans, progress, questions for you, cancel, resume, and retry from the failed step. |
-| **Approvals** | External writes (webhooks today; mail and calendar next) run only after you approve that exact payload (hash-bound, expiring, run at most once, `outcome_unknown` on crashes). |
+| **Approvals** | External writes (emails, calendar events, webhooks) run only after you approve that exact payload (hash-bound, expiring, run at most once, `outcome_unknown` on crashes). |
 | **Cloud browser** | Real Chromium per chat and per task (`apps/browser`). The agent can `browse`, `click_link` and `read_page`. You watch it live in chat and **Take control** by tapping, typing, scrolling or using the address bar. Logins persist per session. All traffic goes through an egress proxy that blocks private networks. |
 | **Mail and calendar** | Connect Google per user (OAuth with PKCE; refresh tokens encrypted with AES-256-GCM). The agent searches and reads mail, checks the calendar, and *proposes* emails and events. You approve the exact message, and it is sent from the account you reviewed. Without Google, a fictional demo mailbox lets you try everything. |
 | **Documents** | Upload PDFs, save email attachments or browser downloads to Files, view them in the app, and fill supported forms into a new copy with scripts removed. The permission-slip flow works end to end: find the email, fill the form with your answers, then reply with it attached after your review. |
 | **Linux computer** | Each person gets a private Docker container (optionally gVisor) with bash, Node and Python. It has no network, a read-only system, no capabilities and runs as a non-root user; only `/workspace` persists. There is a terminal with a saved record of every command and its output, plus a file browser and editor, and PDF transfer to and from Files. The agent runs commands through the same record. Retries return the original result instead of running twice, and interrupted commands are never re-run automatically. |
+| **Goals** | Outcomes with milestones. Start a task for any milestone and it is checked off when the task succeeds; other finished tasks for the goal are added as done milestones. A goal without a plan gets one from a background task. |
+| **Watches** | Recurring checks of a public page: any change (with what changed), text appearing, or a price dropping below a threshold in a chosen currency. One scheduler per minute enqueues each due check exactly once, even with several servers. Failures back off exponentially and pause the watch after five in a row. You get one alert per change, not one per check. Built-in demo pages let you try it offline. |
+| **Ideas** | Suggestions with their evidence: forms to fill from your mail, questions waiting for a reply (with your calendar for that day), goals without a plan, recurring charges, broken watches. Edit what the agent will do, then accept (one task, however often you tap) or dismiss (it never comes back). Suggestions retire themselves once handled. |
+| **Money** | Import a bank or card CSV: comma, semicolon or tab; debit/credit or signed amounts; US, European and ISO dates and numbers. Get spending by category and month, top merchants and recurring charges, and turn a report into a savings goal with a plan. The agent answers spending questions from it. |
 | **Web reading** | Without a browser worker, `web_fetch` reads static pages. It pins DNS and blocks private, loopback, link-local and metadata addresses, including after redirects. |
-| **Memory and inbox** | Facts you ask the agent to remember, and notifications for results, questions and reviews. |
+| **Memory and inbox** | Facts you ask the agent to remember, and notifications for results, questions, reviews and watch alerts (each opens what it is about). |
 | **Live updates** | One SSE stream per device, fed by Postgres LISTEN/NOTIFY. No polling. |
 
 ## Quick start
@@ -86,7 +90,7 @@ origin to `ALLOWED_ORIGINS`.
 
 | Path | What it is |
 | --- | --- |
-| `apps/server` | Hono API, Better Auth, Drizzle schema and migrations, AI SDK agent, DBOS tasks, approvals, realtime. |
+| `apps/server` | Hono API, Better Auth, Drizzle schema and migrations, AI SDK agent, DBOS tasks and schedules, approvals, goals, watches, ideas, finance, realtime. |
 | `apps/browser` | Cloud browser worker: Chromium sessions, egress proxy, live view and take-control. |
 | `packages/net` | Network guard shared by the API and the browser (public addresses only, DNS pinning). |
 | `apps/computer` | Image for the per-user Linux computer and its workspace file helper. |

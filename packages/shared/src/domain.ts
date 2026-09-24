@@ -45,6 +45,7 @@ export interface PlanStep {
 export interface Task {
   id: string;
   threadId: string | null;
+  goalId: string | null;
   title: string;
   prompt: string;
   status: TaskStatus;
@@ -103,6 +104,8 @@ export interface Notification {
   title: string;
   body: string;
   taskId: string | null;
+  /** App path to open when the notification is not about a task. */
+  link: string | null;
   readAt: string | null;
   createdAt: string;
 }
@@ -145,7 +148,11 @@ export interface WorkspaceEvent {
     | "mail"
     | "calendar"
     | "file"
-    | "computer";
+    | "computer"
+    | "goal"
+    | "monitor"
+    | "idea"
+    | "finance";
   id: string;
 }
 
@@ -172,6 +179,9 @@ export const createTaskSchema = z.object({
   prompt: text(12_000),
   title: text(160).optional(),
   threadId: z.string().uuid().optional(),
+  goalId: z.string().uuid().optional(),
+  /** A milestone of `goalId` this task completes when it succeeds. */
+  milestoneId: z.string().min(1).max(64).optional(),
 });
 export const taskControlSchema = z.object({ action: z.enum(["cancel", "retry"]) });
 export const taskAnswerSchema = z.object({ answer: text(12_000) });

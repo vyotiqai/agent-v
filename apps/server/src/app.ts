@@ -26,6 +26,7 @@ import { createThread, listMessages, listThreads, updateThread } from "./chat/th
 import { computerRoutes } from "./computer/routes.ts";
 import type { Context } from "./context.ts";
 import { AppError } from "./errors.ts";
+import { lifeRoutes } from "./goals/routes.ts";
 import { publicWorkspaceRoutes, workspaceRoutes } from "./providers/routes.ts";
 import {
   answerTask,
@@ -80,9 +81,10 @@ export function createApp(ctx: Context, auth: Auth) {
     }),
   );
   const smallBodies = bodyLimit({ maxSize: 1024 * 1024 });
-  // Uploads carry their own, larger limit on the route.
+  // Uploads and CSV imports carry their own, larger limit on the route.
+  const ownLimit = new Set(["/api/files", "/api/finance/import"]);
   app.use("/api/*", (c, next) =>
-    c.req.method === "POST" && c.req.path === "/api/files" ? next() : smallBodies(c, next),
+    c.req.method === "POST" && ownLimit.has(c.req.path) ? next() : smallBodies(c, next),
   );
   app.onError((error, c) => {
     if (error instanceof AppError) return c.json({ error: error.message }, error.status);
@@ -227,6 +229,7 @@ export function createApp(ctx: Context, auth: Auth) {
   browserRoutes(app, ctx);
   workspaceRoutes(app, ctx);
   computerRoutes(app, ctx);
+  lifeRoutes(app, ctx);
 
   // Live workspace changes: one SSE stream per device replaces polling.
   app.get("/api/events", (c) => {

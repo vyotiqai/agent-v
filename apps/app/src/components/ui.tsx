@@ -201,3 +201,104 @@ export function Empty({ icon, title, body }: { icon: IconName; title: string; bo
 export function ErrorText({ children }: { children: ReactNode }) {
   return <Text className="px-1 text-sm text-red-600 dark:text-red-400">{children}</Text>;
 }
+
+/** A row of mutually exclusive options (tabs on a screen, or a small choice). */
+export function Segmented<T extends string>({
+  value,
+  options,
+  onChange,
+  role = "tab",
+}: {
+  value: T;
+  options: { value: T; label: string; badge?: number }[];
+  onChange: (value: T) => void;
+  role?: "tab" | "radio";
+}) {
+  return (
+    <View
+      accessibilityRole={role === "tab" ? "tablist" : "radiogroup"}
+      className="flex-row rounded-full bg-zinc-100 p-1 dark:bg-zinc-900"
+    >
+      {options.map((option) => {
+        const selected = value === option.value;
+        return (
+          <Pressable
+            key={option.value}
+            accessibilityRole={role}
+            accessibilityState={{ selected, checked: role === "radio" ? selected : undefined }}
+            onPress={() => onChange(option.value)}
+            className={`flex-1 flex-row items-center justify-center gap-1.5 rounded-full py-2 ${selected ? "bg-white dark:bg-zinc-800" : ""}`}
+          >
+            <Text
+              numberOfLines={1}
+              className={`text-sm font-medium ${selected ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-500"}`}
+            >
+              {option.label}
+            </Text>
+            {option.badge ? (
+              <Text className="min-w-5 overflow-hidden rounded-full bg-indigo-600 px-1.5 text-center text-[11px] font-semibold leading-5 text-white">
+                {option.badge}
+              </Text>
+            ) : null}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+/** Small pill choices that wrap, for settings like an interval. */
+export function Choices<T extends string | number>({
+  value,
+  options,
+  onChange,
+  label,
+}: {
+  value: T;
+  options: { value: T; label: string }[];
+  onChange: (value: T) => void;
+  label?: string;
+}) {
+  return (
+    <View className="gap-1.5">
+      {label ? (
+        <Text className="px-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">{label}</Text>
+      ) : null}
+      <View accessibilityRole="radiogroup" className="flex-row flex-wrap gap-2">
+        {options.map((option) => {
+          const selected = option.value === value;
+          return (
+            <Pressable
+              key={String(option.value)}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: selected }}
+              onPress={() => onChange(option.value)}
+              className={`rounded-full border px-3.5 py-1.5 ${selected ? "border-zinc-900 bg-zinc-900 dark:border-zinc-100 dark:bg-zinc-100" : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"}`}
+            >
+              <Text
+                className={`text-sm ${selected ? "text-white dark:text-zinc-900" : "text-zinc-700 dark:text-zinc-300"}`}
+              >
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+/** A thin progress meter; `label` names it for screen readers. */
+export function Progress({ value, label }: { value: number; label: string }) {
+  const percent = Math.round(Math.min(1, Math.max(0, value)) * 100);
+  return (
+    <View
+      accessibilityRole="progressbar"
+      accessibilityLabel={label}
+      accessibilityValue={{ min: 0, max: 100, now: percent }}
+      className="h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
+    >
+      <View className="h-full rounded-full bg-emerald-500" style={{ width: `${percent}%` }} />
+    </View>
+  );
+}

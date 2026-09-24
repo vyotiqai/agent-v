@@ -1,10 +1,20 @@
 import type {
   ActionStatus,
+  AmountConvention,
+  Evidence,
+  FinanceReport,
+  GoalStatus,
+  IdeaStatus,
+  Milestone,
+  MonitorCondition,
+  MonitorOutcome,
+  MonitorStatus,
   PdfField,
   PlanStep,
   TaskEventKind,
   TaskStatus,
   ToolCall,
+  Transaction,
 } from "@agent-v/shared";
 import { sql } from "drizzle-orm";
 import {
@@ -14,6 +24,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -103,6 +114,7 @@ export const settings = pgTable("settings", {
   model: text("model"),
   agentName: text("agent_name").notNull().default("Agent V"),
   tone: text("tone").notNull().default("warm and concise"),
+  ideasRefreshedAt: timestamp("ideas_refreshed_at", { withTimezone: true }),
   updatedAt: updatedAt(),
 });
 
@@ -147,6 +159,9 @@ export const tasks = pgTable(
     id: text("id").primaryKey(),
     userId: owner(),
     threadId: text("thread_id").references(() => threads.id, { onDelete: "set null" }),
+    goalId: text("goal_id").references(() => goals.id, { onDelete: "set null" }),
+    /** The goal milestone this task completes when it succeeds. */
+    milestoneId: text("milestone_id"),
     title: text("title").notNull(),
     prompt: text("prompt").notNull(),
     model: text("model").notNull(),
@@ -161,7 +176,10 @@ export const tasks = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [index("tasks_user_updated_idx").on(t.userId, t.updatedAt.desc())],
+  (t) => [
+    index("tasks_user_updated_idx").on(t.userId, t.updatedAt.desc()),
+    index("tasks_goal_idx").on(t.goalId),
+  ],
 );
 
 export const taskEvents = pgTable(
@@ -221,6 +239,8 @@ export const notifications = pgTable(
     title: text("title").notNull(),
     body: text("body").notNull(),
     taskId: text("task_id").references(() => tasks.id, { onDelete: "set null" }),
+    /** An app path to open, for notifications about something other than a task. */
+    link: text("link"),
     dedupeKey: text("dedupe_key"),
     readAt: timestamp("read_at", { withTimezone: true }),
     createdAt: createdAt(),
@@ -332,6 +352,125 @@ export const computerCommands = pgTable(
   ],
 );
 
+export const goals = pgTable(
+  "goals",
+  {
+    id: text("id").primaryKey(),
+    userId: owner(),
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    category: text("category").notNull().default("Personal"),
+    status: text("status").$type<GoalStatus>().notNull().default("active"),
+    milestones: jsonb("milestones").$type<Milestone[]>().notNull().default(sql`'[]'::jsonb`),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("goals_user_idx").on(t.userId, t.updatedAt.desc())],
+);
+
+/** Recurring checks of a public page. A scheduler enqueues one check per due time slot. */
+export const monitors = pgTable(
+  "monitors",
+  {
+    id: text("id").primaryKey(),
+    userId: owner(),
+    goalId: text("goal_id").references(() => goals.id, { onDelete: "set null" }),
+    title: text("title").notNull(),
+    url: text("url").notNull(),
+    condition: text("condition").$type<MonitorCondition>().notNull(),
+    value: text("value").notNull().default(""),
+    currency: text("currency"),
+    intervalMinutes: integer("interval_minutes").notNull(),
+    status: text("status").$type<MonitorStatus>().notNull().default("active"),
+    /** Null while no check is scheduled (paused or stopped). */
+    nextCheckAt: timestamp("next_check_at", { withTimezone: true }),
+    lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
+    lastHash: text("last_hash"),
+    lastExcerpt: text("last_excerpt").notNull().default(""),
+    lastPrice: text("last_price"),
+    matched: boolean("matched").notNull().default(false),
+    failures: integer("failures").notNull().default(0),
+    error: text("error"),
+    checks: integer("checks").notNull().default(0),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("monitors_user_idx").on(t.userId, t.createdAt.desc()),
+    index("monitors_due_idx").on(t.nextCheckAt).where(sql`status = 'active'`),
+  ],
+);
+
+export const monitorChecks = pgTable(
+  "monitor_checks",
+  {
+    id: text("id").primaryKey(),
+    monitorId: text("monitor_id")
+      .notNull()
+      .references(() => monitors.id, { onDelete: "cascade" }),
+    userId: owner(),
+    outcome: text("outcome").$type<MonitorOutcome>().notNull(),
+    detail: text("detail").notNull().default(""),
+    price: text("price"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("monitor_checks_monitor_idx").on(t.monitorId, t.createdAt.desc())],
+);
+
+/** Editable pages served under demo:// so watches can be tried without the internet. */
+export const demoPages = pgTable(
+  "demo_pages",
+  {
+    userId: owner(),
+    slug: text("slug").notNull(),
+    text: text("text").notNull(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.slug] })],
+);
+
+/** Suggestions. The id is derived from the source, so a dismissed idea never comes back. */
+export const ideas = pgTable(
+  "ideas",
+  {
+    id: text("id").primaryKey(),
+    userId: owner(),
+    kind: text("kind")
+      .$type<"paperwork" | "reply" | "event" | "plan" | "watch" | "finance">()
+      .notNull(),
+    title: text("title").notNull(),
+    reason: text("reason").notNull(),
+    prompt: text("prompt").notNull(),
+    evidence: jsonb("evidence").$type<Evidence[]>().notNull(),
+    status: text("status").$type<IdeaStatus>().notNull().default("new"),
+    goalId: text("goal_id").references(() => goals.id, { onDelete: "set null" }),
+    taskId: text("task_id").references(() => tasks.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("ideas_user_idx").on(t.userId, t.status, t.createdAt.desc())],
+);
+
+export const financeReports = pgTable(
+  "finance_reports",
+  {
+    id: text("id").primaryKey(),
+    userId: owner(),
+    name: text("name").notNull(),
+    currency: text("currency"),
+    convention: text("convention").$type<AmountConvention>().notNull(),
+    summary: jsonb("summary")
+      .$type<
+        Omit<FinanceReport, "id" | "name" | "currency" | "convention" | "goalId" | "createdAt">
+      >()
+      .notNull(),
+    transactions: jsonb("transactions").$type<Transaction[]>().notNull(),
+    goalId: text("goal_id").references(() => goals.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("finance_reports_user_idx").on(t.userId, t.createdAt.desc())],
+);
+
 export const schema = {
   user,
   session,
@@ -351,4 +490,10 @@ export const schema = {
   files,
   demoWorkspaces,
   computerCommands,
+  goals,
+  monitors,
+  monitorChecks,
+  demoPages,
+  ideas,
+  financeReports,
 };

@@ -6,8 +6,10 @@ import { executeAction, expireAction, getAction, proposeAction } from "../action
 import { browseForAgent, scopedAgentAction } from "../browser/service.ts";
 import { type Context, newId } from "../context.ts";
 import { AppError } from "../errors.ts";
+import { recordGoalProgress } from "../goals/service.ts";
 import { taskSystemPrompt } from "../prompts.ts";
 import { computerDescriptions, computerSchemas, runComputerTool } from "../tools/computer.ts";
+import { lifeDescriptions, lifeSchemas, runLifeTool } from "../tools/life.ts";
 import { readWebPage } from "../tools/web.ts";
 import { workspaceDescriptions, workspaceSchemas, workspaceTools } from "../tools/workspace.ts";
 
@@ -87,6 +89,22 @@ const allTaskTools = {
       }),
     ]),
   ) as { [K in keyof typeof computerSchemas]: ReturnType<typeof tool> }),
+  add_goal_milestones: tool({
+    description: lifeDescriptions.add_goal_milestones,
+    inputSchema: lifeSchemas.add_goal_milestones,
+  }),
+  goal_status: tool({
+    description: lifeDescriptions.goal_status,
+    inputSchema: lifeSchemas.goal_status,
+  }),
+  watch_page: tool({
+    description: lifeDescriptions.watch_page,
+    inputSchema: lifeSchemas.watch_page,
+  }),
+  finance_summary: tool({
+    description: lifeDescriptions.finance_summary,
+    inputSchema: lifeSchemas.finance_summary,
+  }),
   finish_task: tool({
     description: "Finish the task with a summary of the outcome for the owner.",
     inputSchema: z.object({ summary: z.string().min(1).max(8000) }),
@@ -159,7 +177,7 @@ async function runTool(
   userId: string,
   taskId: string,
   call: ModelCall,
-  plan: { current: PlanStep[] },
+  plan: { current: PlanStep[]; goalId?: string | null },
 ): Promise<unknown> {
   const c = ctx();
   const name = call.toolName as TaskToolName;
@@ -367,6 +385,31 @@ async function runTool(
         );
         return result;
       });
+    case "add_goal_milestones":
+    case "goal_status":
+    case "watch_page":
+    case "finance_summary":
+      return step(`${name}:${id}`, async () => {
+        const result = (await runLifeTool(c, userId, name, parsed.data, {
+          goalId: plan.goalId,
+        })) as { error?: string } | null;
+        if (name !== "goal_status")
+          await addEvent(
+            c,
+            userId,
+            taskId,
+            "tool",
+            result?.error
+              ? `${name.replace(/_/g, " ")} failed`
+              : name === "add_goal_milestones"
+                ? "Added milestones to the goal"
+                : name === "watch_page"
+                  ? "Started watching a page"
+                  : "Read the spending summary",
+            result?.error ?? "",
+          );
+        return result;
+      });
     case "search_mail":
     case "read_email_thread":
     case "list_events":
@@ -406,6 +449,11 @@ async function runTool(
           { status: "succeeded", result: summary, plan: done },
           { kind: "result", title: "Finished", detail: summary },
         );
+        // Goal bookkeeping never turns a finished task into a failed one.
+        if (task)
+          await recordGoalProgress(c, userId, taskId).catch((error) =>
+            console.warn("[goals] could not record progress:", (error as Error).message),
+          );
         if (task)
           await notify(c, userId, {
             title: `Done: ${task.title}`,
@@ -432,9 +480,9 @@ async function taskWorkflowFunction(userId: string, taskId: string): Promise<voi
       { status: "running" },
       { kind: "status", title: "Started working" },
     );
-    return { prompt: row.prompt, model: row.model, plan: row.plan };
+    return { prompt: row.prompt, model: row.model, plan: row.plan, goalId: row.goalId };
   });
-  const plan = { current: task.plan };
+  const plan = { current: task.plan, goalId: task.goalId };
   const messages: ModelMessage[] = [{ role: "user", content: task.prompt }];
   try {
     for (let turn = 0; turn < maxTurns; turn++) {

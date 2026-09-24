@@ -3,39 +3,20 @@ import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Empty, ErrorText, Field, Icon, Label, Muted, Title } from "../../src/components/ui";
+import {
+  Empty,
+  ErrorText,
+  Field,
+  Icon,
+  Label,
+  Muted,
+  Segmented,
+  Title,
+} from "../../src/components/ui";
 import { useResource } from "../../src/lib/resource";
 import { ago } from "../../src/lib/time";
 
 const sender = (from: string) => from.replace(/\s*<.*>/, "").replace(/"/g, "") || from;
-
-function Segmented({
-  value,
-  onChange,
-}: {
-  value: "mail" | "calendar";
-  onChange: (v: "mail" | "calendar") => void;
-}) {
-  return (
-    <View className="flex-row rounded-full bg-zinc-100 p-1 dark:bg-zinc-900">
-      {(["mail", "calendar"] as const).map((option) => (
-        <Pressable
-          key={option}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: value === option }}
-          onPress={() => onChange(option)}
-          className={`flex-1 items-center rounded-full py-2 ${value === option ? "bg-white dark:bg-zinc-800" : ""}`}
-        >
-          <Text
-            className={`text-sm font-medium ${value === option ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-500"}`}
-          >
-            {option === "mail" ? "Mail" : "Calendar"}
-          </Text>
-        </Pressable>
-      ))}
-    </View>
-  );
-}
 
 function MailList() {
   const [query, setQuery] = useState("");
@@ -160,7 +141,14 @@ export default function Inbox() {
             </Pressable>
           ) : null}
         </View>
-        <Segmented value={tab} onChange={setTab} />
+        <Segmented
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: "mail", label: "Mail" },
+            { value: "calendar", label: "Calendar" },
+          ]}
+        />
         {status.data?.source === "none" ? (
           <Empty
             icon="link"

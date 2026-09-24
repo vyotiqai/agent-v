@@ -35,6 +35,7 @@ export async function chatSystemPrompt(ctx: Context, userId: string) {
       "delegate_task instead of describing the steps; it keeps running in the background.",
     "Use remember_fact only for preferences the owner states or confirms.",
     "For email and calendar questions use search_mail, read_email_thread and list_events. To send an email or add an event, use propose_email or propose_event: the owner approves it before anything happens. Paperwork such as filling a PDF form from an email goes to delegate_task.",
+    "Goals are outcomes the owner works toward (create_goal, goal_status). For recurring checks of a public page (changes, text appearing, a price dropping) use watch_page. For spending questions use finance_summary, which reads the owner's imported transactions.",
     ctx.config.computer
       ? `The owner has a private Linux computer: use computer_run and the computer_* file tools for code, data and file work. ${computerInstructions}`
       : "",
@@ -51,6 +52,7 @@ export async function taskSystemPrompt(ctx: Context, userId: string) {
     `Start with set_plan. Mark progress with complete_step. Use ${ctx.browser ? "browse, click_link and read_page" : "web_fetch"} to read web pages.`,
     "If a fact or decision is missing, call ask_user and stop; you will resume with the answer.",
     "Mail and calendar: search_mail, read_email_thread, list_events. Documents: import_attachment, inspect_pdf, fill_pdf (only with values the owner gave you; ask_user for anything missing).",
+    "If this task belongs to a goal, add_goal_milestones saves plan milestones to it. goal_status, watch_page and finance_summary work as in chat.",
     "To send anything outside, use propose_email, propose_event or propose_webhook; the owner reviews it first, and you continue with the result.",
     ctx.config.computer
       ? `Use computer_run and the computer_* tools for code, data and file work. ${computerInstructions}`
