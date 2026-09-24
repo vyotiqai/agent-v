@@ -11,6 +11,7 @@ import {
 } from "@agent-v/shared";
 import { DBOS } from "@dbos-inc/dbos-sdk";
 import { getConnInfo } from "@hono/node-server/conninfo";
+import { createNodeWebSocket } from "@hono/node-ws";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
@@ -19,6 +20,7 @@ import { streamSSE } from "hono/streaming";
 import { z } from "zod";
 import { decideAction, getAction } from "./actions.ts";
 import { type Auth, clientIpHeader } from "./auth.ts";
+import { browserRoutes, signedBrowserRoutes } from "./browser/routes.ts";
 import { runChat } from "./chat/run.ts";
 import { createThread, listMessages, listThreads, updateThread } from "./chat/threads.ts";
 import type { Context } from "./context.ts";
@@ -54,6 +56,7 @@ function safeRemoteAddress(c: Parameters<typeof getConnInfo>[0]) {
 
 export function createApp(ctx: Context, auth: Auth) {
   const app = new Hono<Env>();
+  const ws = createNodeWebSocket({ app });
   const origins = new Set(ctx.config.allowedOrigins);
 
   app.use("*", secureHeaders({ crossOriginResourcePolicy: "cross-origin" }));
@@ -89,6 +92,8 @@ export function createApp(ctx: Context, auth: Auth) {
     return auth.handler(new Request(c.req.raw, { headers }));
   });
 
+  signedBrowserRoutes(app, ctx, ws.upgradeWebSocket);
+
   app.use("/api/*", async (c, next) => {
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
     if (!session) return c.json({ error: "Sign in to continue" }, 401);
@@ -107,6 +112,7 @@ export function createApp(ctx: Context, auth: Auth) {
       user: session?.user,
       settings: await getSettings(ctx, userId),
       models: ctx.models.options(),
+      features: { browser: Boolean(ctx.browser) },
     });
   });
   app.patch("/api/settings", async (c) =>
@@ -199,6 +205,8 @@ export function createApp(ctx: Context, auth: Auth) {
     return c.json({ ok: true });
   });
 
+  browserRoutes(app, ctx);
+
   // Live workspace changes: one SSE stream per device replaces polling.
   app.get("/api/events", (c) => {
     const userId = c.get("userId");
@@ -215,5 +223,5 @@ export function createApp(ctx: Context, auth: Auth) {
   });
 
   app.notFound((c) => c.json({ error: "Not found" }, 404));
-  return app;
+  return { app, injectWebSocket: ws.injectWebSocket };
 }

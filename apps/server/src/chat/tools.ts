@@ -1,6 +1,7 @@
 import { activeTaskStatuses } from "@agent-v/shared";
 import { tool } from "ai";
 import { z } from "zod";
+import { type BrowserScope, browseForAgent, scopedAgentAction } from "../browser/service.ts";
 import type { Context } from "../context.ts";
 import { createTask, listTasks } from "../tasks/service.ts";
 import { readWebPage } from "../tools/web.ts";
@@ -45,11 +46,41 @@ export function chatTools(ctx: Context, userId: string, threadId: string) {
         return { ok: true, id: memory.id };
       },
     }),
+    ...(ctx.browser ? browserTools(ctx, userId, { threadId }) : webFetchTool(ctx)),
+  };
+}
+
+function webFetchTool(ctx: Context) {
+  return {
     web_fetch: tool({
       description:
         "Read a public web page as text. Returns url, title and up to 20,000 characters of text, or an error.",
       inputSchema: z.object({ url: z.url().max(4096) }),
       execute: async ({ url }) => readWebPage(ctx, url),
+    }),
+  };
+}
+
+/** The chat's own cloud browser: real Chromium that the owner can watch and take over. */
+export function browserTools(ctx: Context, userId: string, scope: BrowserScope) {
+  return {
+    browse: tool({
+      description:
+        "Open a public URL in this conversation's cloud browser (real Chromium; runs JavaScript; keeps logins) and read it. Returns sessionId, url, title and up to 20,000 characters of page text, or an error. The owner can watch and take control.",
+      inputSchema: z.object({ url: z.url().max(4096) }),
+      execute: async ({ url }) => browseForAgent(ctx, userId, scope, url),
+    }),
+    click_link: tool({
+      description:
+        "Follow a link on the current page by its visible text, then read the new page. Only follows links; it never submits forms.",
+      inputSchema: z.object({ name: z.string().min(1).max(300) }),
+      execute: async ({ name }) => scopedAgentAction(ctx, userId, scope, { type: "click", name }),
+    }),
+    read_page: tool({
+      description:
+        "Read the browser's current page again, for example after the owner took control and changed it.",
+      inputSchema: z.object({}),
+      execute: async () => scopedAgentAction(ctx, userId, scope, { type: "read" }),
     }),
   };
 }

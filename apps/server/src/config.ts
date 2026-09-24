@@ -29,6 +29,9 @@ const envSchema = z.object({
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
   /** JSON array of OpenAI-compatible endpoints: [{"name":"ollama","baseURL":"http://…/v1"}] */
   OPENAI_COMPATIBLE_PROVIDERS: z.string().default("[]"),
+  /** Browser worker (apps/browser). Browser tools are off when unset. */
+  BROWSER_URL: z.url().optional(),
+  BROWSER_TOKEN: z.string().min(32, "BROWSER_TOKEN must be at least 32 characters").optional(),
   /** Trust X-Forwarded-For from a reverse proxy in front of the API. */
   TRUST_PROXY: bool.default(false),
   TASK_WORKERS: z.coerce.number().int().min(1).max(64).default(4),
@@ -54,6 +57,7 @@ export interface Config {
     compat: z.infer<typeof compatProvider>[];
   };
   taskWorkers: number;
+  browser?: { url: string; token: string };
   trustProxy: boolean;
   allowPrivateNetworkFetch: boolean;
 }
@@ -97,6 +101,10 @@ export function readConfig(env: Record<string, string | undefined> = process.env
       compat,
     },
     taskWorkers: e.TASK_WORKERS,
+    browser:
+      e.BROWSER_URL && e.BROWSER_TOKEN
+        ? { url: e.BROWSER_URL.replace(/\/$/, ""), token: e.BROWSER_TOKEN }
+        : undefined,
     trustProxy: e.TRUST_PROXY,
     allowPrivateNetworkFetch: e.ALLOW_PRIVATE_NETWORK_FETCH,
   };

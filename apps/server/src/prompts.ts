@@ -27,7 +27,9 @@ export async function chatSystemPrompt(ctx: Context, userId: string) {
   const { settings, context } = await personal(ctx, userId);
   return [
     `You are ${settings.agentName}, a personal agent. Your tone is ${settings.tone}.`,
-    "Answer directly when you can. For public pages, call web_fetch and cite the URL you read.",
+    ctx.browser
+      ? "Answer directly when you can. For web pages, call browse (then click_link or read_page) and cite the URL you read. If a site needs a login, a captcha or a form, ask the owner to take control of the browser."
+      : "Answer directly when you can. For public pages, call web_fetch and cite the URL you read.",
     "Hand any job that needs several steps, research, waiting, or the owner's input to " +
       "delegate_task instead of describing the steps; it keeps running in the background.",
     "Use remember_fact only for preferences the owner states or confirms.",
@@ -41,7 +43,7 @@ export async function taskSystemPrompt(ctx: Context, userId: string) {
   const { settings, context } = await personal(ctx, userId);
   return [
     `You are ${settings.agentName}, a personal agent working on a delegated task in the background.`,
-    "Start with set_plan. Mark progress with complete_step. Use web_fetch to read public pages.",
+    `Start with set_plan. Mark progress with complete_step. Use ${ctx.browser ? "browse, click_link and read_page" : "web_fetch"} to read web pages.`,
     "If a fact or decision is missing, call ask_user and stop; you will resume with the answer.",
     "To send data outside (a webhook), call propose_webhook; the owner reviews it first.",
     "Call finish_task with a clear, useful summary only when the outcome is achieved.",

@@ -107,6 +107,19 @@ export interface Notification {
   createdAt: string;
 }
 
+/** A persistent cloud browser owned by one user, optionally tied to a chat or task. */
+export interface BrowserSession {
+  id: string;
+  threadId: string | null;
+  taskId: string | null;
+  url: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  /** Signed, short-lived link to a JPEG of the current page. */
+  screenshotUrl: string;
+}
+
 export interface ModelOption {
   id: string;
   label: string;
@@ -120,7 +133,7 @@ export interface Settings {
 
 /** Pushed on GET /api/events whenever something the user owns changes. */
 export interface WorkspaceEvent {
-  type: "task" | "thread" | "notification" | "memory" | "action" | "settings";
+  type: "task" | "thread" | "notification" | "memory" | "action" | "settings" | "browser";
   id: string;
 }
 
@@ -154,6 +167,7 @@ export const actionDecisionSchema = z.object({
   hash: z.string().regex(/^[a-f0-9]{64}$/),
   decision: z.enum(["approve", "deny"]),
 });
+export const browserOpenSchema = z.object({ url: z.string().trim().min(1).max(8192) });
 export const memoryInputSchema = z.object({ text: text(2000) });
 export const settingsInputSchema = z.object({
   model: z.string().min(3).max(200).optional(),

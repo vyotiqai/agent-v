@@ -15,5 +15,32 @@ services:
       test: ["CMD-SHELL", "pg_isready -U agentv"]
       interval: 5s
       retries: 10
+
+  # Cloud browser worker. Set BROWSER_TOKEN in .env (the API uses the same value).
+  browser:
+    build:
+      context: .
+      dockerfile: apps/browser/Dockerfile
+    restart: unless-stopped
+    environment:
+      BROWSER_TOKEN: ${BROWSER_TOKEN:?Set BROWSER_TOKEN to a random secret of at least 32 characters}
+    ports:
+      - "127.0.0.1:8790:8790"
+    volumes:
+      - browser-profiles:/data
+    # Chromium runs without its own sandbox inside the container, so the container is locked down.
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m
+    shm_size: 1gb
+    mem_limit: 3g
+    pids_limit: 512
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8790/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      retries: 3
 volumes:
   pgdata:
+  browser-profiles:

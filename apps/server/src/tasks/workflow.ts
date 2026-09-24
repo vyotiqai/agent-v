@@ -3,6 +3,7 @@ import { DBOS } from "@dbos-inc/dbos-sdk";
 import { generateText, type ModelMessage, tool } from "ai";
 import { z } from "zod";
 import { executeAction, expireAction, getAction, proposeAction } from "../actions.ts";
+import { browseForAgent, scopedAgentAction } from "../browser/service.ts";
 import { type Context, newId } from "../context.ts";
 import { AppError } from "../errors.ts";
 import { taskSystemPrompt } from "../prompts.ts";
@@ -26,7 +27,7 @@ function ctx(): Context {
 
 // Tool definitions the model sees. Execution happens in the workflow so each call is a
 // checkpointed step and waits for people are durable.
-const taskTools = {
+const allTaskTools = {
   set_plan: tool({
     description: "Set the concrete plan for this task (2-8 steps).",
     inputSchema: z.object({ steps: z.array(z.string().min(1).max(200)).min(1).max(8) }),
@@ -60,8 +61,27 @@ const taskTools = {
     description: "Finish the task with a summary of the outcome for the owner.",
     inputSchema: z.object({ summary: z.string().min(1).max(8000) }),
   }),
+  browse: tool({
+    description:
+      "Open a public URL in this task's cloud browser (real Chromium, runs JavaScript) and read it. Returns url, title and text, or an error.",
+    inputSchema: z.object({ url: z.url().max(4096) }),
+  }),
+  click_link: tool({
+    description: "Follow a link on the current page by its visible text and read the new page.",
+    inputSchema: z.object({ name: z.string().min(1).max(300) }),
+  }),
+  read_page: tool({
+    description: "Read the browser's current page again.",
+    inputSchema: z.object({}),
+  }),
 };
-type TaskToolName = keyof typeof taskTools;
+type TaskToolName = keyof typeof allTaskTools;
+
+/** With a browser worker the agent gets the real browser; otherwise the plain fetcher. */
+function taskTools(c: Context) {
+  const { browse, click_link, read_page, web_fetch, ...rest } = allTaskTools;
+  return c.browser ? { ...rest, browse, click_link, read_page } : { ...rest, web_fetch };
+}
 
 interface ModelCall {
   toolCallId: string;
@@ -82,7 +102,7 @@ async function nextStep(
     model: ctx().models.resolve(model),
     system: await taskSystemPrompt(ctx(), userId),
     messages,
-    tools: taskTools,
+    tools: taskTools(ctx()),
     maxRetries: 0,
   });
   return {
@@ -109,7 +129,7 @@ async function runTool(
 ): Promise<unknown> {
   const c = ctx();
   const name = call.toolName as TaskToolName;
-  const schema = taskTools[name]?.inputSchema as z.ZodType | undefined;
+  const schema = allTaskTools[name]?.inputSchema as z.ZodType | undefined;
   if (!schema) return { error: `Unknown tool ${call.toolName}` };
   const parsed = schema.safeParse(call.input);
   if (!parsed.success) return { error: `Invalid input: ${parsed.error.issues[0]?.message}` };
@@ -157,6 +177,33 @@ async function runTool(
           "error" in page ? page.error : page.url,
         );
         return page;
+      });
+    }
+    case "browse":
+    case "click_link":
+    case "read_page": {
+      const input = parsed.data as { url?: string; name?: string };
+      return step(`browser:${id}`, async () => {
+        const result =
+          name === "browse"
+            ? await browseForAgent(c, userId, { taskId }, input.url ?? "")
+            : await scopedAgentAction(
+                c,
+                userId,
+                { taskId },
+                name === "click_link"
+                  ? { type: "click", name: input.name ?? "" }
+                  : { type: "read" },
+              );
+        await addEvent(
+          c,
+          userId,
+          taskId,
+          "tool",
+          "error" in result ? "Browser problem" : `Browsed ${result.title || result.url}`,
+          "error" in result ? result.error : result.url,
+        );
+        return result;
       });
     }
     case "remember_fact": {

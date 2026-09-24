@@ -1,11 +1,13 @@
 import { DBOS } from "@dbos-inc/dbos-sdk";
 import { createApp } from "./app.ts";
 import { createAuth } from "./auth.ts";
+import { BrowserClient } from "./browser/client.ts";
 import type { Config } from "./config.ts";
 import type { Context } from "./context.ts";
 import { createDatabase, runMigrations } from "./db/client.ts";
 import { createModels, type Models } from "./models/registry.ts";
 import { Realtime } from "./realtime.ts";
+import { Signer } from "./signing.ts";
 import { setTaskContext, taskQueue } from "./tasks/workflow.ts";
 
 /** Build and start everything one server process needs. Used by the entry point and tests. */
@@ -19,6 +21,10 @@ export async function startRuntime(config: Config, options: { models?: Models } 
     db: database.db,
     models: options.models ?? createModels(config),
     realtime,
+    browser: config.browser
+      ? new BrowserClient(config.browser.url, config.browser.token)
+      : undefined,
+    signer: new Signer(config.authSecret),
   };
   setTaskContext(ctx);
   DBOS.setConfig({
@@ -33,9 +39,10 @@ export async function startRuntime(config: Config, options: { models?: Models } 
     onConflict: "always_update",
   });
   const auth = createAuth(config, database.db);
-  const app = createApp(ctx, auth);
+  const { app, injectWebSocket } = createApp(ctx, auth);
   return {
     app,
+    injectWebSocket,
     ctx,
     auth,
     async close() {

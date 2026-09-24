@@ -1,4 +1,5 @@
-import type { Memory, ModelOption, Settings } from "@agent-v/shared";
+import type { BrowserSession, Memory, ModelOption, Settings } from "@agent-v/shared";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -21,12 +22,18 @@ interface Me {
   user: { name: string; email: string };
   settings: Settings;
   models: ModelOption[];
+  features: { browser: boolean };
 }
 
 export default function SettingsScreen() {
   const { signOut } = useAuth();
   const me = useResource<Me>("/api/me", ["settings"]);
   const memories = useResource<Memory[]>("/api/memories", ["memory"]);
+  const browsers = useResource<BrowserSession[]>(
+    me.data?.features.browser ? "/api/browsers" : null,
+    ["browser"],
+  );
+  const [address, setAddress] = useState("");
   const [name, setName] = useState("");
   const [tone, setTone] = useState("");
   const [memory, setMemory] = useState("");
@@ -147,6 +154,67 @@ export default function SettingsScreen() {
             </View>
           </Card>
         </View>
+
+        {me.data?.features.browser ? (
+          <View>
+            <Label>Cloud browser</Label>
+            <Card className="gap-3">
+              <Muted>
+                A real browser that runs on your server. Your agent uses it to read sites, and you
+                can take control for logins or forms. Logins stay in each session until you delete
+                it.
+              </Muted>
+              {(browsers.data ?? []).map((b) => (
+                <View key={b.id} className="flex-row items-center gap-2">
+                  <Pressable className="flex-1" onPress={() => router.push(`/browser/${b.id}`)}>
+                    <Text
+                      numberOfLines={1}
+                      className="text-[15px] text-zinc-800 dark:text-zinc-200"
+                    >
+                      {b.title || b.url || "Blank page"}
+                    </Text>
+                    <Muted className="text-xs">
+                      {b.threadId ? "From a chat" : b.taskId ? "From a task" : "Opened by you"} ·{" "}
+                      {b.url.replace(/^https?:\/\//, "").slice(0, 60)}
+                    </Muted>
+                  </Pressable>
+                  <IconButton
+                    name="trash-2"
+                    label="Delete session"
+                    onPress={() =>
+                      void run(() => api(`/api/browsers/${b.id}`, { method: "DELETE" }))
+                    }
+                  />
+                </View>
+              ))}
+              <View className="flex-row items-center gap-2">
+                <View className="flex-1">
+                  <Field
+                    value={address}
+                    onChangeText={setAddress}
+                    placeholder="Open an address, e.g. news.ycombinator.com"
+                    autoCapitalize="none"
+                    keyboardType="url"
+                  />
+                </View>
+                <IconButton
+                  name="external-link"
+                  label="Open browser"
+                  onPress={() =>
+                    void run(async () => {
+                      const value = address.trim();
+                      if (!value) return;
+                      const url = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+                      const session = await api<BrowserSession>("/api/browsers", { body: { url } });
+                      setAddress("");
+                      router.push(`/browser/${session.id}`);
+                    })
+                  }
+                />
+              </View>
+            </Card>
+          </View>
+        ) : null}
 
         <View>
           <Label>Account</Label>

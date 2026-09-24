@@ -114,7 +114,7 @@ function respond(options: LanguageModelV4CallOptions): LanguageModelV4Content[] 
   const tools = new Set((options.tools ?? []).map((t) => t.name));
   const { lastUser, results } = analyse(options.prompt);
   return tools.has("finish_task")
-    ? taskTurn(lastUser, results)
+    ? taskTurn(lastUser, results, tools)
     : chatTurn(lastUser, results, tools);
 }
 
@@ -128,7 +128,7 @@ function chatTurn(input: string, results: ToolOutcome[], tools: Set<string>) {
         `I've started **${String(output.title ?? "your task")}**. It keeps running in the background — follow it in Tasks, and I'll ask if I need anything.`,
       );
     if (done.toolName === "remember_fact") return say("Got it. I'll remember that.");
-    if (done.toolName === "web_fetch")
+    if (done.toolName === "web_fetch" || done.toolName === "browse")
       return say(
         `I read **${String(output.title || output.url)}**. Here's the start of it:\n\n${String(
           output.text ?? "",
@@ -144,8 +144,9 @@ function chatTurn(input: string, results: ToolOutcome[], tools: Set<string>) {
   if (remember?.[1] && tools.has("remember_fact"))
     return [call("remember_fact", { text: remember[1] })];
   const url = urlPattern.exec(input)?.[0];
-  if (url && tools.has("web_fetch") && !/\b(task|monitor|watch)\b/i.test(input))
-    return [call("web_fetch", { url })];
+  const reader = tools.has("browse") ? "browse" : "web_fetch";
+  if (url && tools.has(reader) && !/\b(task|monitor|watch)\b/i.test(input))
+    return [call(reader, { url })];
   if (
     tools.has("delegate_task") &&
     /\b(task|research|plan|organi[sz]e|prepare|draft|compare|find|book|schedule|help me)\b/i.test(
@@ -162,7 +163,7 @@ function chatTurn(input: string, results: ToolOutcome[], tools: Set<string>) {
   );
 }
 
-function taskTurn(prompt: string, results: ToolOutcome[]) {
+function taskTurn(prompt: string, results: ToolOutcome[], tools: Set<string>) {
   const called = new Set(results.map((r) => r.toolName));
   if (!called.has("set_plan"))
     return [
@@ -171,7 +172,9 @@ function taskTurn(prompt: string, results: ToolOutcome[]) {
       }),
     ];
   const url = urlPattern.exec(prompt)?.[0];
-  if (url && !called.has("web_fetch")) return [call("web_fetch", { url })];
+  const reader = tools.has("browse") ? "browse" : "web_fetch";
+  if (url && !called.has(reader) && !/\b(webhook|post to)\b/i.test(prompt))
+    return [call(reader, { url })];
   if (/\b(ask me|check with me|confirm with me)\b/i.test(prompt) && !called.has("ask_user"))
     return [call("ask_user", { question: "What detail should I use to finish this?" })];
   if (/\b(webhook|post to)\b/i.test(prompt) && url && !called.has("propose_webhook"))
@@ -185,7 +188,7 @@ function taskTurn(prompt: string, results: ToolOutcome[]) {
   const answer = results.find((r) => r.toolName === "ask_user")?.output as
     | { answer?: string }
     | undefined;
-  const page = results.find((r) => r.toolName === "web_fetch")?.output as
+  const page = results.find((r) => r.toolName === "web_fetch" || r.toolName === "browse")?.output as
     | { title?: string }
     | undefined;
   const lines = [

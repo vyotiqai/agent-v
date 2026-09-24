@@ -1,49 +1,7 @@
-import { lookup as dnsLookup } from "node:dns/promises";
-import { BlockList, isIP, type LookupFunction } from "node:net";
+import type { LookupFunction } from "node:net";
+import { BlockedDestinationError, parseWebUrl, resolvePublic } from "@agent-v/net";
 import { Agent, fetch as undiciFetch } from "undici";
 import { AppError } from "../errors.ts";
-
-// Separate lists: a BlockList also matches IPv4 addresses against IPv4-mapped IPv6 rules.
-const blockedV4 = new BlockList();
-const blockedV6 = new BlockList();
-for (const [network, prefix] of [
-  ["0.0.0.0", 8],
-  ["10.0.0.0", 8],
-  ["100.64.0.0", 10],
-  ["127.0.0.0", 8],
-  ["169.254.0.0", 16],
-  ["172.16.0.0", 12],
-  ["192.0.0.0", 24],
-  ["192.0.2.0", 24],
-  ["192.88.99.0", 24],
-  ["192.168.0.0", 16],
-  ["198.18.0.0", 15],
-  ["198.51.100.0", 24],
-  ["203.0.113.0", 24],
-  ["224.0.0.0", 3],
-] as const)
-  blockedV4.addSubnet(network, prefix, "ipv4");
-// Addresses outside 2000::/3 (loopback, mapped, NAT64, ULA, link-local…) are rejected below.
-for (const [network, prefix] of [
-  ["2001::", 23],
-  ["2001:db8::", 32],
-  ["2002::", 16],
-  ["3fff::", 20],
-] as const)
-  blockedV6.addSubnet(network, prefix, "ipv6");
-
-export function isPublicAddress(address: string): boolean {
-  const family = isIP(address);
-  if (family === 4) return !blockedV4.check(address, "ipv4");
-  if (family === 6) {
-    // Only global unicast (2000::/3) is public; everything else is special-purpose.
-    const first = Number.parseInt(address.split(":")[0] || "0", 16);
-    return (
-      !address.includes(".") && (first & 0xe000) === 0x2000 && !blockedV6.check(address, "ipv6")
-    );
-  }
-  return false;
-}
 
 export interface SafeFetchOptions {
   allowPrivate?: boolean;
@@ -63,18 +21,17 @@ export interface SafeResponse {
   truncated: boolean;
 }
 
+export { isPublicAddress } from "@agent-v/net";
+
+const blocked = (error: unknown) =>
+  error instanceof BlockedDestinationError ? new AppError(error.message, 422) : null;
+
 function validateUrl(raw: string): URL {
-  let url: URL;
   try {
-    url = new URL(raw);
-  } catch {
-    throw new AppError("That is not a valid URL", 422);
+    return parseWebUrl(raw);
+  } catch (error) {
+    throw blocked(error) ?? error;
   }
-  if (url.protocol !== "http:" && url.protocol !== "https:")
-    throw new AppError("Only http and https URLs are allowed", 422);
-  if (url.username || url.password)
-    throw new AppError("URLs with credentials are not allowed", 422);
-  return url;
 }
 
 /**
@@ -93,27 +50,22 @@ export async function safeFetch(
     maxRedirects = 5,
   } = options;
   const lookup: LookupFunction = (hostname, lookupOptions, callback) => {
-    dnsLookup(hostname, { all: true, verbatim: true })
+    resolvePublic(hostname, { allowPrivate })
       .then((addresses) => {
-        const usable = allowPrivate
-          ? addresses
-          : addresses.filter((a) => isPublicAddress(a.address));
-        if (!usable.length || (!allowPrivate && usable.length !== addresses.length))
-          throw new AppError(`${hostname} resolves to a private or reserved address`, 422);
-        if (lookupOptions.all) callback(null, usable);
-        else callback(null, usable[0]?.address ?? "", usable[0]?.family ?? 4);
+        if (lookupOptions.all) callback(null, addresses);
+        else callback(null, addresses[0]?.address ?? "", addresses[0]?.family ?? 4);
       })
-      .catch((error: Error) => callback(error as NodeJS.ErrnoException, ""));
+      .catch((error: Error) => callback((blocked(error) ?? error) as NodeJS.ErrnoException, ""));
   };
   const dispatcher = new Agent({ connect: { lookup, timeout: timeoutMs } });
   const signal = AbortSignal.timeout(timeoutMs);
   try {
     let url = validateUrl(raw);
     for (let hop = 0; ; hop++) {
-      if (isIP(url.hostname.replace(/^\[|\]$/g, "")) && !allowPrivate) {
-        if (!isPublicAddress(url.hostname.replace(/^\[|\]$/g, "")))
-          throw new AppError("That address is private or reserved", 422);
-      }
+      // Literal IPs never reach the lookup hook, so check them (and private names) here.
+      await resolvePublic(url.hostname, { allowPrivate }).catch((error) => {
+        throw blocked(error) ?? error;
+      });
       const response = await undiciFetch(url, {
         dispatcher,
         signal,

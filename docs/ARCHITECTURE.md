@@ -92,6 +92,29 @@ so a changed proposal cannot be approved by a stale screen. A claim step moves t
 `awaiting_review` to `executing` atomically, and a crash during execution leaves
 `outcome_unknown` instead of retrying.
 
+### Cloud browser
+
+`apps/browser` is a separate process (or container) holding persistent Chromium sessions. The
+API owns which user owns which session (`browser_sessions`), and it is the only client of the
+worker, authenticated with a shared token.
+
+```
+app ──signed WS──▶ API /api/browsers/:id/live ──token WS──▶ worker ──CDP screencast──▶ Chromium
+                                                                                │
+                                              egress proxy (resolve once, check, pin IP) ◀─┘
+```
+
+- Chromium is launched with `--host-resolver-rules=MAP * ~NOTFOUND` and a proxy, so it cannot
+  resolve or connect by itself. The proxy resolves each host once, rejects private, reserved
+  and metadata addresses, and connects to the checked IP. Only ports 80 and 443 are allowed.
+- Live view uses `Page.startScreencast`; frames go out only while someone watches, and slow
+  viewers drop frames instead of buffering. Input (tap, type, keys, scroll, navigate) comes back
+  over the same socket, and every URL is validated again.
+- Images and WebSockets cannot carry a bearer header, so the API issues HMAC-signed links bound
+  to user, path and expiry (15 minutes for screenshots, one minute to open a live view).
+- Each chat and each task gets its own session; profiles persist until deleted, and the worker
+  recycles idle browsers.
+
 ### Realtime
 
 Mutations call `publish(userId, event)`, which runs `pg_notify`. Every server process listens
@@ -115,6 +138,8 @@ changed; nothing polls.
   (react-native-enriched-markdown / streamdown) arrives with phase 6.
 - Email verification, password reset, passkeys and OAuth sign-in are Better Auth plugins that
   are not switched on yet.
-- `web_fetch` reads static HTML. JavaScript-heavy sites need the agent browser (phase 2).
+- `web_fetch` (used only without a browser worker) reads static HTML.
+- One worker process serves every user's sessions; hard per-user isolation (a container per
+  user) and WebRTC take-over are next steps.
 - The demo model follows fixed rules so the product can be exercised offline; it is not a
   substitute for a real model.

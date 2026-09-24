@@ -7,6 +7,7 @@ const runtime = await startRuntime(config);
 const server = serve({ fetch: runtime.app.fetch, port: config.port, hostname: config.host }, () =>
   console.log(`Agent V API listening on http://${config.host}:${config.port}`),
 );
+runtime.injectWebSocket(server);
 
 let stopping = false;
 const shutdown = () => {

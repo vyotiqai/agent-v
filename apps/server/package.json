@@ -13,6 +13,7 @@
   "dependencies": {
     "@ag-ui/core": "1.0.0",
     "@ag-ui/encoder": "^1.0.0",
+    "@agent-v/net": "workspace:*",
     "@agent-v/shared": "workspace:*",
     "@ai-sdk/anthropic": "4.0.62",
     "@ai-sdk/google": "4.0.79",
@@ -21,18 +22,22 @@
     "@ai-sdk/provider": "4.0.18",
     "@dbos-inc/dbos-sdk": "5.0.2",
     "@hono/node-server": "2.1.1",
+    "@hono/node-ws": "1.3.1",
     "ai": "7.0.113",
     "better-auth": "1.7.5",
     "drizzle-orm": "0.45.3",
     "hono": "4.13.9",
     "pg": "8.23.0",
     "undici": "8.11.2",
+    "ws": "8.21.3",
     "zod": "4.6.5"
   },
   "devDependencies": {
     "@types/node": "^24.13.6",
     "@types/pg": "^8.23.1",
+    "@types/ws": "^8.18.1",
     "drizzle-kit": "0.31.11",
+    "playwright-core": "1.63.0",
     "tsx": "^4.23.15",
     "vitest": "5.0.1"
   }

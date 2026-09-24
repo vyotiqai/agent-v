@@ -19,18 +19,29 @@ OpenMuse plus multi-user SaaS, MCP connectors, push notifications and voice.
       follow-up queue, chat history, tasks with plan/answer/approve/cancel/retry, notifications,
       model choice, personality and memory.
 
-## Phase 2 — Agent browser
+## Phase 2 — Agent browser (this change)
 
-- Browser service: per-user Chromium containers (kernel-images), Playwright over CDP.
-- Live view with CDP screencast; full takeover over WebRTC.
-- Egress proxy with post-resolution IP checks; PDF download capture.
-- `browse`, `read_page`, `act` tools; inline browser cards in chat.
+- [x] Browser worker (`apps/browser`): persistent Chromium profiles per session, Playwright,
+      token-protected HTTP + WebSocket API, idle recycling, one view per session (popups load in
+      place), dialogs dismissed, service workers blocked.
+- [x] Egress proxy: every request resolved once, checked against the shared network guard and
+      pinned to the checked IP; Chromium cannot resolve or connect on its own. Ports 80/443 only.
+- [x] Live view with CDP screencast over WebSocket; take control with taps, typing, keys,
+      scrolling, address bar, back/forward/reload. Signed one-minute links, proxied by the API.
+- [x] Agent tools `browse`, `click_link` (links only, never forms) and `read_page` in chat and in
+      durable tasks; one browser per chat and per task, private to its owner.
+- [x] Inline browser card in chat with a signed live screenshot and **Take control**; browser
+      sessions in Settings (open, resume, delete with profile).
+- [x] Docker image and hardened Compose service for the worker.
+- [ ] Next: WebRTC take-over (native dialogs, clipboard), one container per user for hard
+      isolation, and agent form-filling behind approvals.
 
 ## Phase 3 — Google workspace and documents
 
 - Google OAuth per user (PKCE, encrypted refresh tokens, incremental scopes).
 - Gmail search/read/draft/send and Calendar CRUD, all writes through approvals.
 - PDF import, form fill (pdf-lib), viewer (expo-pdf native, pdf.js on web).
+- Browser PDF downloads captured into Files.
 - S3-compatible storage (local FS → Garage/R2).
 - The permission-slip flow end to end.
 

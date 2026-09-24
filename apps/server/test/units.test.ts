@@ -40,7 +40,7 @@ describe("safeFetch", () => {
     const port = (server.address() as AddressInfo).port;
     try {
       await expect(safeFetch(`http://127.0.0.1:${port}/`)).rejects.toThrow(/private or reserved/);
-      await expect(safeFetch(`http://localhost:${port}/`)).rejects.toThrow(/private or reserved/);
+      await expect(safeFetch(`http://localhost:${port}/`)).rejects.toThrow(/private host name/);
       await expect(safeFetch("file:///etc/passwd")).rejects.toThrow(/http and https/);
       await expect(safeFetch("http://user:pw@example.com/")).rejects.toThrow(/credentials/);
       const allowed = await safeFetch(`http://127.0.0.1:${port}/`, { allowPrivate: true });

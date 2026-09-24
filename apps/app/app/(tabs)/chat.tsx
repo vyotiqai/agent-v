@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Composer } from "../../src/components/Composer";
-import { MessageView } from "../../src/components/Messages";
+import { browserSessionOf, browserTools, MessageView } from "../../src/components/Messages";
 import { ErrorText, IconButton } from "../../src/components/ui";
 import { api } from "../../src/lib/api";
 import { useChat } from "../../src/lib/chat";
@@ -24,14 +24,20 @@ export default function ChatScreen() {
   useEffect(() => setThreadId(params.thread ?? null), [params.thread]);
   const chat = useChat(threadId);
 
-  const { visible, results } = useMemo(() => {
+  const { visible, results, liveCallId } = useMemo(() => {
     const results = new Map<string, Result>();
     const visible: ChatMessage[] = [];
     for (const m of chat.messages) {
       if (m.role === "tool") results.set(m.toolCallId, m);
       else visible.push(m);
     }
-    return { visible, results };
+    let liveCallId: string | null = null;
+    for (const m of visible)
+      if (m.role === "assistant")
+        for (const call of m.toolCalls ?? [])
+          if (browserTools.has(call.function.name) && browserSessionOf(results.get(call.id)))
+            liveCallId = call.id;
+    return { visible, results, liveCallId };
   }, [chat.messages]);
 
   const send = async (text: string) => {
@@ -85,8 +91,10 @@ export default function ChatScreen() {
           <LegendList
             data={visible}
             keyExtractor={(m) => m.id}
-            renderItem={({ item }) => <MessageView message={item} results={results} />}
-            extraData={results}
+            renderItem={({ item }) => (
+              <MessageView message={item} results={results} liveCallId={liveCallId} />
+            )}
+            extraData={`${results.size}:${liveCallId}`}
             estimatedItemSize={72}
             alignItemsAtEnd
             initialScrollAtEnd

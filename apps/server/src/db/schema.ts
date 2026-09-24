@@ -222,6 +222,25 @@ export const notifications = pgTable(
   ],
 );
 
+export const browserSessions = pgTable(
+  "browser_sessions",
+  {
+    id: text("id").primaryKey(),
+    userId: owner(),
+    threadId: text("thread_id").references(() => threads.id, { onDelete: "set null" }),
+    taskId: text("task_id").references(() => tasks.id, { onDelete: "set null" }),
+    url: text("url").notNull().default(""),
+    title: text("title").notNull().default(""),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("browser_sessions_user_idx").on(t.userId, t.updatedAt.desc()),
+    uniqueIndex("browser_sessions_thread_idx").on(t.threadId),
+    uniqueIndex("browser_sessions_task_idx").on(t.taskId),
+  ],
+);
+
 export const schema = {
   user,
   session,
@@ -235,4 +254,5 @@ export const schema = {
   actions,
   memories,
   notifications,
+  browserSessions,
 };
