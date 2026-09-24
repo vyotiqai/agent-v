@@ -43,7 +43,22 @@ no required hosted service apart from your model provider.
 | **Memory and inbox** | Facts you ask the agent to remember, and notifications for results, questions, reviews and watch alerts (each opens what it is about). |
 | **Live updates** | One SSE stream per device, fed by Postgres LISTEN/NOTIFY. No polling. |
 
-## Quick start
+## Try it (Docker only)
+
+With [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running:
+
+```sh
+git clone https://github.com/vyotiqai/agent-v.git && cd agent-v
+docker compose -f deploy/try/compose.yml up --build
+```
+
+The first build takes a few minutes. Then open http://localhost:8787 and create an account.
+Sign up as `admin@example.com` to also see the Admin screen. Everything works offline with the
+demo model, a demo mailbox and sample tools. For real AI, start it with a key, for example
+`ANTHROPIC_API_KEY=… DEFAULT_MODEL=anthropic/claude-sonnet-5 docker compose -f deploy/try/compose.yml up --build`.
+Stop with Ctrl+C; `docker compose -f deploy/try/compose.yml down -v` also deletes the data.
+
+## Quick start (development)
 
 Requirements: Node 22.12+ (24 LTS recommended), pnpm 10+, and Postgres 16+ with the pgvector extension (or Docker).
 
