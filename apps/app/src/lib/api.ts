@@ -2,9 +2,12 @@ import { fetch as expoFetch } from "expo/fetch";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
+const configured = process.env.EXPO_PUBLIC_API_URL;
+/** "/" means the web app is served by the API itself (the production image). */
 export const API_URL = (
-  process.env.EXPO_PUBLIC_API_URL ??
-  (Platform.OS === "android" ? "http://10.0.2.2:8787" : "http://localhost:8787")
+  configured === "/" && Platform.OS === "web"
+    ? globalThis.location.origin
+    : (configured ?? (Platform.OS === "android" ? "http://10.0.2.2:8787" : "http://localhost:8787"))
 ).replace(/\/$/, "");
 
 const tokenKey = "agent-v.token";

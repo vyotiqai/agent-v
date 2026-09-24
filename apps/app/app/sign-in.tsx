@@ -3,11 +3,13 @@ import { useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, ErrorText, Field, Muted } from "../src/components/ui";
+import { api } from "../src/lib/api";
 import { useAuth } from "../src/lib/auth";
 
 export default function SignIn() {
   const { status, signIn, signUp } = useAuth();
-  const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
+  const [mode, setMode] = useState<"sign-in" | "sign-up" | "forgot">("sign-in");
+  const [sent, setSent] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +22,10 @@ export default function SignIn() {
     setBusy(true);
     setError(null);
     try {
-      if (mode === "sign-up")
+      if (mode === "forgot") {
+        await api("/api/auth/request-password-reset", { body: { email: email.trim() } });
+        setSent(true);
+      } else if (mode === "sign-up")
         await signUp(name.trim() || email.split("@")[0] || "You", email.trim(), password);
       else await signIn(email.trim(), password);
     } catch (e) {
@@ -46,7 +51,11 @@ export default function SignIn() {
                 <Text className="text-xl font-bold text-white dark:text-zinc-900">V</Text>
               </View>
               <Text className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-                {mode === "sign-in" ? "Welcome back" : "Create your account"}
+                {mode === "sign-in"
+                  ? "Welcome back"
+                  : mode === "sign-up"
+                    ? "Create your account"
+                    : "Reset your password"}
               </Text>
               <Muted>Your personal agent. Ask for an outcome; it plans, works and checks in.</Muted>
             </View>
@@ -69,33 +78,61 @@ export default function SignIn() {
                 keyboardType="email-address"
                 placeholder="you@example.com"
               />
-              <Field
-                label="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
-                placeholder="At least 10 characters"
-                onSubmitEditing={submit}
-              />
+              {mode === "forgot" ? null : (
+                <Field
+                  label="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                  autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
+                  placeholder="At least 10 characters"
+                  onSubmitEditing={submit}
+                />
+              )}
               {error ? <ErrorText>{error}</ErrorText> : null}
-              <Button
-                title={mode === "sign-in" ? "Sign in" : "Create account"}
-                onPress={submit}
-                busy={busy}
-                disabled={!email || password.length < 10}
-              />
+              {mode === "forgot" && sent ? (
+                <Muted>
+                  If there's an account for {email.trim()}, a link to choose a new password is on
+                  its way. It works for one hour.
+                </Muted>
+              ) : (
+                <Button
+                  title={
+                    mode === "sign-in"
+                      ? "Sign in"
+                      : mode === "sign-up"
+                        ? "Create account"
+                        : "Email me a reset link"
+                  }
+                  onPress={submit}
+                  busy={busy}
+                  disabled={!email || (mode !== "forgot" && password.length < 10)}
+                />
+              )}
             </View>
-            <Pressable
-              onPress={() => setMode(mode === "sign-in" ? "sign-up" : "sign-in")}
-              className="items-center py-2"
-            >
-              <Muted>
-                {mode === "sign-in"
-                  ? "New here? Create an account"
-                  : "Already have an account? Sign in"}
-              </Muted>
-            </Pressable>
+            <View className="items-center gap-1">
+              {mode === "sign-in" ? (
+                <Pressable onPress={() => setMode("forgot")} className="py-2">
+                  <Muted>Forgot your password?</Muted>
+                </Pressable>
+              ) : null}
+              <Pressable
+                onPress={() => {
+                  setMode(mode === "sign-in" ? "sign-up" : "sign-in");
+                  setSent(false);
+                  setError(null);
+                }}
+                className="py-2"
+              >
+                <Muted>
+                  {mode === "sign-in"
+                    ? "New here? Create an account"
+                    : mode === "sign-up"
+                      ? "Already have an account? Sign in"
+                      : "Back to sign in"}
+                </Muted>
+              </Pressable>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

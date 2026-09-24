@@ -15,12 +15,19 @@ export async function stopQueueClient() {
   client = undefined;
 }
 
+/** `user` records whose work it is, so an account's workflow history can be erased. */
 export async function enqueue(
-  queueName: string,
-  workflowName: string,
-  workflowID: string,
+  work: { queue: string; workflow: string; id: string; user: string },
   ...args: unknown[]
 ) {
   if (!client) throw new Error("The queue client is not started");
-  await client.enqueue({ queueName, workflowName, workflowID }, ...args);
+  await client.enqueue(
+    {
+      queueName: work.queue,
+      workflowName: work.workflow,
+      workflowID: work.id,
+      authenticatedUser: work.user,
+    },
+    ...args,
+  );
 }

@@ -6,6 +6,7 @@ import type {
   ComputerStatus,
 } from "@agent-v/shared";
 import { and, desc, eq } from "drizzle-orm";
+import { assertQuota, recordUsage } from "../billing/usage.ts";
 import { type Context, newId } from "../context.ts";
 import { computerCommands } from "../db/schema.ts";
 import { AppError } from "../errors.ts";
@@ -239,6 +240,7 @@ export async function runCommand(
     if (existing.status === "running" && !active.has(existing.id)) return interrupt(ctx, existing);
     return toCommand(existing);
   }
+  await assertQuota(ctx, userId, "computerMinutes");
   let row: Row | undefined;
   try {
     [row] = await ctx.db
@@ -312,11 +314,15 @@ export async function runCommand(
   } finally {
     active.delete(row.id);
   }
+  const finishedAt = new Date();
   const [done] = await ctx.db
     .update(computerCommands)
-    .set({ ...patch, finishedAt: new Date() })
+    .set({ ...patch, finishedAt })
     .where(eq(computerCommands.id, row.id))
     .returning();
+  await recordUsage(ctx, userId, {
+    computerSeconds: Math.max(1, (finishedAt.getTime() - row.startedAt.getTime()) / 1000),
+  }).catch((error) => console.error("[usage] computer time:", (error as Error).message));
   await ctx.realtime.publish(userId, { type: "computer", id: row.id });
   return toCommand(done ?? row);
 }

@@ -7,6 +7,7 @@ import type { LanguageModel } from "ai";
 import pg from "pg";
 import { expect } from "vitest";
 import { type Config, readConfig } from "../src/config.ts";
+import type { Mailer, MailMessage } from "../src/mail.ts";
 import { createModels, type Models } from "../src/models/registry.ts";
 import { startRuntime } from "../src/runtime.ts";
 
@@ -47,13 +48,33 @@ export function withModels(config: Config, extra: Record<string, () => LanguageM
 
 export type TestServer = Awaited<ReturnType<typeof startTestServer>>;
 
+/** Keeps every email the server sends, as if it had been delivered. */
+export class TestMailer implements Mailer {
+  readonly delivers = true;
+  readonly sent: MailMessage[] = [];
+  async send(message: MailMessage) {
+    this.sent.push(message);
+  }
+  /** The newest email to an address, optionally matching a subject. */
+  last(to: string, subject?: RegExp) {
+    return this.sent.findLast((m) => m.to === to && (!subject || subject.test(m.subject)));
+  }
+}
+
 export async function startTestServer(
-  options: { config?: Record<string, string>; models?: Record<string, () => LanguageModel> } = {},
+  options: {
+    config?: Record<string, string>;
+    models?: Record<string, () => LanguageModel>;
+    mailer?: Mailer;
+    telemetry?: NonNullable<Parameters<typeof startRuntime>[1]>["telemetry"];
+  } = {},
 ) {
   await resetDatabase();
   const config = testConfig(options.config);
   const runtime = await startRuntime(config, {
     models: options.models ? withModels(config, options.models) : undefined,
+    mailer: options.mailer,
+    telemetry: options.telemetry,
   });
   let userCount = 0;
 
@@ -83,18 +104,15 @@ export async function startTestServer(
   }
 
   async function signUp(name = `User ${++userCount}`) {
+    const email = `${name.replace(/\W/g, "").toLowerCase()}@example.com`;
     const response = await call("/api/auth/sign-up/email", {
-      body: {
-        name,
-        email: `${name.replace(/\W/g, "").toLowerCase()}@example.com`,
-        password: "a-long-password-1",
-      },
+      body: { name, email, password: "a-long-password-1" },
     });
     expect(response.status, await response.clone().text()).toBe(200);
     const token = response.headers.get("set-auth-token");
     expect(token).toBeTruthy();
     const body = (await response.json()) as { user: { id: string } };
-    return { token: token as string, userId: body.user.id };
+    return { token: token as string, userId: body.user.id, email };
   }
 
   async function run(token: string, threadId: string, content: string, model?: string) {

@@ -24,7 +24,7 @@ export class DemoModel implements LanguageModelV4 {
     return {
       content,
       finishReason: finishReason(content),
-      usage: usage(),
+      usage: usage(options.prompt, content),
       warnings: [],
     };
   }
@@ -40,7 +40,11 @@ export class DemoModel implements LanguageModelV4 {
         parts.push({ type: "text-end", id: "t0" });
       } else parts.push(part as LanguageModelV4StreamPart);
     }
-    parts.push({ type: "finish", finishReason: finishReason(content), usage: usage() });
+    parts.push({
+      type: "finish",
+      finishReason: finishReason(content),
+      usage: usage(options.prompt, content),
+    });
     const signal = options.abortSignal;
     return {
       stream: new ReadableStream<LanguageModelV4StreamPart>({
@@ -58,10 +62,15 @@ export class DemoModel implements LanguageModelV4 {
   }
 }
 
-const usage = () => ({
-  inputTokens: { total: 0, noCache: 0, cacheRead: undefined, cacheWrite: undefined },
-  outputTokens: { total: 0, text: 0, reasoning: undefined },
-});
+/** Rough token counts (4 characters a token) so metering and quotas work offline too. */
+function usage(prompt: LanguageModelV4Prompt, content: LanguageModelV4Content[]) {
+  const input = Math.ceil(JSON.stringify(prompt).length / 4);
+  const output = Math.ceil(JSON.stringify(content).length / 4);
+  return {
+    inputTokens: { total: input, noCache: input, cacheRead: undefined, cacheWrite: undefined },
+    outputTokens: { total: output, text: output, reasoning: undefined },
+  };
+}
 
 function finishReason(content: LanguageModelV4Content[]) {
   return {

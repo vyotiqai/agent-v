@@ -1,3 +1,4 @@
+export * from "./account.ts";
 export * from "./domain.ts";
 export * from "./life.ts";
 export * from "./markdown.ts";

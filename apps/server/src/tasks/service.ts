@@ -10,6 +10,7 @@ import {
 import { DBOS } from "@dbos-inc/dbos-sdk";
 import { and, asc, count, desc, eq, inArray, notInArray } from "drizzle-orm";
 import { getAction } from "../actions.ts";
+import { assertQuota, recordUsage } from "../billing/usage.ts";
 import { type Context, newId } from "../context.ts";
 import { goals, taskEvents, tasks, threads } from "../db/schema.ts";
 import { AppError, notFound } from "../errors.ts";
@@ -108,10 +109,12 @@ export async function createTask(
         await DBOS.startWorkflow(taskWorkflow, {
           workflowID: existing.workflowId,
           queueName: taskQueue,
+          authenticatedUser: userId,
         })(userId, existing.id);
       return toTask(existing);
     }
   }
+  await assertQuota(ctx, userId, "tasks");
   const [active] = await ctx.db
     .select({ n: count() })
     .from(tasks)
@@ -156,8 +159,13 @@ export async function createTask(
     if (options.id) return toTask(await getTaskRow(ctx, userId, options.id));
     throw new AppError("Task could not be created", 500);
   }
+  await recordUsage(ctx, userId, { tasks: 1 });
   await addEvent(ctx, userId, id, "status", "Queued");
-  await DBOS.startWorkflow(taskWorkflow, { workflowID: id, queueName: taskQueue })(userId, id);
+  await DBOS.startWorkflow(taskWorkflow, {
+    workflowID: id,
+    queueName: taskQueue,
+    authenticatedUser: userId,
+  })(userId, id);
   await ctx.realtime.publish(userId, { type: "task", id });
   return toTask(row);
 }

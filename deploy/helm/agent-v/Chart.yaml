@@ -1,0 +1,7 @@
+apiVersion: v2
+name: agent-v
+description: Agent V, a personal AI agent (API, web app, cloud browser)
+type: application
+version: 0.1.0
+appVersion: "0.7.0"
+keywords: [ai, agent, assistant]

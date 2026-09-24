@@ -3,6 +3,7 @@ import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { FileItem } from "@agent-v/shared";
 import { and, desc, eq } from "drizzle-orm";
+import { assertQuota } from "../billing/usage.ts";
 import { type Context, newId } from "../context.ts";
 import { files } from "../db/schema.ts";
 import { AppError, notFound } from "../errors.ts";
@@ -52,6 +53,7 @@ export async function storeFile(
 ) {
   if (!isPdf(input.bytes)) throw new AppError("Only PDF files are supported for now", 415);
   if (input.bytes.length > maxPdfBytes) throw new AppError("PDFs must be 10 MB or smaller", 413);
+  await assertQuota(ctx, userId, "storageMb", input.bytes.length / (1024 * 1024));
   const count = await ctx.db.$count(files, eq(files.userId, userId));
   if (count >= maxFilesPerUser)
     throw new AppError("File limit reached. Delete some files first.", 409);

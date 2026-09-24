@@ -22,6 +22,7 @@ import type {
 } from "@modelcontextprotocol/sdk/shared/auth.js";
 import { McpError } from "@modelcontextprotocol/sdk/types.js";
 import { and, asc, eq, gt, lt } from "drizzle-orm";
+import { assertQuota } from "../billing/usage.ts";
 import { type Context, iso, newId } from "../context.ts";
 import { connectors, oauthStates } from "../db/schema.ts";
 import { AppError, notFound } from "../errors.ts";
@@ -298,6 +299,7 @@ export async function createConnector(ctx: Context, userId: string, raw: unknown
   const input = connectorInputSchema.parse(raw);
   const url = checkUrl(ctx, input.url);
   if (input.auth === "bearer" && !input.token) throw new AppError("Enter the access token", 422);
+  await assertQuota(ctx, userId, "connectors", 1);
   const count = await ctx.db.$count(connectors, eq(connectors.userId, userId));
   if (count >= maxConnectors) throw new AppError(`Add at most ${maxConnectors} connectors`, 429);
   const id = newId();

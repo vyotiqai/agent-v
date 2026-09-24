@@ -292,5 +292,9 @@ export async function enqueueDelivery(ctx: Context, userId: string, notification
     .where(eq(pushDevices.userId, userId))
     .limit(1);
   if (!device) return;
-  await enqueue(pushQueue, "push-notification", `push:${notificationId}`, userId, notificationId);
+  await enqueue(
+    { queue: pushQueue, workflow: "push-notification", id: `push:${notificationId}`, user: userId },
+    userId,
+    notificationId,
+  );
 }

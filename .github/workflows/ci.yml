@@ -71,9 +71,29 @@ jobs:
 
   images:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: pgvector/pgvector:pg18
+        env:
+          POSTGRES_USER: agentv
+          POSTGRES_PASSWORD: agentv
+          POSTGRES_DB: agentv
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U agentv" --health-interval 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
+      - run: docker build -t agent-v:ci .
+      - name: Server image starts read-only, migrates and serves the web app
+        run: |
+          docker run -d --name server --network host --read-only --tmpfs /tmp --cap-drop ALL \
+            --security-opt no-new-privileges -e HOST=127.0.0.1 -e PUBLIC_URL=http://127.0.0.1:8787 \
+            -e DATABASE_URL=postgresql://agentv:agentv@127.0.0.1:5432/agentv \
+            -e BETTER_AUTH_SECRET=$(openssl rand -hex 32) -e DEMO_MODEL=true -e DEFAULT_MODEL=demo/agent-v \
+            -v server-data:/data agent-v:ci
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:8787/api/health && break; sleep 1; done
+          curl -sf http://127.0.0.1:8787/ | grep -q '<div id="root">' || { docker logs server; exit 1; }
       - run: docker build -t agent-v-computer:ci apps/computer
       - run: docker build -f apps/browser/Dockerfile -t agent-v-browser:ci .
       - name: Browser image starts and answers health checks
@@ -82,6 +102,31 @@ jobs:
             --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges agent-v-browser:ci
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:8790/health && exit 0; sleep 1; done
           docker logs browser; exit 1
+
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - name: The chart's backup script matches deploy/backup
+        run: cmp deploy/backup/backup.sh deploy/helm/agent-v/files/backup.sh
+      - name: Lint and validate the Helm chart
+        run: |
+          go install github.com/yannh/kubeconform/cmd/kubeconform@v0.7.0
+          cd deploy/helm/agent-v
+          S="--set secrets.BETTER_AUTH_SECRET=x --set secrets.BROWSER_TOKEN=y"
+          helm lint . $S --set secrets.DATABASE_URL=postgresql://db
+          helm template t . $S --set secrets.DATABASE_URL=postgresql://db | ~/go/bin/kubeconform -strict -summary -
+          helm template t . $S --set postgresql.enabled=true --set postgresql.password=pw \
+            --set autoscaling.enabled=true | ~/go/bin/kubeconform -strict -summary -
+      - name: Compose production file is valid
+        working-directory: deploy/compose
+        run: |
+          cp .env.example .env
+          sed -i 's/^POSTGRES_PASSWORD=/POSTGRES_PASSWORD=x/; s/^BROWSER_TOKEN=/BROWSER_TOKEN=y/' .env
+          docker compose config -q
+          docker compose --profile observability config -q
 
   app:
     runs-on: ubuntu-latest

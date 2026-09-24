@@ -192,8 +192,17 @@ export default function ChatScreen() {
           </View>
         ) : null}
         {chat.error || voiceError ? (
-          <View className="px-5 pb-1">
-            <ErrorText>{chat.error ?? voiceError}</ErrorText>
+          <View className="w-full max-w-[760px] flex-row items-center gap-3 self-center px-5 pb-1">
+            <View className="flex-1">
+              <ErrorText>{chat.error ?? voiceError}</ErrorText>
+            </View>
+            {chat.limited ? (
+              <Pressable accessibilityRole="link" onPress={() => router.push("/plan")} hitSlop={8}>
+                <Text className="text-sm font-medium text-zinc-900 underline dark:text-zinc-100">
+                  See plans
+                </Text>
+              </Pressable>
+            ) : null}
           </View>
         ) : null}
         {voiceMode === "thinking" || voiceMode === "speaking" ? (

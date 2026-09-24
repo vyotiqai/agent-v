@@ -43,6 +43,13 @@
       "when": 1790262856938,
       "tag": "0005_reach",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790265052428,
+      "tag": "0006_accounts",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,6 @@
 import { createECDH, createHash, hkdfSync } from "node:crypto";
 import { resolve } from "node:path";
+import type { Limits } from "@agent-v/shared";
 import { z } from "zod";
 
 const compatProvider = z.object({
@@ -85,7 +86,95 @@ const envSchema = z.object({
   EMBEDDING_MODEL: z.string().default("demo/hash"),
   /** "openai/model" for voice transcription (uses OPENAI_API_KEY and OPENAI_BASE_URL). */
   TRANSCRIPTION_MODEL: z.string().optional(),
+  /** Where people use the app (links in emails, checkout returns). Defaults to the first origin. */
+  APP_URL: z.url().optional(),
+  /** Unset: no quotas (self-hosted). "default": Free, Pro and Team. Or a JSON array of plans. */
+  PLANS: z.string().optional(),
+  /** JSON map of plan id to Stripe price id: {"pro":"price_…","team":"price_…"}. */
+  STRIPE_PRICES: z.string().default("{}"),
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  /** Overridable only so tests can point at a fake Stripe. */
+  STRIPE_API_BASE: z.url().default("https://api.stripe.com"),
+  /** Comma-separated emails that become platform admins when they sign up or sign in. */
+  ADMIN_EMAILS: z.string().default(""),
+  /** smtp(s)://user:pass@host:port for account emails. Without it, emails are logged (not in production). */
+  SMTP_URL: z.string().optional(),
+  EMAIL_FROM: z.string().default("Agent V <no-reply@localhost>"),
+  /** Per-user request limits. On by default outside tests. */
+  RATE_LIMITS: bool.optional(),
+  /** "memory" for one API process, "postgres" when several replicas share the limits. */
+  RATE_LIMIT_STORE: z.enum(["memory", "postgres"]).default("memory"),
+  /** OpenTelemetry: traces and metrics are exported over OTLP/HTTP when this is set. */
+  OTEL_EXPORTER_OTLP_ENDPOINT: z.url().optional(),
+  OTEL_SERVICE_NAME: z.string().default("agent-v-server"),
+  /** Put prompts and replies on AI spans. Off by default: traces hold no personal content. */
+  OTEL_RECORD_CONTENT: bool.default(false),
+  /** "json" writes one JSON object per log line (with trace ids) for log collectors. */
+  LOG_FORMAT: z.enum(["pretty", "json"]).default("pretty"),
+  /** Serve the exported web app (apps/app dist) from the API origin. */
+  WEB_DIR: z.string().optional(),
 });
+
+const limit = z.number().int().min(0).nullable();
+const planSchema = z.object({
+  id: z.string().regex(/^[a-z][a-z0-9-]{0,39}$/),
+  name: z.string().min(1).max(40),
+  price: z.string().max(40).nullable().default(null),
+  team: z.boolean().default(false),
+  limits: z.object({
+    tokens: limit,
+    tasks: limit,
+    browserActions: limit,
+    computerMinutes: limit,
+    voiceMinutes: limit,
+    storageMb: limit,
+    connectors: limit,
+    watches: limit,
+  }),
+});
+export type PlanConfig = z.infer<typeof planSchema> & { stripePrice?: string };
+
+const unlimited: Limits = {
+  tokens: null,
+  tasks: null,
+  browserActions: null,
+  computerMinutes: null,
+  voiceMinutes: null,
+  storageMb: null,
+  connectors: null,
+  watches: null,
+};
+const pro: Limits = {
+  tokens: 5_000_000,
+  tasks: 500,
+  browserActions: 5000,
+  computerMinutes: 600,
+  voiceMinutes: 300,
+  storageMb: 5000,
+  connectors: 20,
+  watches: 50,
+};
+/** The built-in plans for PLANS=default. The first plan is where everyone starts. */
+export const defaultPlans: z.input<typeof planSchema>[] = [
+  {
+    id: "free",
+    name: "Free",
+    price: null,
+    limits: {
+      tokens: 300_000,
+      tasks: 30,
+      browserActions: 300,
+      computerMinutes: 30,
+      voiceMinutes: 30,
+      storageMb: 200,
+      connectors: 2,
+      watches: 3,
+    },
+  },
+  { id: "pro", name: "Pro", price: "$12 / month", limits: pro },
+  { id: "team", name: "Team", price: "$20 / member / month", team: true, limits: pro },
+];
 
 export interface Config {
   env: "development" | "production" | "test";
@@ -137,6 +226,35 @@ export interface Config {
   };
   embeddingModel: string;
   transcriptionModel?: string;
+  appUrl: string;
+  plans: { enforced: boolean; list: PlanConfig[] };
+  stripe?: { secretKey: string; webhookSecret: string; apiBase: string };
+  adminEmails: string[];
+  email: { smtpUrl?: string; from: string };
+  rateLimits: { enabled: boolean; store: "memory" | "postgres" };
+  telemetry: {
+    endpoint?: string;
+    serviceName: string;
+    recordContent: boolean;
+    logFormat: "pretty" | "json";
+  };
+  webDir?: string;
+}
+
+function readPlans(value: string | undefined, prices: Record<string, string>) {
+  if (!value)
+    return {
+      enforced: false,
+      list: [{ id: "unlimited", name: "Unlimited", price: null, team: false, limits: unlimited }],
+    };
+  const list = z
+    .array(planSchema)
+    .min(1)
+    .parse(value === "default" ? defaultPlans : JSON.parse(value))
+    .map((plan) => ({ ...plan, stripePrice: prices[plan.id] }));
+  if (new Set(list.map((p) => p.id)).size !== list.length)
+    throw new Error("PLANS has duplicate plan ids");
+  return { enforced: true, list };
 }
 
 /** Development convenience: a stable secret derived from the auth secret, never in production. */
@@ -180,6 +298,13 @@ export function readConfig(env: Record<string, string | undefined> = process.env
     throw new Error("TOKEN_ENCRYPTION_KEY must be 32 bytes encoded as base64");
   if (e.GOOGLE_CLIENT_ID && !encryptionKey)
     throw new Error("Set TOKEN_ENCRYPTION_KEY (openssl rand -base64 32) before connecting Google");
+  if (production && !e.SMTP_URL)
+    console.warn("[config] SMTP_URL is not set: password resets and invitations cannot be emailed");
+  if (Boolean(e.STRIPE_SECRET_KEY) !== Boolean(e.STRIPE_WEBHOOK_SECRET))
+    throw new Error("Set both STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET, or neither");
+  const origins = e.ALLOWED_ORIGINS.split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
   const allowed = e.ALLOWED_MODELS.split(",")
     .map((m) => m.trim())
     .filter(Boolean);
@@ -188,9 +313,7 @@ export function readConfig(env: Record<string, string | undefined> = process.env
     host: e.HOST,
     port: e.PORT,
     publicUrl: e.PUBLIC_URL.replace(/\/$/, ""),
-    allowedOrigins: e.ALLOWED_ORIGINS.split(",")
-      .map((o) => o.trim())
-      .filter(Boolean),
+    allowedOrigins: origins,
     databaseUrl: e.DATABASE_URL,
     authSecret: e.BETTER_AUTH_SECRET,
     defaultModel: e.DEFAULT_MODEL,
@@ -250,5 +373,30 @@ export function readConfig(env: Record<string, string | undefined> = process.env
     },
     embeddingModel: e.EMBEDDING_MODEL,
     transcriptionModel: e.TRANSCRIPTION_MODEL,
+    appUrl: (e.APP_URL ?? origins[0] ?? e.PUBLIC_URL).replace(/\/$/, ""),
+    plans: readPlans(
+      e.PLANS,
+      z.record(z.string(), z.string().startsWith("price_")).parse(JSON.parse(e.STRIPE_PRICES)),
+    ),
+    stripe:
+      e.STRIPE_SECRET_KEY && e.STRIPE_WEBHOOK_SECRET
+        ? {
+            secretKey: e.STRIPE_SECRET_KEY,
+            webhookSecret: e.STRIPE_WEBHOOK_SECRET,
+            apiBase: e.STRIPE_API_BASE.replace(/\/$/, ""),
+          }
+        : undefined,
+    adminEmails: e.ADMIN_EMAILS.split(",")
+      .map((m) => m.trim().toLowerCase())
+      .filter(Boolean),
+    email: { smtpUrl: e.SMTP_URL, from: e.EMAIL_FROM },
+    rateLimits: { enabled: e.RATE_LIMITS ?? e.NODE_ENV !== "test", store: e.RATE_LIMIT_STORE },
+    telemetry: {
+      endpoint: e.OTEL_EXPORTER_OTLP_ENDPOINT?.replace(/\/$/, ""),
+      serviceName: e.OTEL_SERVICE_NAME,
+      recordContent: e.OTEL_RECORD_CONTENT,
+      logFormat: e.LOG_FORMAT,
+    },
+    webDir: e.WEB_DIR ? resolve(e.WEB_DIR) : undefined,
   };
 }

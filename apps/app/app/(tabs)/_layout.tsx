@@ -2,10 +2,12 @@ import Feather from "@expo/vector-icons/Feather";
 import { Redirect, Tabs } from "expo-router";
 import { useColorScheme } from "react-native";
 import { useAuth } from "../../src/lib/auth";
+import { useDesktopNotifications } from "../../src/lib/desktop";
 
 export default function TabsLayout() {
   const { status } = useAuth();
   const dark = useColorScheme() === "dark";
+  useDesktopNotifications();
   if (status === "signed-out") return <Redirect href="/sign-in" />;
   return (
     <Tabs

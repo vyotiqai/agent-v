@@ -54,6 +54,11 @@ export const user = pgTable("user", {
   image: text("image"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
+  // Admin plugin: platform role and bans.
+  role: text("role"),
+  banned: boolean("banned").default(false),
+  banReason: text("ban_reason"),
+  banExpires: timestamp("ban_expires", { withTimezone: true }),
 });
 
 export const session = pgTable(
@@ -69,6 +74,8 @@ export const session = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    impersonatedBy: text("impersonated_by"),
+    activeOrganizationId: text("active_organization_id"),
   },
   (t) => [index("session_user_idx").on(t.userId)],
 );
@@ -108,6 +115,57 @@ export const verification = pgTable(
   (t) => [index("verification_identifier_idx").on(t.identifier)],
 );
 
+// Organization plugin: teams share a plan and admin, never each other's data.
+export const organization = pgTable("organization", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  logo: text("logo"),
+  metadata: text("metadata"),
+  createdAt: createdAt(),
+});
+
+export const member = pgTable(
+  "member",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    role: text("role").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("member_org_user_idx").on(t.organizationId, t.userId),
+    index("member_user_idx").on(t.userId),
+  ],
+);
+
+export const invitation = pgTable(
+  "invitation",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    role: text("role"),
+    status: text("status").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    inviterId: text("inviter_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("invitation_org_idx").on(t.organizationId),
+    index("invitation_email_idx").on(t.email),
+  ],
+);
+
 // Application tables. Every row is owned by exactly one user.
 const owner = () =>
   text("user_id")
@@ -139,6 +197,8 @@ export const threads = pgTable(
     userId: owner(),
     title: text("title").notNull(),
     archived: boolean("archived").notNull().default(false),
+    /** A reply is streaming until this time (a lease shared by every API replica). */
+    runningUntil: timestamp("running_until", { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -548,11 +608,87 @@ export const pushDevices = pgTable(
   ],
 );
 
+/** Metered usage per user and calendar month (UTC), one counter per metric. */
+export const usageCounters = pgTable(
+  "usage_counters",
+  {
+    userId: owner(),
+    /** "YYYY-MM" */
+    period: text("period").notNull(),
+    /** "tokens", "tasks", … or "input_tokens:<model>" / "output_tokens:<model>". */
+    metric: text("metric").notNull(),
+    amount: bigint("amount", { mode: "number" }).notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.period, t.metric] })],
+);
+
+export type SubjectType = "user" | "organization";
+
+/** Paid plans (Stripe) and plans granted by an operator, for a person or a team. */
+export const subscriptions = pgTable(
+  "subscriptions",
+  {
+    id: text("id").primaryKey(),
+    subjectType: text("subject_type").$type<SubjectType>().notNull(),
+    subjectId: text("subject_id").notNull(),
+    provider: text("provider").$type<"stripe" | "grant">().notNull(),
+    plan: text("plan").notNull(),
+    /** Stripe's status, or "active" for a grant. */
+    status: text("status").notNull(),
+    customerId: text("customer_id"),
+    externalId: text("external_id").unique(),
+    itemId: text("item_id"),
+    seats: integer("seats"),
+    currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+    cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex("subscriptions_subject_provider_idx").on(t.subjectType, t.subjectId, t.provider),
+  ],
+);
+
+/** The Stripe customer for a person or a team. */
+export const billingCustomers = pgTable(
+  "billing_customers",
+  {
+    subjectType: text("subject_type").$type<SubjectType>().notNull(),
+    subjectId: text("subject_id").notNull(),
+    customerId: text("customer_id").notNull().unique(),
+    createdAt: createdAt(),
+  },
+  (t) => [primaryKey({ columns: [t.subjectType, t.subjectId] })],
+);
+
+/** Better Auth's sign-in rate limits, when replicas share them (RATE_LIMIT_STORE=postgres). */
+export const authRateLimit = pgTable("auth_rate_limit", {
+  id: text("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  count: integer("count").notNull(),
+  lastRequest: bigint("last_request", { mode: "number" }).notNull(),
+});
+
+/** Fixed-window request counters shared by every API replica. */
+export const rateLimits = pgTable("rate_limits", {
+  key: text("key").primaryKey(),
+  count: integer("count").notNull(),
+  resetAt: timestamp("reset_at", { withTimezone: true }).notNull(),
+});
+
 export const schema = {
   user,
   session,
   account,
   verification,
+  organization,
+  member,
+  invitation,
+  usageCounters,
+  subscriptions,
+  billingCustomers,
+  rateLimits,
+  authRateLimit,
   settings,
   threads,
   messages,

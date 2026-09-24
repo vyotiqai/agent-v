@@ -1,5 +1,6 @@
 import type { BrowserSession } from "@agent-v/shared";
 import { and, desc, eq } from "drizzle-orm";
+import { assertQuota, recordUsage } from "../billing/usage.ts";
 import { type Context, newId } from "../context.ts";
 import { browserSessions } from "../db/schema.ts";
 import { AppError, notFound } from "../errors.ts";
@@ -12,6 +13,14 @@ type Row = typeof browserSessions.$inferSelect;
 export function browserOf(ctx: Context): BrowserClient {
   if (!ctx.browser) throw new AppError("The cloud browser is not configured on this server", 503);
   return ctx.browser;
+}
+
+/** The browser for one page action (open, read, click), counted against the owner's plan. */
+async function meteredBrowser(ctx: Context, userId: string) {
+  const client = browserOf(ctx);
+  await assertQuota(ctx, userId, "browserActions");
+  await recordUsage(ctx, userId, { browserActions: 1 });
+  return client;
 }
 
 export function toBrowserSession(ctx: Context, row: Row): BrowserSession {
@@ -97,7 +106,7 @@ async function record(
 }
 
 export async function openBrowser(ctx: Context, userId: string, scope: BrowserScope, url: string) {
-  const client = browserOf(ctx);
+  const client = await meteredBrowser(ctx, userId);
   const session = await sessionFor(ctx, userId, scope);
   const state = await client.open(session.id, url);
   return toBrowserSession(ctx, await record(ctx, userId, session.id, state));
@@ -105,7 +114,7 @@ export async function openBrowser(ctx: Context, userId: string, scope: BrowserSc
 
 export async function navigateBrowser(ctx: Context, userId: string, id: string, url: string) {
   const row = await getBrowserRow(ctx, userId, id);
-  const state = await browserOf(ctx).open(row.id, url);
+  const state = await (await meteredBrowser(ctx, userId)).open(row.id, url);
   return toBrowserSession(ctx, await record(ctx, userId, row.id, state));
 }
 
@@ -134,7 +143,7 @@ export async function browseForAgent(
 
 export async function readForAgent(ctx: Context, userId: string, id: string, maxChars = 20_000) {
   const row = await getBrowserRow(ctx, userId, id);
-  const page = await browserOf(ctx).read(row.id);
+  const page = await (await meteredBrowser(ctx, userId)).read(row.id);
   await record(ctx, userId, row.id, page);
   return {
     sessionId: row.id,
@@ -156,7 +165,7 @@ export async function scopedAgentAction(
     const session = await sessionFor(ctx, userId, scope);
     if (!session.url) return { error: "Open a page with browse first" };
     if (action.type === "click") {
-      const state = await browserOf(ctx).clickLink(session.id, action.name);
+      const state = await (await meteredBrowser(ctx, userId)).clickLink(session.id, action.name);
       await record(ctx, userId, session.id, state);
     }
     return await readForAgent(ctx, userId, session.id);

@@ -11,13 +11,17 @@ import {
 } from "@agent-v/shared";
 import { DBOS } from "@dbos-inc/dbos-sdk";
 import { getConnInfo } from "@hono/node-server/conninfo";
+import { serveStatic } from "@hono/node-server/serve-static";
 import { createNodeWebSocket } from "@hono/node-ws";
-import { Hono } from "hono";
+import { APIError } from "better-auth/api";
+import { Hono, type MiddlewareHandler } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 import { streamSSE } from "hono/streaming";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { z } from "zod";
+import { accountRoutes, publicAccountRoutes } from "./account/routes.ts";
 import { decideAction, executeAction, getAction } from "./actions.ts";
 import { type Auth, clientIpHeader } from "./auth.ts";
 import { browserRoutes, signedBrowserRoutes } from "./browser/routes.ts";
@@ -30,6 +34,7 @@ import { lifeRoutes } from "./goals/routes.ts";
 import { connectorRoutes, publicConnectorRoutes } from "./mcp/routes.ts";
 import { publicWorkspaceRoutes, workspaceRoutes } from "./providers/routes.ts";
 import { pushRoutes } from "./push/routes.ts";
+import { MemoryStore, PostgresStore, rateLimiter } from "./ratelimit.ts";
 import {
   answerTask,
   cancelTask,
@@ -39,6 +44,7 @@ import {
   listTasks,
   retryTask,
 } from "./tasks/service.ts";
+import { httpTracing } from "./telemetry.ts";
 import { transcriptionAvailable, voiceRoutes } from "./voice.ts";
 import {
   addMemory,
@@ -60,8 +66,9 @@ function safeRemoteAddress(c: Parameters<typeof getConnInfo>[0]) {
   }
 }
 
-export function createApp(ctx: Context, auth: Auth) {
+export function createApp(ctx: Context, auth: Auth, options: { tracing?: boolean } = {}) {
   const app = new Hono<Env>();
+  if (options.tracing) app.use("*", httpTracing());
   const ws = createNodeWebSocket({ app });
   const origins = new Set(ctx.config.allowedOrigins);
 
@@ -91,6 +98,11 @@ export function createApp(ctx: Context, auth: Auth) {
   );
   app.onError((error, c) => {
     if (error instanceof AppError) return c.json({ error: error.message }, error.status);
+    if (error instanceof APIError)
+      return c.json(
+        { error: error.body?.message ?? error.message },
+        error.statusCode as ContentfulStatusCode,
+      );
     if (error instanceof z.ZodError)
       return c.json({ error: error.issues.map((i) => i.message).join("; ") }, 422);
     if (error instanceof SyntaxError) return c.json({ error: "Invalid JSON" }, 400);
@@ -99,7 +111,12 @@ export function createApp(ctx: Context, auth: Auth) {
   });
 
   app.get("/api/health", (c) => c.json({ ok: true }));
+  // Teams, operator actions and account deletion go through /api/team, /api/admin and
+  // /api/account (which add their own checks and side effects), never straight to Better Auth.
+  const internalAuth = /^\/api\/auth\/(organization|admin)\/|^\/api\/auth\/delete-user/;
   app.on(["GET", "POST"], "/api/auth/*", (c) => {
+    if (internalAuth.test(c.req.path))
+      return Response.json({ error: "Not found" }, { status: 404 });
     const headers = new Headers(c.req.raw.headers);
     headers.delete(clientIpHeader);
     const ip = ctx.config.trustProxy
@@ -112,6 +129,7 @@ export function createApp(ctx: Context, auth: Auth) {
   signedBrowserRoutes(app, ctx, ws.upgradeWebSocket);
   publicWorkspaceRoutes(app, ctx);
   publicConnectorRoutes(app, ctx);
+  publicAccountRoutes(app, ctx);
 
   app.use("/api/*", async (c, next) => {
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
@@ -119,6 +137,13 @@ export function createApp(ctx: Context, auth: Auth) {
     c.set("userId", session.user.id);
     await next();
   });
+  if (ctx.config.rateLimits.enabled)
+    app.use(
+      "/api/*",
+      rateLimiter(
+        ctx.config.rateLimits.store === "postgres" ? new PostgresStore(ctx) : new MemoryStore(),
+      ),
+    );
 
   const json = async <T extends z.ZodType>(c: { req: { json(): Promise<unknown> } }, schema: T) =>
     schema.parse(await c.req.json()) as z.output<T>;
@@ -132,6 +157,10 @@ export function createApp(ctx: Context, auth: Auth) {
       settings: await getSettings(ctx, userId),
       models: ctx.models.options(),
       features: {
+        plans: ctx.config.plans.enforced,
+        billing: Boolean(ctx.config.stripe),
+        email: ctx.mailer.delivers,
+        admin: (session?.user as { role?: string } | undefined)?.role === "admin",
         browser: Boolean(ctx.browser),
         computer: Boolean(ctx.config.computer),
         sampleConnector: ctx.config.mcpDemo,
@@ -242,6 +271,7 @@ export function createApp(ctx: Context, auth: Auth) {
   connectorRoutes(app, ctx);
   pushRoutes(app, ctx);
   voiceRoutes(app, ctx);
+  accountRoutes(app, ctx, auth);
 
   // Live workspace changes: one SSE stream per device replaces polling.
   app.get("/api/events", (c) => {
@@ -257,6 +287,43 @@ export function createApp(ctx: Context, auth: Auth) {
       unsubscribe();
     });
   });
+
+  // The exported web app, from the API's own origin (one image serves both).
+  if (ctx.config.webDir) {
+    const root = ctx.config.webDir;
+    const pageCsp = [
+      "default-src 'self'",
+      "script-src 'self'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https:",
+      "media-src 'self' data: blob:",
+      "font-src 'self' data:",
+      "connect-src 'self' https: wss:",
+      "frame-src 'self' https:",
+      "worker-src 'self'",
+      "frame-ancestors 'none'",
+    ].join("; ");
+    const web = (path?: string) => serveStatic({ root, path });
+    const pages =
+      (handler: ReturnType<typeof web>): MiddlewareHandler =>
+      async (c, next) => {
+        if (c.req.path.startsWith("/api/")) return next();
+        const res = await handler(c, next);
+        if (res instanceof Response && res.ok) {
+          const hashed = c.req.path.startsWith("/_expo/static/");
+          res.headers.set(
+            "cache-control",
+            hashed ? "public, max-age=31536000, immutable" : "no-cache",
+          );
+          if (res.headers.get("content-type")?.startsWith("text/html"))
+            res.headers.set("content-security-policy", pageCsp);
+        }
+        return res;
+      };
+    app.get("*", pages(web()));
+    // Client-side routes (/plan, /team, …) all load the single-page app.
+    app.get("*", pages(web("index.html")));
+  }
 
   app.notFound((c) => c.json({ error: "Not found" }, 404));
   return { app, injectWebSocket: ws.injectWebSocket };

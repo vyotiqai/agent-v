@@ -1,6 +1,6 @@
 import { type ChatMessage, readSse } from "@agent-v/shared";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, stream } from "./api";
+import { ApiError, api, stream } from "./api";
 import { useLive } from "./live";
 
 interface AgUiEvent {
@@ -89,6 +89,8 @@ export function useChat(threadId: string | null) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** The last message was refused because a plan limit was reached. */
+  const [limited, setLimited] = useState(false);
   const [queued, setQueued] = useState<{ id: string; threadId: string; content: string }[]>([]);
   const controller = useRef<AbortController | null>(null);
   const runningRef = useRef(false);
@@ -115,6 +117,7 @@ export function useChat(threadId: string | null) {
 
   const run = useCallback(async (id: string, content: string) => {
     setError(null);
+    setLimited(false);
     const messageId = `m_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
     setMessages((m) => [...m, { id: messageId, role: "user", content }]);
     const abort = new AbortController();
@@ -143,6 +146,11 @@ export function useChat(threadId: string | null) {
         frame ??= requestAnimationFrame(flush);
       }
     } catch (e) {
+      if (e instanceof ApiError && e.status === 402) {
+        // Refused before anything was saved: take the message back out.
+        setMessages((m) => m.filter((x) => x.id !== messageId));
+        setLimited(true);
+      }
       if (!abort.signal.aborted) setError((e as Error).message);
     } finally {
       if (frame !== null) cancelAnimationFrame(frame);
@@ -176,5 +184,5 @@ export function useChat(threadId: string | null) {
     controller.current?.abort();
   }, []);
 
-  return { messages, running, queued, error, send, stop, reload: load };
+  return { messages, running, queued, error, limited, send, stop, reload: load };
 }

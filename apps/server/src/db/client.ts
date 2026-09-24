@@ -22,6 +22,17 @@ export function createDatabase(url: string, max = 10): Database {
 
 export const migrationsFolder = fileURLToPath(new URL("../../drizzle", import.meta.url));
 
-export async function runMigrations(db: Db) {
-  await migrate(db, { migrationsFolder });
+/**
+ * Apply pending migrations. Replicas starting together queue on an advisory lock, so exactly
+ * one of them migrates and the rest find nothing left to do.
+ */
+export async function runMigrations(db: Db, pool?: pg.Pool) {
+  const lock = await pool?.connect();
+  try {
+    await lock?.query("select pg_advisory_lock(hashtext('agent-v:migrations'))");
+    await migrate(db, { migrationsFolder });
+  } finally {
+    await lock?.query("select pg_advisory_unlock(hashtext('agent-v:migrations'))").catch(() => {});
+    lock?.release();
+  }
 }

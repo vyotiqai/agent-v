@@ -1,11 +1,13 @@
 import { DBOS } from "@dbos-inc/dbos-sdk";
 import { createApp } from "./app.ts";
-import { createAuth } from "./auth.ts";
+import { createAuth, promoteAdmins } from "./auth.ts";
+import { billingQueue, setBillingContext } from "./billing/service.ts";
 import { BrowserClient } from "./browser/client.ts";
 import { recoverCommands } from "./computer/service.ts";
 import type { Config } from "./config.ts";
 import type { Context } from "./context.ts";
 import { createDatabase, runMigrations } from "./db/client.ts";
+import { createMailer, type Mailer } from "./mail.ts";
 import { createEmbedder } from "./memory/embed.ts";
 import { learnQueue, setMemoryContext } from "./memory/service.ts";
 import { createModels, type Models } from "./models/registry.ts";
@@ -20,13 +22,22 @@ import { startQueueClient, stopQueueClient } from "./queue.ts";
 import { Realtime } from "./realtime.ts";
 import { Signer } from "./signing.ts";
 import { setTaskContext, taskQueue } from "./tasks/workflow.ts";
+import { startTelemetry } from "./telemetry.ts";
 
 const appName = "agent-v";
 
 /** Build and start everything one server process needs. Used by the entry point and tests. */
-export async function startRuntime(config: Config, options: { models?: Models } = {}) {
+export async function startRuntime(
+  config: Config,
+  options: {
+    models?: Models;
+    mailer?: Mailer;
+    telemetry?: Parameters<typeof startTelemetry>[1];
+  } = {},
+) {
   const database = createDatabase(config.databaseUrl);
-  await runMigrations(database.db);
+  const telemetry = startTelemetry(config, options.telemetry);
+  await runMigrations(database.db, database.pool);
   const realtime = new Realtime(database.pool, config.databaseUrl);
   await realtime.start();
   const ctx: Context = {
@@ -35,6 +46,7 @@ export async function startRuntime(config: Config, options: { models?: Models } 
     models: options.models ?? createModels(config),
     embedder: createEmbedder(config),
     realtime,
+    mailer: options.mailer ?? createMailer(config),
     browser: config.browser
       ? new BrowserClient(config.browser.url, config.browser.token)
       : undefined,
@@ -44,6 +56,8 @@ export async function startRuntime(config: Config, options: { models?: Models } 
   setMonitorContext(ctx);
   setPushContext(ctx);
   setMemoryContext(ctx);
+  setBillingContext(ctx);
+  await promoteAdmins(ctx);
   await recoverCommands(ctx);
   DBOS.setConfig({
     name: appName,
@@ -66,6 +80,11 @@ export async function startRuntime(config: Config, options: { models?: Models } 
     minPollingIntervalMs: 1000,
     onConflict: "always_update",
   });
+  await DBOS.registerQueue(billingQueue, {
+    workerConcurrency: 2,
+    minPollingIntervalMs: 1000,
+    onConflict: "always_update",
+  });
   await DBOS.registerQueue(pushQueue, {
     workerConcurrency: 8,
     minPollingIntervalMs: 500,
@@ -75,8 +94,8 @@ export async function startRuntime(config: Config, options: { models?: Models } 
   await startQueueClient(config.databaseUrl, appName);
   ctx.monitors = { enqueue: enqueueCheck };
   ctx.push = { deliver: (userId, id) => enqueueDelivery(ctx, userId, id) };
-  const auth = createAuth(config, database.db);
-  const { app, injectWebSocket } = createApp(ctx, auth);
+  const auth = createAuth(ctx);
+  const { app, injectWebSocket } = createApp(ctx, auth, { tracing: telemetry.enabled });
   return {
     app,
     injectWebSocket,
@@ -87,6 +106,7 @@ export async function startRuntime(config: Config, options: { models?: Models } 
       await DBOS.shutdown();
       await realtime.close();
       await database.close();
+      await telemetry.shutdown();
     },
   };
 }

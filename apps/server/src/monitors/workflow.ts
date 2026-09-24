@@ -46,7 +46,12 @@ const checkId = (id: string, slot: string) => `monitor:${id}:${slot}`;
 /** Queue the check for a due time. Safe to call from requests, steps and repeated calls. */
 export async function enqueueCheck(userId: string, id: string, slot: Date) {
   const at = slot.toISOString();
-  await enqueue(monitorQueue, "monitor-check", checkId(id, at), userId, id, at);
+  await enqueue(
+    { queue: monitorQueue, workflow: "monitor-check", id: checkId(id, at), user: userId },
+    userId,
+    id,
+    at,
+  );
 }
 
 /** Runs every minute on every server; the per-slot workflow ids keep checks from doubling. */
@@ -65,6 +70,7 @@ async function sweepFunction(_scheduled: Date, _context: unknown): Promise<void>
       await DBOS.startWorkflow(monitorCheckWorkflow, {
         workflowID: checkId(m.id, m.slot),
         queueName: monitorQueue,
+        authenticatedUser: m.userId,
       })(m.userId, m.id, m.slot);
 }
 export const monitorSweep = DBOS.registerWorkflow(sweepFunction, { name: "monitor-sweep" });

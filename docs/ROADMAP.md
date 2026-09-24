@@ -133,9 +133,36 @@ OpenMuse plus multi-user SaaS, MCP connectors, push notifications and voice.
       MCP resources and prompts, remote MCP servers over the legacy SSE transport, an HNSW index
       once memories per user grow large, push receipts.
 
-## Phase 7 — SaaS hardening
+## Phase 7 — SaaS hardening (done)
 
-- Organisations, roles, admin (Better Auth plugins); per-user quotas and rate limits.
-- Usage metering and billing hooks; data export and deletion.
-- Observability (OpenTelemetry), backups, Helm chart / Compose production profile.
-- Desktop app via Tauri 2 wrapping the web build.
+- [x] Plans and quotas: Free, Pro and Team built in (`PLANS=default`) or your own JSON; monthly
+      AI tokens, tasks, browser actions, computer and voice minutes, plus storage, connectors and
+      watches. Without `PLANS` a server has no limits. Refusals are HTTP 402 with a clear message.
+- [x] Metering: every model call goes through one wrapper that counts tokens per user and model
+      (an estimate when a reply is cut short, so closing the app doesn't skip metering); task,
+      browser, computer and voice counters; usage by month in `usage_counters`.
+- [x] Rate limits per person and route, in memory or shared through Postgres for several
+      replicas, with standard `RateLimit-*` headers; Better Auth's sign-in limits share the store.
+- [x] Billing: Stripe Checkout, the billing portal and signed webhooks (state read back from
+      Stripe, so replays and out-of-order events settle correctly), team seats kept in sync by a
+      durable workflow, and plan grants by operators.
+- [x] Teams (Better Auth organization plugin): owner, admin and member roles, email
+      invitations (in-app too for existing accounts), one team per person, shared plan; members'
+      data stays private and managers only see usage numbers.
+- [x] Operators (Better Auth admin plugin, restricted): list and search accounts, grant plans,
+      suspend (ends sessions). No impersonation, no password or content access.
+- [x] Account email over SMTP: verification, password reset, invitations; the log stands in when
+      SMTP isn't set.
+- [x] Your data: a streamed ZIP export (JSON plus files, no secrets) with a short-lived signed
+      link for phones and desktop; password-confirmed deletion that also cancels billing, stops
+      work, removes files, the Linux computer, browser profiles and the workflow history.
+- [x] OpenTelemetry traces (per request by route, continuing callers' traces, AI calls without
+      prompt content by default) and metrics over OTLP; JSON logs with trace ids.
+- [x] Several replicas: a per-chat lease in Postgres instead of per-process locks, and migrations
+      behind an advisory lock.
+- [x] Production: one image serving API and web app, a Compose stack (Caddy HTTPS, browser worker,
+      Postgres, backups, optional collector and Jaeger), a Helm chart (probes, PDB, HPA, network
+      policy, backup CronJob), and tested backup and restore scripts.
+- [x] Desktop app (Tauri 2): the web build in a native window with tray, single instance, window
+      state and native notifications; built for macOS, Windows and Linux in CI.
+- [ ] Next: SSO

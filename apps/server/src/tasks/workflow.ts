@@ -9,12 +9,15 @@ import {
   getAction,
   proposeAction,
 } from "../actions.ts";
+import { meteredModel } from "../billing/meter.ts";
+import { assertQuota } from "../billing/usage.ts";
 import { browseForAgent, scopedAgentAction } from "../browser/service.ts";
 import { type Context, newId } from "../context.ts";
 import { AppError } from "../errors.ts";
 import { recordGoalProgress } from "../goals/service.ts";
 import { connectorToolsFor } from "../mcp/service.ts";
 import { taskSystemPrompt } from "../prompts.ts";
+import { aiTelemetry } from "../telemetry.ts";
 import { computerDescriptions, computerSchemas, runComputerTool } from "../tools/computer.ts";
 import { lifeDescriptions, lifeSchemas, runLifeTool } from "../tools/life.ts";
 import { proposalFor, runAutoTool, toolSchema } from "../tools/mcp.ts";
@@ -158,8 +161,10 @@ async function nextStep(
   model: string,
   messages: ModelMessage[],
 ): Promise<ModelReply> {
+  // A task stops (and can be retried later) when the month's AI allowance runs out.
+  await assertQuota(ctx(), userId, "tokens");
   const result = await generateText({
-    model: ctx().models.resolve(model),
+    model: meteredModel(ctx(), userId, model),
     system: await taskSystemPrompt(
       ctx(),
       userId,
@@ -176,6 +181,7 @@ async function nextStep(
       ...taskTools(ctx()),
     },
     maxRetries: 0,
+    telemetry: aiTelemetry(ctx().config, "task"),
   });
   return {
     text: result.text,

@@ -1,5 +1,5 @@
 import Feather from "@expo/vector-icons/Feather";
-import type { ComponentProps, ReactNode } from "react";
+import { type ComponentProps, type ReactNode, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -288,8 +288,22 @@ export function Choices<T extends string | number>({
   );
 }
 
+const progressTones = {
+  normal: "bg-emerald-500",
+  warn: "bg-amber-500",
+  full: "bg-red-500",
+};
+
 /** A thin progress meter; `label` names it for screen readers. */
-export function Progress({ value, label }: { value: number; label: string }) {
+export function Progress({
+  value,
+  label,
+  tone = "normal",
+}: {
+  value: number;
+  label: string;
+  tone?: keyof typeof progressTones;
+}) {
   const percent = Math.round(Math.min(1, Math.max(0, value)) * 100);
   return (
     <View
@@ -298,7 +312,88 @@ export function Progress({ value, label }: { value: number; label: string }) {
       accessibilityValue={{ min: 0, max: 100, now: percent }}
       className="h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
     >
-      <View className="h-full rounded-full bg-emerald-500" style={{ width: `${percent}%` }} />
+      <View
+        className={`h-full rounded-full ${progressTones[tone]}`}
+        style={{ width: `${percent}%` }}
+      />
     </View>
+  );
+}
+
+/** A tappable settings row that opens another screen. */
+export function NavRow({
+  icon,
+  title,
+  detail,
+  onPress,
+}: {
+  icon: IconName;
+  title: string;
+  detail?: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="link"
+      onPress={onPress}
+      className="flex-row items-center gap-3 rounded-xl px-2 py-2.5 active:bg-zinc-50 dark:active:bg-zinc-800"
+    >
+      <Icon name={icon} size={18} />
+      <View className="flex-1">
+        <Text className="text-[15px] font-medium text-zinc-900 dark:text-zinc-100">{title}</Text>
+        {detail ? <Muted className="text-xs">{detail}</Muted> : null}
+      </View>
+      <Icon name="chevron-right" size={16} />
+    </Pressable>
+  );
+}
+
+/** One headline number with its label. */
+export function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <View className="min-w-[140px] flex-1 gap-1 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+      <Text className="text-2xl font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
+        {value}
+      </Text>
+      <Muted className="text-xs">{label}</Muted>
+    </View>
+  );
+}
+
+/** A destructive button that asks for a second tap before acting. */
+export function ConfirmButton({
+  title,
+  confirmTitle,
+  onConfirm,
+  busy,
+  disabled,
+  className = "",
+}: {
+  title: string;
+  confirmTitle: string;
+  onConfirm: () => void;
+  busy?: boolean;
+  disabled?: boolean;
+  className?: string;
+}) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const timer = setTimeout(() => setArmed(false), 5000);
+    return () => clearTimeout(timer);
+  }, [armed]);
+  return (
+    <Button
+      title={armed ? confirmTitle : title}
+      variant="danger"
+      busy={busy}
+      disabled={disabled}
+      className={className}
+      onPress={() => {
+        if (!armed) return setArmed(true);
+        setArmed(false);
+        onConfirm();
+      }}
+    />
   );
 }

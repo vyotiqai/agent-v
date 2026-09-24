@@ -18,7 +18,11 @@ no required hosted service apart from your model provider.
 
 | Area | Details |
 | --- | --- |
-| **Accounts** | Multi-user email/password sign-in (Better Auth). Bearer tokens on mobile. Every row is scoped to its owner. |
+| **Accounts** | Multi-user email/password sign-in (Better Auth) with email verification and password reset over SMTP. Bearer tokens on phones and desktop. Every row is scoped to its owner. Download everything as a ZIP, or delete the account and everything it owns (including billing, files, the Linux computer and workflow history) after confirming your password. |
+| **Plans and teams** | Optional plans with monthly allowances (AI tokens, tasks, browser actions, computer and voice minutes) and limits (storage, connectors, watches), metered per person and model. Stripe Checkout, billing portal and signed webhooks. Teams share a plan billed per member (seats follow the team) with owner, admin and member roles and email invitations; nobody sees another member's data. Per-person rate limits. |
+| **Operators** | An Admin screen for the emails in `ADMIN_EMAILS`: search accounts, see monthly usage, grant plans, suspend. Operators can't impersonate anyone or read content. |
+| **Operations** | One image serves API and web app. Docker Compose (Caddy HTTPS, backups, optional tracing) and a Helm chart for Kubernetes. OpenTelemetry traces and metrics, JSON logs. Several replicas share rate limits, chat locks and migrations through Postgres. Tested backup and restore scripts. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). |
+| **Desktop** | A Tauri 2 app (`apps/desktop`) for macOS, Windows and Linux: the web app in a native window, tray, single instance, native notifications. |
 | **Chat** | Streams [AG-UI 1.0](https://docs.ag-ui.com) events over SSE, rendered as Markdown (tables, code, lists) that never flashes half-written syntax and re-renders only the block that is still growing. Tool activity shows inline. Send becomes Stop while a reply streams, and typed follow-ups queue. Chats are stored, renamable and archivable. |
 | **Models** | OpenAI, Anthropic, Google, and any OpenAI-compatible endpoint (Ollama, vLLM, LM Studio, OpenRouter…). An offline demo model makes everything work with no key. |
 | **Background tasks** | Durable DBOS workflows. Every model call and tool call is checkpointed, so restarts resume. Tasks have plans, progress, questions for you, cancel, resume, and retry from the failed step. |

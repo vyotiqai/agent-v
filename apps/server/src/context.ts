@@ -1,6 +1,7 @@
 import type { BrowserClient } from "./browser/client.ts";
 import type { Config } from "./config.ts";
 import type { Db } from "./db/client.ts";
+import type { Mailer } from "./mail.ts";
 import type { Embedder } from "./memory/embed.ts";
 import type { Models } from "./models/registry.ts";
 import type { Realtime } from "./realtime.ts";
@@ -14,6 +15,8 @@ export interface Context {
   /** Turns text into vectors for memory search. */
   embedder: Embedder;
   realtime: Realtime;
+  /** Account emails: verification, password resets, team invitations. */
+  mailer: Mailer;
   /** Present when a browser worker is configured. */
   browser?: BrowserClient;
   /** Signs short-lived links (screenshots, live view) that cannot carry a bearer token. */

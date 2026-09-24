@@ -1,0 +1,66 @@
+{{- if .Values.postgresql.enabled }}
+{{- $fullname := include "agent-v.fullname" . }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $fullname }}-postgresql
+  labels: {{- include "agent-v.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+spec:
+  serviceName: {{ $fullname }}-postgresql
+  replicas: 1
+  selector:
+    matchLabels: {{- include "agent-v.selector" . | nindent 6 }}
+      app.kubernetes.io/component: postgresql
+  template:
+    metadata:
+      labels: {{- include "agent-v.selector" . | nindent 8 }}
+        app.kubernetes.io/component: postgresql
+    spec:
+      securityContext:
+        fsGroup: 999
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: postgresql
+          image: {{ .Values.postgresql.image }}
+          env:
+            - { name: POSTGRES_USER, value: agentv }
+            - { name: POSTGRES_DB, value: agentv }
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "agent-v.secretName" . }}
+                  key: POSTGRES_PASSWORD
+          ports:
+            - { name: postgresql, containerPort: 5432 }
+          readinessProbe:
+            exec: { command: [pg_isready, -U, agentv] }
+            periodSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - { name: data, mountPath: /var/lib/postgresql }
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        {{- with .Values.postgresql.storageClass }}
+        storageClassName: {{ . }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.postgresql.storage }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullname }}-postgresql
+  labels: {{- include "agent-v.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  selector: {{- include "agent-v.selector" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+  ports:
+    - { name: postgresql, port: 5432, targetPort: postgresql }
+{{- end }}

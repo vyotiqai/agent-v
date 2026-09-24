@@ -9,6 +9,7 @@ import {
   monitorInputSchema,
 } from "@agent-v/shared";
 import { and, desc, eq, inArray, lte, notInArray, sql } from "drizzle-orm";
+import { assertQuota } from "../billing/usage.ts";
 import { type Context, iso, newId } from "../context.ts";
 import { demoPages, goals, monitorChecks, monitors } from "../db/schema.ts";
 import { AppError, notFound } from "../errors.ts";
@@ -115,6 +116,7 @@ export async function getMonitorDetail(
 export async function createMonitor(ctx: Context, userId: string, raw: MonitorInput) {
   const input = monitorInputSchema.parse(raw);
   const url = checkSource(ctx, input.url);
+  await assertQuota(ctx, userId, "watches", 1);
   const running = await ctx.db.$count(
     monitors,
     and(eq(monitors.userId, userId), notInArray(monitors.status, ["stopped"])),

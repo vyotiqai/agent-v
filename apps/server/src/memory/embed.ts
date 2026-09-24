@@ -6,6 +6,7 @@ import { type EmbeddingModel, embedMany } from "ai";
 import type { Config } from "../config.ts";
 import { AppError } from "../errors.ts";
 import { parseModelId } from "../models/registry.ts";
+import { aiTelemetry } from "../telemetry.ts";
 
 export interface Embedder {
   /** Stored with each vector: vectors from different models are never compared. */
@@ -75,6 +76,7 @@ export function createEmbedder(config: Config): Embedder {
           model: embeddingModel,
           values: texts,
           maxRetries: 2,
+          telemetry: aiTelemetry(config, "embed"),
         });
         return embeddings;
       } catch (error) {

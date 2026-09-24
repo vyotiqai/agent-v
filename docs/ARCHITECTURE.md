@@ -26,7 +26,7 @@ users, fully self-hostable, and with no required hosted service apart from a mod
 | --- | --- | --- |
 | Runtime | Node 24 LTS (22.12+ works), native TypeScript type stripping | No build step for the server; Playwright and `pg` are first-class. |
 | HTTP | Hono 4.13 | Tiny, fast, web-standard, portable to Bun or edge later. |
-| Auth | Better Auth 1.7 (email/password, bearer tokens for mobile; passkeys, OAuth, orgs later) | Self-hosted, TypeScript-native, grows from one user to SaaS. |
+| Auth | Better Auth 1.7 (email/password, bearer tokens, organization and admin plugins) | Self-hosted, TypeScript-native, grows from one user to SaaS. |
 | Database | Postgres 18 (16+ works) with Drizzle ORM 0.45 | Typed SQL, zero runtime overhead, generated migrations. |
 | Durable work | DBOS Transact 5 | Library, Postgres-only, MIT. Steps, `recv` waits, cancel/resume/fork, queues, cron. |
 | Agent loop | Vercel AI SDK 7 | Widest provider support: OpenAI, Anthropic, Google, any OpenAI-compatible endpoint. |
@@ -216,6 +216,82 @@ Mutations call `publish(userId, event)`, which runs `pg_notify`. Every server pr
 on one connection and forwards events to that user's open SSE streams. Clients refetch what
 changed; nothing polls.
 
+### Plans, metering and billing
+
+Every model call goes through `meteredModel` (AI SDK middleware), which adds the provider's
+token counts to `usage_counters` (user, month, metric). If a stream ends without the provider's
+usage report, because the person stopped it or closed the app, it records an estimate instead.
+Tasks, browser actions, computer seconds and voice seconds are counted where they happen.
+Storage, connectors and watches are counted live.
+
+`assertQuota` runs before the work starts:
+
+- It returns HTTP 402 with a message saying which limit was reached and when it resets.
+- Only the plan's limits are cached (30 s), never the counters.
+- Learning from chat skips quietly instead of failing.
+
+A person's plan is the best of three:
+
+- their own Stripe subscription
+- a grant from an operator
+- their team's subscription
+
+Stripe webhooks are verified with HMAC over timestamp and body, with a 5-minute tolerance.
+They are handled by fetching the subscription from Stripe rather than trusting the event, so
+replays and out-of-order delivery converge. A late event about an old, ended subscription
+never overrides a live one. Team seats follow membership through a `billing-seats` workflow
+that retries and uses Stripe idempotency keys.
+
+### Teams and operators
+
+**Teams** are Better Auth organizations. The app reaches them only through `/api/team`,
+which enforces:
+
+- one team per person
+- who may do what (owners, admins, members)
+- invitation delivery: email, plus a notification in the app for existing accounts
+
+Better Auth's own `/organization/*`, `/admin/*` and `/delete-user` endpoints are closed to
+clients. When email is really delivered, invitations require a confirmed address.
+
+**Operators** (`ADMIN_EMAILS`) have a narrowed admin role: list, get and ban users, and list
+and revoke sessions. There is no impersonation, password setting or account editing.
+
+### Export and deletion
+
+**Export** streams a ZIP (fflate) of JSON per area plus the files. Tokens, sealed secrets,
+push addresses and embeddings are left out. Phones and the desktop app download through a
+5-minute signed link.
+
+**Deletion** requires the password and runs in two stages:
+
+1. **Before the rows go:**
+   - refuse if the person owns a team with other members
+   - cancel Stripe
+   - cancel running workflows
+   - remove browser sessions, the Linux computer and files
+2. **After the rows go:** erase the workflow history. Every workflow records its owner as the
+   DBOS `authenticatedUser`, which is how it is found.
+
+### Operations
+
+**Telemetry:**
+
+- OpenTelemetry is enabled by `OTEL_EXPORTER_OTLP_ENDPOINT`.
+- Every request gets a server span named by its route. It continues the caller's
+  `traceparent`, and AI SDK spans (via `@ai-sdk/otel`) nest inside it.
+- AI spans carry model and token counts but no prompt or reply text unless
+  `OTEL_RECORD_CONTENT=true`.
+- Metrics: `http.server.request.duration` and `agent_v.tokens`.
+
+**Several replicas:**
+
+- A chat reply holds a 60-second lease on its thread row, renewed while it streams and
+  released after the reply is saved.
+- Migrations run behind `pg_advisory_lock`.
+- Rate limits can live in Postgres (`RATE_LIMIT_STORE=postgres`), one upsert per request;
+  Better Auth's sign-in limits use the same store.
+
 ## Security notes
 
 - Server-side fetches resolve DNS once, reject private, loopback, link-local, CGNAT and
@@ -225,14 +301,11 @@ changed; nothing polls.
   no tool lets the model approve its own actions.
 - Provider keys never leave the server.
 
-## Known limits of the foundation (phase 1)
+## Known limits
 
-- One chat run per thread is enforced per process. Horizontally scaled APIs need sticky
-  routing or a Postgres advisory lock for that guarantee.
-- Chat Markdown is a small built-in subset; streaming Markdown with code highlighting
-  (react-native-enriched-markdown / streamdown) arrives with phase 6.
-- Email verification, password reset, passkeys and OAuth sign-in are Better Auth plugins that
-  are not switched on yet.
+- Passkeys, social sign-in and SSO for teams are not switched on yet.
+- Uploaded files live on a volume. Several replicas need a ReadWriteMany volume until
+  S3-compatible storage lands.
 - `web_fetch` (used only without a browser worker) reads static HTML.
 - One worker process serves every user's sessions; hard per-user isolation (a container per
   user) and WebRTC take-over are next steps.

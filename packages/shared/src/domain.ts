@@ -158,6 +158,8 @@ export interface WorkspaceEvent {
     | "idea"
     | "finance"
     | "connector"
+    | "usage"
+    | "team"
     | "device";
   id: string;
 }

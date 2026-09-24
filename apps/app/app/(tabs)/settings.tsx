@@ -1,5 +1,12 @@
-import type { BrowserSession, Memory, Settings, WorkspaceStatus } from "@agent-v/shared";
-import { router } from "expo-router";
+import type {
+  BrowserSession,
+  Memory,
+  Settings,
+  TeamInfo,
+  Usage,
+  WorkspaceStatus,
+} from "@agent-v/shared";
+import { router, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Switch, Text, View } from "react-native";
@@ -14,8 +21,10 @@ import {
   IconButton,
   Label,
   Muted,
+  NavRow,
   Title,
 } from "../../src/components/ui";
+import { compact } from "../../src/lib/account";
 import { API_URL, api } from "../../src/lib/api";
 import { useAuth } from "../../src/lib/auth";
 import { useMe } from "../../src/lib/me";
@@ -23,7 +32,11 @@ import { useResource } from "../../src/lib/resource";
 
 export default function SettingsScreen() {
   const { signOut } = useAuth();
+  const { verified } = useLocalSearchParams<{ verified?: string }>();
   const me = useMe();
+  const usage = useResource<Usage>("/api/usage", ["usage"]);
+  const team = useResource<TeamInfo>("/api/team", ["team"]);
+  const [verifySent, setVerifySent] = useState(false);
   const memories = useResource<Memory[]>("/api/memories", ["memory"]);
   const browsers = useResource<BrowserSession[]>(
     me.data?.features.browser ? "/api/browsers" : null,
@@ -69,6 +82,48 @@ export default function SettingsScreen() {
       <ScrollView contentContainerClassName="mx-auto w-full max-w-2xl gap-6 px-4 pb-12 pt-4">
         <Title>Settings</Title>
         {error ? <ErrorText>{error}</ErrorText> : null}
+
+        <View>
+          <Label>Plan and account</Label>
+          <Card className="gap-1 p-2">
+            <NavRow
+              icon="bar-chart-2"
+              title="Plan and usage"
+              detail={
+                usage.data
+                  ? `${usage.data.plan.name} · ${compact(usage.data.used.tokens)}${usage.data.plan.limits.tokens !== null ? ` of ${compact(usage.data.plan.limits.tokens)}` : ""} AI tokens this month`
+                  : undefined
+              }
+              onPress={() => router.push("/plan")}
+            />
+            <NavRow
+              icon="users"
+              title="Team"
+              detail={
+                team.data?.team
+                  ? `${team.data.team.name} · ${team.data.members.length} ${team.data.members.length === 1 ? "member" : "members"}`
+                  : team.data?.received.length
+                    ? "You have an invitation"
+                    : "Share a plan with others"
+              }
+              onPress={() => router.push("/team")}
+            />
+            <NavRow
+              icon="download"
+              title="Your data"
+              detail="Download everything, or delete your account"
+              onPress={() => router.push("/data")}
+            />
+            {me.data?.features.admin ? (
+              <NavRow
+                icon="shield"
+                title="Admin"
+                detail="Accounts, plans and suspensions"
+                onPress={() => router.push("/admin")}
+              />
+            ) : null}
+          </Card>
+        </View>
 
         <View>
           <Label>Model</Label>
@@ -349,6 +404,31 @@ export default function SettingsScreen() {
                   {me.data.user.name}
                 </Text>
                 <Muted>{me.data.user.email}</Muted>
+              </View>
+            ) : null}
+            {verified ? (
+              <Muted className="text-xs">Your email is confirmed.</Muted>
+            ) : me.data?.features.email && !me.data.user.emailVerified ? (
+              <View className="flex-row items-center gap-3">
+                <Muted className="flex-1 text-xs">
+                  {verifySent
+                    ? "Check your inbox for the confirmation link."
+                    : "Confirm your email to join teams and reset your password."}
+                </Muted>
+                {verifySent ? null : (
+                  <Button
+                    title="Send link"
+                    variant="secondary"
+                    onPress={() =>
+                      void run(async () => {
+                        await api("/api/auth/send-verification-email", {
+                          body: { email: me.data?.user.email },
+                        });
+                        setVerifySent(true);
+                      })
+                    }
+                  />
+                )}
               </View>
             ) : null}
             <Muted className="text-xs">Server: {API_URL}</Muted>

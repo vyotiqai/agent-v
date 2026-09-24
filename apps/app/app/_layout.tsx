@@ -47,6 +47,22 @@ export default function RootLayout() {
             name="tasks/[id]"
             options={{ headerShown: true, title: "Task", headerBackTitle: "Back" }}
           />
+          <Stack.Screen
+            name="plan"
+            options={{ headerShown: true, title: "Plan and usage", headerBackTitle: "Back" }}
+          />
+          <Stack.Screen
+            name="team"
+            options={{ headerShown: true, title: "Team", headerBackTitle: "Back" }}
+          />
+          <Stack.Screen
+            name="data"
+            options={{ headerShown: true, title: "Your data", headerBackTitle: "Back" }}
+          />
+          <Stack.Screen
+            name="admin"
+            options={{ headerShown: true, title: "Admin", headerBackTitle: "Back" }}
+          />
         </Stack>
       </AuthProvider>
     </SafeAreaProvider>
