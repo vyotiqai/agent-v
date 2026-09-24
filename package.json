@@ -7,8 +7,10 @@
     "node": ">=22.12"
   },
   "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "dev:server": "pnpm --filter @agent-v/server dev",
+    "dev:app": "pnpm --filter @agent-v/app dev",
+    "db:migrate": "pnpm --filter @agent-v/server db:migrate",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "lint": "biome check .",

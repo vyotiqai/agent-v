@@ -1,0 +1,7 @@
+@import "tailwindcss";
+@import "uniwind";
+
+@theme {
+  --color-accent: #5b5bd6;
+  --color-accent-soft: #eef0ff;
+}

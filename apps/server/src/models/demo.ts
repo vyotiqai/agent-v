@@ -130,7 +130,13 @@ function chatTurn(input: string, results: ToolOutcome[], tools: Set<string>) {
     if (done.toolName === "remember_fact") return say("Got it. I'll remember that.");
     if (done.toolName === "web_fetch")
       return say(
-        `I read **${String(output.title || output.url)}**. Here's the start of it:\n\n> ${String(output.text ?? "").slice(0, 400)}`,
+        `I read **${String(output.title || output.url)}**. Here's the start of it:\n\n${String(
+          output.text ?? "",
+        )
+          .slice(0, 400)
+          .split("\n")
+          .map((line) => `> ${line}`)
+          .join("\n")}`,
       );
     return say("Done.");
   }

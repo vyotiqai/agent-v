@@ -106,3 +106,15 @@ changed; nothing polls.
 - Model output, page text and email content are treated as data. System prompts say so, and
   no tool lets the model approve its own actions.
 - Provider keys never leave the server.
+
+## Known limits of the foundation (phase 1)
+
+- One chat run per thread is enforced per process. Horizontally scaled APIs need sticky
+  routing or a Postgres advisory lock for that guarantee.
+- Chat Markdown is a small built-in subset; streaming Markdown with code highlighting
+  (react-native-enriched-markdown / streamdown) arrives with phase 6.
+- Email verification, password reset, passkeys and OAuth sign-in are Better Auth plugins that
+  are not switched on yet.
+- `web_fetch` reads static HTML. JavaScript-heavy sites need the agent browser (phase 2).
+- The demo model follows fixed rules so the product can be exercised offline; it is not a
+  substitute for a real model.

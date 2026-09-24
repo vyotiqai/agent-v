@@ -15,8 +15,9 @@ OpenMuse plus multi-user SaaS, MCP connectors, push notifications and voice.
 - [x] Approval-gated actions with content hashes, expiry and `outcome_unknown`.
 - [x] Memory (explicit facts), notifications, realtime SSE fan-out via LISTEN/NOTIFY.
 - [x] `web_fetch` tool with DNS-pinned SSRF protection.
-- [x] Expo app (iOS, Android, web): sign-in, streaming chat with tool activity, tasks with
-      plan/answer/approve, memory and settings.
+- [x] Expo app (iOS, Android, web): sign-in, streaming chat with tool activity and a
+      follow-up queue, chat history, tasks with plan/answer/approve/cancel/retry, notifications,
+      model choice, personality and memory.
 
 ## Phase 2 — Agent browser
 
