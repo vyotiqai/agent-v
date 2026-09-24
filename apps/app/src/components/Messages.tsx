@@ -76,6 +76,34 @@ function describe(
         icon: "calendar",
         text: done ? "Prepared an event for your review" : "Preparing an event",
       };
+    case "computer_run": {
+      const status = typeof output.status === "string" ? output.status : "";
+      return {
+        icon: "terminal",
+        text: done
+          ? `Ran \`${String(args.command ?? "").slice(0, 60)}\` · ${status === "succeeded" ? "exit 0" : status.replace("_", " ") || "done"}`
+          : `Running \`${String(args.command ?? "").slice(0, 60)}\``,
+      };
+    }
+    case "computer_list":
+      return {
+        icon: "folder",
+        text: done ? `Listed ${String(args.path ?? "/workspace")}` : "Listing files",
+      };
+    case "computer_read_file":
+      return {
+        icon: "file-text",
+        text: done ? `Read ${String(args.path ?? "")}` : "Reading a file",
+      };
+    case "computer_write_file":
+      return { icon: "edit-3", text: done ? `Wrote ${String(args.path ?? "")}` : "Writing a file" };
+    case "computer_import_file":
+      return {
+        icon: "download",
+        text: done ? `Copied a file to ${String(args.path ?? "")}` : "Copying a file",
+      };
+    case "computer_export_pdf":
+      return { icon: "upload", text: done ? "Saved a PDF to Files" : "Saving a PDF to Files" };
     case "delegate_task":
       return {
         icon: "zap",

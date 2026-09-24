@@ -7,6 +7,7 @@ import { browseForAgent, scopedAgentAction } from "../browser/service.ts";
 import { type Context, newId } from "../context.ts";
 import { AppError } from "../errors.ts";
 import { taskSystemPrompt } from "../prompts.ts";
+import { computerDescriptions, computerSchemas, runComputerTool } from "../tools/computer.ts";
 import { readWebPage } from "../tools/web.ts";
 import { workspaceDescriptions, workspaceSchemas, workspaceTools } from "../tools/workspace.ts";
 
@@ -77,6 +78,15 @@ const allTaskTools = {
       }),
     ]),
   ) as { [K in keyof typeof workspaceSchemas]: ReturnType<typeof tool> }),
+  ...(Object.fromEntries(
+    (Object.keys(computerSchemas) as (keyof typeof computerSchemas)[]).map((key) => [
+      key,
+      tool({
+        description: computerDescriptions[key],
+        inputSchema: computerSchemas[key] as z.ZodType,
+      }),
+    ]),
+  ) as { [K in keyof typeof computerSchemas]: ReturnType<typeof tool> }),
   finish_task: tool({
     description: "Finish the task with a summary of the outcome for the owner.",
     inputSchema: z.object({ summary: z.string().min(1).max(8000) }),
@@ -100,7 +110,11 @@ type TaskToolName = keyof typeof allTaskTools;
 /** With a browser worker the agent gets the real browser; otherwise the plain fetcher. */
 function taskTools(c: Context) {
   const { browse, click_link, read_page, web_fetch, ...rest } = allTaskTools;
-  return c.browser ? { ...rest, browse, click_link, read_page } : { ...rest, web_fetch };
+  const tools: Record<string, unknown> = c.browser
+    ? { ...rest, browse, click_link, read_page }
+    : { ...rest, web_fetch };
+  if (!c.config.computer) for (const name of Object.keys(computerSchemas)) delete tools[name];
+  return tools as typeof allTaskTools;
 }
 
 interface ModelCall {
@@ -323,6 +337,36 @@ async function runTool(
       });
       return { status: outcome.status, result: outcome.result, error: outcome.error };
     }
+    case "computer_run":
+    case "computer_list":
+    case "computer_read_file":
+    case "computer_write_file":
+    case "computer_import_file":
+    case "computer_export_pdf":
+      // The operation id makes a replayed step return the original receipt, never rerun.
+      return step(`${name}:${id}`, async () => {
+        const result = await runComputerTool(c, userId, name, parsed.data, {
+          operationId: `task:${taskId}:${id}`,
+          taskId,
+        });
+        const r = (result ?? {}) as { error?: string; status?: string; exitCode?: number | null };
+        await addEvent(
+          c,
+          userId,
+          taskId,
+          "tool",
+          r.error
+            ? `${name.replace(/_/g, " ")} failed`
+            : name === "computer_run"
+              ? `Ran a command (${r.status}${r.exitCode != null ? `, exit ${r.exitCode}` : ""})`
+              : name.replace("computer_", "Computer: ").replace(/_/g, " "),
+          r.error ??
+            (name === "computer_run"
+              ? String((parsed.data as { command: string }).command).slice(0, 300)
+              : ""),
+        );
+        return result;
+      });
     case "search_mail":
     case "read_email_thread":
     case "list_events":

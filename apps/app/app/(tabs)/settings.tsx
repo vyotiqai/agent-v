@@ -29,7 +29,7 @@ interface Me {
   user: { name: string; email: string };
   settings: Settings;
   models: ModelOption[];
-  features: { browser: boolean };
+  features: { browser: boolean; computer: boolean };
 }
 
 export default function SettingsScreen() {
@@ -168,6 +168,26 @@ export default function SettingsScreen() {
             </View>
           </Card>
         </View>
+
+        {me.data?.features.computer ? (
+          <View>
+            <Label>Linux computer</Label>
+            <Pressable onPress={() => router.push("/computer")}>
+              <Card className="flex-row items-center gap-3">
+                <Icon name="terminal" size={18} />
+                <View className="flex-1">
+                  <Text className="text-[15px] font-medium text-zinc-900 dark:text-zinc-100">
+                    Open terminal and files
+                  </Text>
+                  <Muted className="text-xs">
+                    A private container with no network. Only /workspace is kept.
+                  </Muted>
+                </View>
+                <Icon name="chevron-right" size={16} />
+              </Card>
+            </Pressable>
+          </View>
+        ) : null}
 
         <View>
           <Label>Accounts</Label>

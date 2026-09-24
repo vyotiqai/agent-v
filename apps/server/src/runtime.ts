@@ -2,6 +2,7 @@ import { DBOS } from "@dbos-inc/dbos-sdk";
 import { createApp } from "./app.ts";
 import { createAuth } from "./auth.ts";
 import { BrowserClient } from "./browser/client.ts";
+import { recoverCommands } from "./computer/service.ts";
 import type { Config } from "./config.ts";
 import type { Context } from "./context.ts";
 import { createDatabase, runMigrations } from "./db/client.ts";
@@ -27,6 +28,7 @@ export async function startRuntime(config: Config, options: { models?: Models } 
     signer: new Signer(config.authSecret),
   };
   setTaskContext(ctx);
+  await recoverCommands(ctx);
   DBOS.setConfig({
     name: "agent-v",
     systemDatabaseUrl: config.databaseUrl,

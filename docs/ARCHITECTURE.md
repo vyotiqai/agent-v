@@ -128,6 +128,22 @@ read, and are served through signed, 15-minute links (framing allowed only for t
 origins). Filling a PDF always produces a new file and removes document, page and field
 scripts from the copy.
 
+### Linux computer
+
+`computer/` drives the Docker CLI with argument lists only (never a shell). Each user has one
+container plus one volume, both named from a hash of the user id and the deployment id, and
+labelled with their owner. The container runs with no network, a read-only root filesystem,
+no capabilities and no-new-privileges, as a non-root user, under memory, CPU and PID limits,
+with `--init` so leftover processes are reaped. Before every use the server inspects the
+container and refuses one that does not match these settings.
+
+Commands go through `docker exec … timeout … bash -c`, one at a time per user (a partial
+unique index on running commands), and every run leaves a saved record of its status, exit
+code and output. An operation id makes a retried request return the original record instead
+of running the command again; a durable task uses its tool-call id, so a replayed step never
+runs a command twice. Commands that were running when the server stopped are marked
+`interrupted` at startup.
+
 ### Realtime
 
 Mutations call `publish(userId, event)`, which runs `pg_notify`. Every server process listens

@@ -303,6 +303,35 @@ export const demoWorkspaces = pgTable("demo_workspaces", {
   updatedAt: updatedAt(),
 });
 
+/** Receipts for commands run on a user's Linux computer. */
+export const computerCommands = pgTable(
+  "computer_commands",
+  {
+    id: text("id").primaryKey(),
+    userId: owner(),
+    /** Caller-chosen key: repeating an operation returns its receipt instead of running again. */
+    operationId: text("operation_id").notNull(),
+    taskId: text("task_id").references(() => tasks.id, { onDelete: "set null" }),
+    command: text("command").notNull(),
+    cwd: text("cwd").notNull(),
+    status: text("status")
+      .$type<"running" | "succeeded" | "failed" | "timed_out" | "interrupted">()
+      .notNull(),
+    exitCode: integer("exit_code"),
+    stdout: text("stdout").notNull().default(""),
+    stderr: text("stderr").notNull().default(""),
+    truncated: boolean("truncated").notNull().default(false),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex("computer_commands_operation_idx").on(t.userId, t.operationId),
+    index("computer_commands_user_idx").on(t.userId, t.startedAt.desc()),
+    // One command at a time per computer.
+    uniqueIndex("computer_commands_running_idx").on(t.userId).where(sql`status = 'running'`),
+  ],
+);
+
 export const schema = {
   user,
   session,
@@ -321,4 +350,5 @@ export const schema = {
   oauthStates,
   files,
   demoWorkspaces,
+  computerCommands,
 };

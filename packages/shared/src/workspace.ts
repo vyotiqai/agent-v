@@ -143,3 +143,55 @@ export const importAttachmentSchema = z.object({
   messageId: z.string().min(1).max(200),
   attachmentId: z.string().min(1).max(2000),
 });
+
+export type ComputerState = "running" | "stopped" | "absent" | "unavailable";
+
+export interface ComputerCommand {
+  id: string;
+  command: string;
+  cwd: string;
+  status: "running" | "succeeded" | "failed" | "timed_out" | "interrupted";
+  exitCode: number | null;
+  stdout: string;
+  stderr: string;
+  truncated: boolean;
+  taskId: string | null;
+  startedAt: string;
+  finishedAt: string | null;
+}
+
+export interface ComputerStatus {
+  available: boolean;
+  state: ComputerState;
+  network: "disabled";
+  limits: { memoryMb: number; cpus: number; commandTimeoutSeconds: number } | null;
+  commands: ComputerCommand[];
+}
+
+export interface ComputerEntry {
+  name: string;
+  kind: "dir" | "file" | "link" | "other";
+  size: number;
+  modified: number;
+}
+
+const workspacePath = z
+  .string()
+  .min(1)
+  .max(1024)
+  .regex(/^\/workspace(\/|$)/, "Paths start with /workspace");
+
+export const computerCommandSchema = z.object({
+  command: z.string().trim().min(1).max(16_000),
+  cwd: workspacePath.default("/workspace"),
+  operationId: z.string().min(1).max(200).optional(),
+});
+export const computerPathSchema = z.object({ path: workspacePath });
+export const computerWriteSchema = z.object({
+  path: workspacePath,
+  text: z.string().max(512 * 1024),
+});
+export const computerImportSchema = z.object({
+  fileId: z.string().min(1).max(100),
+  path: workspacePath,
+});

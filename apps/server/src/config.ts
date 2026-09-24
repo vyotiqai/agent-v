@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { z } from "zod";
 
@@ -45,6 +46,23 @@ const envSchema = z.object({
   GOOGLE_API_BASE: z.url().default("https://www.googleapis.com"),
   /** A fictional mailbox and calendar for people without a Google connection. */
   DEMO_WORKSPACE: bool.optional(),
+  /** Per-user Linux computer: "docker" (needs Docker; optionally gVisor) or "none". */
+  COMPUTER_PROVIDER: z.enum(["none", "docker"]).default("none"),
+  COMPUTER_IMAGE: z.string().default("agent-v-computer:local"),
+  /** Optional OCI runtime for stronger isolation, e.g. "runsc" for gVisor. */
+  COMPUTER_RUNTIME: z
+    .string()
+    .regex(/^[\w.-]+$/)
+    .optional(),
+  COMPUTER_MEMORY_MB: z.coerce.number().int().min(128).max(65536).default(1024),
+  COMPUTER_CPUS: z.coerce.number().min(0.1).max(64).default(1),
+  COMPUTER_PIDS: z.coerce.number().int().min(32).max(32768).default(256),
+  COMPUTER_COMMAND_TIMEOUT_SECONDS: z.coerce.number().int().min(5).max(3600).default(120),
+  /** Names this deployment's containers; defaults to a hash of PUBLIC_URL. */
+  DEPLOYMENT_ID: z
+    .string()
+    .regex(/^[a-z0-9-]{1,32}$/)
+    .optional(),
   /** Trust X-Forwarded-For from a reverse proxy in front of the API. */
   TRUST_PROXY: bool.default(false),
   TASK_WORKERS: z.coerce.number().int().min(1).max(64).default(4),
@@ -82,6 +100,15 @@ export interface Config {
     apiBase: string;
   };
   demoWorkspace: boolean;
+  computer?: {
+    image: string;
+    runtime?: string;
+    memoryMb: number;
+    cpus: number;
+    pids: number;
+    commandTimeoutSeconds: number;
+    deploymentId: string;
+  };
   trustProxy: boolean;
   allowPrivateNetworkFetch: boolean;
 }
@@ -150,6 +177,20 @@ export function readConfig(env: Record<string, string | undefined> = process.env
           }
         : undefined,
     demoWorkspace: e.DEMO_WORKSPACE ?? e.NODE_ENV !== "production",
+    computer:
+      e.COMPUTER_PROVIDER === "docker"
+        ? {
+            image: e.COMPUTER_IMAGE,
+            runtime: e.COMPUTER_RUNTIME,
+            memoryMb: e.COMPUTER_MEMORY_MB,
+            cpus: e.COMPUTER_CPUS,
+            pids: e.COMPUTER_PIDS,
+            commandTimeoutSeconds: e.COMPUTER_COMMAND_TIMEOUT_SECONDS,
+            deploymentId:
+              e.DEPLOYMENT_ID ??
+              createHash("sha256").update(e.PUBLIC_URL).digest("hex").slice(0, 12),
+          }
+        : undefined,
     trustProxy: e.TRUST_PROXY,
     allowPrivateNetworkFetch: e.ALLOW_PRIVATE_NETWORK_FETCH,
   };

@@ -23,6 +23,7 @@ import { type Auth, clientIpHeader } from "./auth.ts";
 import { browserRoutes, signedBrowserRoutes } from "./browser/routes.ts";
 import { runChat } from "./chat/run.ts";
 import { createThread, listMessages, listThreads, updateThread } from "./chat/threads.ts";
+import { computerRoutes } from "./computer/routes.ts";
 import type { Context } from "./context.ts";
 import { AppError } from "./errors.ts";
 import { publicWorkspaceRoutes, workspaceRoutes } from "./providers/routes.ts";
@@ -72,7 +73,7 @@ export function createApp(ctx: Context, auth: Auth) {
     cors({
       origin: (origin) => (origins.has(origin) ? origin : null),
       allowHeaders: ["Content-Type", "Authorization"],
-      allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+      allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       exposeHeaders: ["set-auth-token"],
       credentials: true,
       maxAge: 600,
@@ -124,7 +125,7 @@ export function createApp(ctx: Context, auth: Auth) {
       user: session?.user,
       settings: await getSettings(ctx, userId),
       models: ctx.models.options(),
-      features: { browser: Boolean(ctx.browser) },
+      features: { browser: Boolean(ctx.browser), computer: Boolean(ctx.config.computer) },
     });
   });
   app.patch("/api/settings", async (c) =>
@@ -225,6 +226,7 @@ export function createApp(ctx: Context, auth: Auth) {
 
   browserRoutes(app, ctx);
   workspaceRoutes(app, ctx);
+  computerRoutes(app, ctx);
 
   // Live workspace changes: one SSE stream per device replaces polling.
   app.get("/api/events", (c) => {

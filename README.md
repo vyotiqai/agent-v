@@ -8,9 +8,9 @@ Agent V is a from-scratch rebuild of the ideas in
 [CopilotKit/OpenMuse](https://github.com/CopilotKit/openmuse), designed for many users and with
 no required hosted service apart from your model provider.
 
-> **Status: phases 1–3 of 7.** Chat, durable background tasks, approvals, memory, live updates,
-> a cloud browser you can watch and take over, Gmail/Calendar and PDF documents work end to end.
-> The Linux computer, goals/tracking, MCP connectors, push and voice follow; see the
+> **Status: phases 1–4 of 7.** Chat, durable background tasks, approvals, memory, live updates,
+> a cloud browser you can watch and take over, Gmail/Calendar, PDF documents and a private Linux
+> computer work end to end. Goals/tracking, MCP connectors, push and voice follow; see the
 > [roadmap](docs/ROADMAP.md).
 
 ## What works today
@@ -25,6 +25,7 @@ no required hosted service apart from your model provider.
 | **Cloud browser** | Real Chromium per chat and per task (`apps/browser`). The agent can `browse`, `click_link` and `read_page`. You watch it live in chat and **Take control** by tapping, typing, scrolling or using the address bar. Logins persist per session. All traffic goes through an egress proxy that blocks private networks. |
 | **Mail and calendar** | Connect Google per user (OAuth with PKCE; refresh tokens encrypted with AES-256-GCM). The agent searches and reads mail, checks the calendar, and *proposes* emails and events. You approve the exact message, and it is sent from the account you reviewed. Without Google, a fictional demo mailbox lets you try everything. |
 | **Documents** | Upload PDFs, save email attachments or browser downloads to Files, view them in the app, and fill supported forms into a new copy with scripts removed. The permission-slip flow works end to end: find the email, fill the form with your answers, then reply with it attached after your review. |
+| **Linux computer** | Each person gets a private Docker container (optionally gVisor) with bash, Node and Python. It has no network, a read-only system, no capabilities and runs as a non-root user; only `/workspace` persists. There is a terminal with a saved record of every command and its output, plus a file browser and editor, and PDF transfer to and from Files. The agent runs commands through the same record. Retries return the original result instead of running twice, and interrupted commands are never re-run automatically. |
 | **Web reading** | Without a browser worker, `web_fetch` reads static pages. It pins DNS and blocks private, loopback, link-local and metadata addresses, including after redirects. |
 | **Memory and inbox** | Facts you ask the agent to remember, and notifications for results, questions and reviews. |
 | **Live updates** | One SSE stream per device, fed by Postgres LISTEN/NOTIFY. No polling. |
@@ -61,6 +62,13 @@ Open http://localhost:8081, create an account, and try:
 - **Complete the permission slip.** The agent finds the form, asks for your details, fills the PDF and prepares the reply for you to approve.
 - **Reply to Sam: count me in!** An approval card appears in chat, and nothing is sent until you approve.
 
+Linux computer (optional, needs Docker):
+
+```sh
+docker build -t agent-v-computer:local apps/computer
+# in .env: COMPUTER_PROVIDER=docker
+```
+
 To use your real Gmail and Calendar, add a Google OAuth client and an encryption key (see
 `.env.example`), then open **Settings → Accounts → Connect Google**.
 
@@ -81,6 +89,7 @@ origin to `ALLOWED_ORIGINS`.
 | `apps/server` | Hono API, Better Auth, Drizzle schema and migrations, AI SDK agent, DBOS tasks, approvals, realtime. |
 | `apps/browser` | Cloud browser worker: Chromium sessions, egress proxy, live view and take-control. |
 | `packages/net` | Network guard shared by the API and the browser (public addresses only, DNS pinning). |
+| `apps/computer` | Image for the per-user Linux computer and its workspace file helper. |
 | `apps/app` | Expo SDK 57 + Expo Router app for iOS, Android and web; Uniwind (Tailwind 4) styling; Legend List chat. |
 | `packages/shared` | Domain types, request schemas and the SSE reader, shared by server and app. |
 | `docs` | [Architecture](docs/ARCHITECTURE.md) and [roadmap](docs/ROADMAP.md). |

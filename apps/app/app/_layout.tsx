@@ -12,6 +12,7 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="chats" options={{ presentation: "modal" }} />
           <Stack.Screen name="browser/[id]" options={{ presentation: "fullScreenModal" }} />
+          <Stack.Screen name="computer" options={{ presentation: "fullScreenModal" }} />
           <Stack.Screen
             name="mail/[id]"
             options={{ headerShown: true, title: "Email", headerBackTitle: "Back" }}

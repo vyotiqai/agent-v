@@ -59,11 +59,28 @@ OpenMuse plus multi-user SaaS, MCP connectors, push notifications and voice.
 - [ ] Next: S3-compatible storage (Garage/R2), embedded native PDF renderer (expo-pdf, dev
       build), calendar edits and recurrence, Gmail drafts, more PDF field types and OCR.
 
-## Phase 4 — Linux computer
+## Phase 4 — Linux computer (this change)
 
-- `SandboxProvider` interface; Docker + gVisor default, microsandbox when KVM is present.
-- Per-user persistent workspace volume, command receipts, file editor, PDF transfer.
-- Optional allowlisted egress; interactive PTY terminal over WebSocket.
+- [x] Docker provider (optional gVisor runtime): one container and volume per user, named from a
+      hash of the user id; `--network none`, read-only root, all capabilities dropped,
+      no-new-privileges, non-root user, memory/CPU/PID limits, `--init` to reap processes,
+      images never pulled at runtime. Existing containers are inspected and refused unless they
+      match these settings.
+- [x] Commands with saved records: one at a time per computer, time limit, output cap,
+      operation ids so a retried request returns the original result, and commands left
+      running by a crash are marked interrupted (never re-run). Cancel restarts the container to
+      end every process.
+- [x] Workspace files: list, read, write, mkdir, delete; links cannot lead outside
+      `/workspace`; PDFs copy to and from Files.
+- [x] Agent tools in chat and durable tasks (`computer_run`, `computer_list`,
+      `computer_read_file`, `computer_write_file`, `computer_import_file`,
+      `computer_export_pdf`).
+- [x] App: Computer screen with terminal, file browser and editor; entry from chat and
+      Settings; command rows in chat.
+- [x] Tests against real containers (isolation, persistence, limits, running each operation
+      once, link escapes, PDF transfer, agent use); CI builds the images.
+- [ ] Next: interactive PTY terminal over WebSocket, allowlisted network egress, disk quotas,
+      microVM provider (microsandbox / Firecracker) where KVM is available, desktop apps.
 
 ## Phase 5 — Goals, tracking, ideas, finance
 

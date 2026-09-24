@@ -144,7 +144,8 @@ export interface WorkspaceEvent {
     | "connection"
     | "mail"
     | "calendar"
-    | "file";
+    | "file"
+    | "computer";
   id: string;
 }
 

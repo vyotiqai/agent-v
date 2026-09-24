@@ -143,3 +143,44 @@ describe("settings, memory and live events", () => {
     expect(settings).toMatchObject({ agentName: "Muse", tone: "playful", model: "demo/agent-v" });
   });
 });
+
+describe("Linux computer disabled", () => {
+  it("reports unavailable instead of failing", async () => {
+    const { token } = await server.signUp();
+    expect(await server.json("/api/computer", { token })).toMatchObject({
+      available: false,
+      state: "unavailable",
+    });
+    await server.json("/api/computer/commands", { token, body: { command: "id" } }, 503);
+    await server.json(
+      "/api/computer/commands",
+      { token, body: { command: "id", cwd: "/etc" } },
+      422,
+    );
+  });
+});
+
+describe("CORS", () => {
+  it("lets the app use every method the API exposes", async () => {
+    const preflight = await server.app.fetch(
+      new Request("http://localhost:8787/api/computer/file", {
+        method: "OPTIONS",
+        headers: {
+          origin: "http://localhost:8081",
+          "access-control-request-method": "PUT",
+          "access-control-request-headers": "authorization,content-type",
+        },
+      }),
+    );
+    const allowed = preflight.headers.get("access-control-allow-methods") ?? "";
+    for (const method of ["GET", "POST", "PUT", "PATCH", "DELETE"])
+      expect(allowed).toContain(method);
+    expect(preflight.headers.get("access-control-allow-origin")).toBe("http://localhost:8081");
+    const other = await server.app.fetch(
+      new Request("http://localhost:8787/api/health", {
+        headers: { origin: "https://evil.example" },
+      }),
+    );
+    expect(other.headers.get("access-control-allow-origin")).toBeNull();
+  });
+});

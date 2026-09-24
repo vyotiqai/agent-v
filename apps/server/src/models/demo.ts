@@ -160,6 +160,14 @@ function chatTurn(input: string, results: ToolOutcome[], tools: Set<string>) {
           .join("\n")}`,
       );
     }
+    if (done.toolName === "computer_run") {
+      const out = [String(output.stdout ?? "").trim(), String(output.stderr ?? "").trim()]
+        .filter(Boolean)
+        .join("\n");
+      return say(
+        `Ran it on your computer (${String(output.status)}${output.exitCode != null ? `, exit ${String(output.exitCode)}` : ""}):\n\n\`\`\`\n${out.slice(0, 1500) || "(no output)"}\n\`\`\``,
+      );
+    }
     if (done.toolName === "propose_email" || done.toolName === "propose_event")
       return say(
         `I've prepared **${String(output.title ?? "it")}**. Review it below; nothing happens until you approve.`,
@@ -183,6 +191,8 @@ function chatTurn(input: string, results: ToolOutcome[], tools: Set<string>) {
   const reader = tools.has("browse") ? "browse" : "web_fetch";
   if (url && tools.has(reader) && !/\b(task|monitor|watch)\b/i.test(input))
     return [call(reader, { url })];
+  const command = commandIntent(input);
+  if (command && tools.has("computer_run")) return [call("computer_run", { command })];
   const reply = replyIntent(input);
   if (reply && tools.has("search_mail")) return [call("search_mail", { query: reply.name })];
   const addEvent = /^add (.+?) to my calendar(?: on (\d{4}-\d{2}-\d{2}))?/i.exec(input.trim());
@@ -240,6 +250,9 @@ function taskTurn(prompt: string, results: ToolOutcome[], tools: Set<string>) {
     const paperwork = paperworkTurn(results, called);
     if (paperwork) return paperwork;
   }
+  const command = commandIntent(prompt);
+  if (command && tools.has("computer_run") && !called.has("computer_run"))
+    return [call("computer_run", { command })];
   const url = urlPattern.exec(prompt)?.[0];
   const reader = tools.has("browse") ? "browse" : "web_fetch";
   if (url && !called.has(reader) && !/\b(webhook|post to)\b/i.test(prompt))
@@ -260,8 +273,16 @@ function taskTurn(prompt: string, results: ToolOutcome[], tools: Set<string>) {
   const page = results.find((r) => r.toolName === "web_fetch" || r.toolName === "browse")?.output as
     | { title?: string }
     | undefined;
+  const ran = results.find((r) => r.toolName === "computer_run")?.output as
+    | { stdout?: string; exitCode?: number | null }
+    | undefined;
   const lines = [
     `Worked on: ${prompt}`,
+    ran
+      ? `Command output (exit ${String(ran.exitCode)}):\n${String(ran.stdout ?? "")
+          .trim()
+          .slice(0, 1000)}`
+      : null,
     page?.title ? `Read the page “${page.title}”.` : null,
     answer?.answer ? `Used your answer: ${answer.answer}.` : null,
     "This result comes from the demo model; connect a real model for real reasoning.",
@@ -275,6 +296,12 @@ interface MailRow {
   from: string;
   subject: string;
   attachments?: { id: string; name: string }[];
+}
+
+/** "Run `ls -la` on my computer" → "ls -la" */
+function commandIntent(input: string) {
+  if (!/\b(run|execute|terminal|computer|shell)\b/i.test(input)) return null;
+  return /`([^`]{1,2000})`/.exec(input)?.[1]?.trim() || null;
 }
 
 /** "Reply to Sam: count me in" → { name: "Sam", body: "count me in" } */

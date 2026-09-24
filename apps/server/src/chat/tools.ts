@@ -5,6 +5,7 @@ import { proposeAction } from "../actions.ts";
 import { type BrowserScope, browseForAgent, scopedAgentAction } from "../browser/service.ts";
 import type { Context } from "../context.ts";
 import { createTask, listTasks } from "../tasks/service.ts";
+import { computerDescriptions, computerSchemas, runComputerTool } from "../tools/computer.ts";
 import { readWebPage } from "../tools/web.ts";
 import { workspaceDescriptions, workspaceSchemas, workspaceTools } from "../tools/workspace.ts";
 import { addMemory } from "../workspace.ts";
@@ -50,7 +51,24 @@ export function chatTools(ctx: Context, userId: string, threadId: string) {
     }),
     ...(ctx.browser ? browserTools(ctx, userId, { threadId }) : webFetchTool(ctx)),
     ...mailAndCalendarTools(ctx, userId),
+    ...(ctx.config.computer ? computerChatTools(ctx, userId, threadId) : {}),
   };
+}
+
+function computerChatTools(ctx: Context, userId: string, threadId: string) {
+  return Object.fromEntries(
+    (Object.keys(computerSchemas) as (keyof typeof computerSchemas)[]).map((name) => [
+      name,
+      tool({
+        description: computerDescriptions[name],
+        inputSchema: computerSchemas[name] as z.ZodType,
+        execute: async (input, { toolCallId }) =>
+          runComputerTool(ctx, userId, name, input, {
+            operationId: `chat:${threadId}:${toolCallId}`,
+          }),
+      }),
+    ]),
+  );
 }
 
 /** Read mail and calendar, and propose (never perform) sends and calendar changes. */

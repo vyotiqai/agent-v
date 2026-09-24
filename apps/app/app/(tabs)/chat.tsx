@@ -56,14 +56,21 @@ export default function ChatScreen() {
       <View className="h-12 flex-row items-center justify-between px-2">
         <IconButton name="menu" label="Chats" onPress={() => router.push("/chats")} />
         <Text className="text-[15px] font-semibold text-zinc-900 dark:text-zinc-100">Agent V</Text>
-        <IconButton
-          name="edit"
-          label="New chat"
-          onPress={() => {
-            setThreadId(null);
-            router.setParams({ thread: undefined });
-          }}
-        />
+        <View className="flex-row">
+          <IconButton
+            name="terminal"
+            label="Linux computer"
+            onPress={() => router.push("/computer")}
+          />
+          <IconButton
+            name="edit"
+            label="New chat"
+            onPress={() => {
+              setThreadId(null);
+              router.setParams({ thread: undefined });
+            }}
+          />
+        </View>
       </View>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
