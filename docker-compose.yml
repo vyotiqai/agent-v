@@ -1,0 +1,19 @@
+# Local infrastructure. `docker compose up -d` then `pnpm --filter @agent-v/server db:migrate`.
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: agentv
+      POSTGRES_PASSWORD: agentv
+      POSTGRES_DB: agentv
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agentv"]
+      interval: 5s
+      retries: 10
+volumes:
+  pgdata:
