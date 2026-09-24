@@ -1,3 +1,4 @@
+import type { FileItem } from "@agent-v/shared";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -13,6 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconButton, webInput } from "../../src/components/ui";
+import { api } from "../../src/lib/api";
 import { type Frame, useLiveBrowser } from "../../src/lib/live-browser";
 
 /**
@@ -199,6 +201,28 @@ export default function BrowserScreen() {
         </View>
         {live.error ? (
           <Text className="px-1 text-sm text-red-600 dark:text-red-400">{live.error}</Text>
+        ) : null}
+        {live.downloads.length ? (
+          <View className="flex-row items-center gap-3 rounded-2xl bg-indigo-50 px-4 py-2.5 dark:bg-indigo-950">
+            <Text numberOfLines={1} className="flex-1 text-sm text-indigo-900 dark:text-indigo-100">
+              Downloaded {live.downloads.join(", ")}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() =>
+                void api<FileItem[]>(`/api/browsers/${id}/downloads/import`, { body: {} }).then(
+                  (saved) => {
+                    live.clearDownloads();
+                    if (saved[0]) router.push(`/files/${saved[0].id}`);
+                  },
+                )
+              }
+            >
+              <Text className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+                Save to Files
+              </Text>
+            </Pressable>
+          </View>
         ) : null}
         <View className="flex-row items-center gap-2 rounded-full border border-zinc-200 bg-white py-1 pl-4 pr-1 dark:border-zinc-800 dark:bg-zinc-900">
           <TextInput

@@ -26,6 +26,7 @@ export function useLiveBrowser(sessionId: string) {
   const [page, setPage] = useState({ url: "", title: "" });
   const [status, setStatus] = useState<"connecting" | "live" | "offline">("connecting");
   const [error, setError] = useState<string | null>(null);
+  const [downloads, setDownloads] = useState<string[]>([]);
   const socket = useRef<WebSocket | null>(null);
 
   useEffect(() => {
@@ -48,6 +49,7 @@ export function useLiveBrowser(sessionId: string) {
           const message = JSON.parse(String(event.data)) as
             | { type: "frame"; data: string; width: number; height: number }
             | { type: "page"; url: string; title: string }
+            | { type: "download"; id: string; name: string }
             | { type: "error"; message: string };
           if (message.type === "frame")
             setFrame({
@@ -56,6 +58,7 @@ export function useLiveBrowser(sessionId: string) {
               height: message.height,
             });
           else if (message.type === "page") setPage({ url: message.url, title: message.title });
+          else if (message.type === "download") setDownloads((d) => [...d, message.name]);
           else setError(message.message);
         };
         ws.onclose = () => {
@@ -83,5 +86,5 @@ export function useLiveBrowser(sessionId: string) {
     if (socket.current?.readyState === WebSocket.OPEN) socket.current.send(JSON.stringify(input));
   }, []);
 
-  return { frame, page, status, error, send };
+  return { frame, page, status, error, send, downloads, clearDownloads: () => setDownloads([]) };
 }

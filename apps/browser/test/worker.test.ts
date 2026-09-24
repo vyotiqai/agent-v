@@ -38,6 +38,7 @@ const pages: Record<string, string> = {
 };
 
 let site: Server;
+let pdfBytes: Buffer;
 let origin: string;
 let dir: string;
 let proxy: EgressProxy;
@@ -57,7 +58,22 @@ const config = (allowPrivate: boolean): WorkerConfig => ({
 });
 
 beforeAll(async () => {
+  pdfBytes = Buffer.from("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF");
   site = createServer((req, res) => {
+    if (req.url === "/report.pdf")
+      return res
+        .writeHead(200, {
+          "content-type": "application/pdf",
+          "content-disposition": 'attachment; filename="report.pdf"',
+        })
+        .end(pdfBytes);
+    if (req.url === "/fake.pdf")
+      return res
+        .writeHead(200, {
+          "content-type": "application/pdf",
+          "content-disposition": 'attachment; filename="fake.pdf"',
+        })
+        .end("not a pdf");
     const body = pages[req.url ?? ""];
     if (!body) return res.writeHead(404).end("missing");
     res.writeHead(200, { "content-type": "text/html" }).end(body);
@@ -109,6 +125,28 @@ describe.skipIf(!chromiumPath)("browser sessions", () => {
     await expect(sessions.input(id, { type: "key", key: "Meta+Q" })).rejects.toThrow(/not allowed/);
     await sessions.close(id);
     expect((await sessions.read(id)).title).toBe("Next");
+  });
+
+  it("keeps PDF downloads and discards anything else", async () => {
+    const dl = "11111111-aaaa-4bbb-8ccc-000000000003";
+    await sessions.open(dl, `${origin}/`);
+    await sessions.open(dl, `${origin}/fake.pdf`);
+    await sessions.open(dl, `${origin}/report.pdf`);
+    let list = await sessions.downloads(dl);
+    for (let i = 0; i < 50 && !list.length; i++) {
+      await new Promise((r) => setTimeout(r, 100));
+      list = await sessions.downloads(dl);
+    }
+    await new Promise((r) => setTimeout(r, 300));
+    list = await sessions.downloads(dl);
+    expect(list.map((d) => d.name)).toEqual(["report.pdf"]);
+    expect(Buffer.compare(await sessions.downloadBytes(dl, list[0]?.id ?? ""), pdfBytes)).toBe(0);
+    await expect(sessions.downloadBytes(dl, "../../etc/passwd")).rejects.toThrow(
+      /Invalid download/,
+    );
+    await sessions.removeDownload(dl, list[0]?.id ?? "");
+    expect(await sessions.downloads(dl)).toEqual([]);
+    expect((await sessions.read(dl)).title).toBe("Home");
   });
 
   it("refuses non-web URLs and, in strict mode, private networks", async () => {

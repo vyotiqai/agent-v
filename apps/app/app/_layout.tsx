@@ -13,6 +13,14 @@ export default function RootLayout() {
           <Stack.Screen name="chats" options={{ presentation: "modal" }} />
           <Stack.Screen name="browser/[id]" options={{ presentation: "fullScreenModal" }} />
           <Stack.Screen
+            name="mail/[id]"
+            options={{ headerShown: true, title: "Email", headerBackTitle: "Back" }}
+          />
+          <Stack.Screen
+            name="files/[id]"
+            options={{ headerShown: true, title: "File", headerBackTitle: "Back" }}
+          />
+          <Stack.Screen
             name="tasks/[id]"
             options={{ headerShown: true, title: "Task", headerBackTitle: "Back" }}
           />

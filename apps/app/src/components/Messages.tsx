@@ -2,6 +2,7 @@ import type { ChatMessage, ToolCall } from "@agent-v/shared";
 import { router } from "expo-router";
 import { memo } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { ActionCard } from "./ActionReview";
 import { BrowserCard } from "./BrowserCard";
 import { Markdown } from "./Markdown";
 import { Icon, type IconName } from "./ui";
@@ -52,6 +53,29 @@ function describe(
       };
     case "read_page":
       return { icon: "file-text", text: done ? "Read the page again" : "Reading the page" };
+    case "search_mail": {
+      const found = Array.isArray(output) ? output.length : 0;
+      return {
+        icon: "mail",
+        text: done
+          ? `Found ${found} email${found === 1 ? "" : "s"}${args.query ? ` for “${String(args.query)}”` : ""}`
+          : "Searching mail",
+      };
+    }
+    case "read_email_thread":
+      return { icon: "mail", text: done ? "Read an email thread" : "Reading an email thread" };
+    case "list_events":
+      return { icon: "calendar", text: done ? "Checked your calendar" : "Checking your calendar" };
+    case "propose_email":
+      return {
+        icon: "send",
+        text: done ? "Prepared an email for your review" : "Preparing an email",
+      };
+    case "propose_event":
+      return {
+        icon: "calendar",
+        text: done ? "Prepared an event for your review" : "Preparing an event",
+      };
     case "delegate_task":
       return {
         icon: "zap",
@@ -105,6 +129,13 @@ function ToolRow({ call, result }: { call: ToolCall; result?: Result }) {
   );
 }
 
+/** The action id a propose_* tool created, so chat can show its approval card. */
+function proposalOf(call: ToolCall, result: Result | undefined) {
+  if (!call.function.name.startsWith("propose_")) return null;
+  const output = parse(result?.content);
+  return typeof output.actionId === "string" ? output.actionId : null;
+}
+
 export const browserTools = new Set(["browse", "click_link", "read_page"]);
 
 /** The session id a browser tool result points at, if it succeeded. */
@@ -143,6 +174,9 @@ export const MessageView = memo(function MessageView({
           <View key={call.id}>
             <ToolRow call={call} result={result} />
             {session ? <BrowserCard sessionId={session} /> : null}
+            {proposalOf(call, result) ? (
+              <ActionCard actionId={proposalOf(call, result) ?? ""} />
+            ) : null}
           </View>
         );
       })}

@@ -1,7 +1,14 @@
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { copyFile, mkdir, open, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { BlockedDestinationError, parseWebUrl } from "@agent-v/net";
-import { type BrowserContext, type CDPSession, chromium, type Page } from "playwright-core";
+import {
+  type BrowserContext,
+  type CDPSession,
+  chromium,
+  type Download,
+  type Page,
+} from "playwright-core";
 import type { WorkerConfig } from "./config.ts";
 import { blockedHeader } from "./proxy.ts";
 
@@ -24,7 +31,18 @@ export interface PageText extends PageState {
 
 export type LiveMessage =
   | { type: "frame"; data: string; width: number; height: number }
-  | { type: "page"; url: string; title: string };
+  | { type: "page"; url: string; title: string }
+  | { type: "download"; id: string; name: string };
+
+export interface DownloadInfo {
+  id: string;
+  name: string;
+  size: number;
+  savedAt: string;
+}
+
+const maxDownloadBytes = 10 * 1024 * 1024;
+const maxPendingDownloads = 20;
 
 export type InputAction =
   | { type: "click"; x: number; y: number }
@@ -144,7 +162,9 @@ export class Sessions {
       headless: true,
       viewport,
       deviceScaleFactor: 1,
-      acceptDownloads: false,
+      // Downloads are captured, checked and kept only if they are PDFs (see captureDownload).
+      acceptDownloads: true,
+      downloadsPath: join(dir, "incoming"),
       serviceWorkers: "block",
       proxy: { server: this.proxyUrl, bypass: "<-loopback>" },
       // Chromium must never resolve or connect on its own: everything goes through the proxy.
@@ -172,6 +192,8 @@ export class Sessions {
         .finally(() => popup.close().catch(() => {}));
     });
     page.on("dialog", (dialog) => void dialog.dismiss().catch(() => {}));
+    context.on("page", (p) => p.on("download", (d) => void this.captureDownload(session, d)));
+    page.on("download", (download) => void this.captureDownload(session, download));
     page.on("framenavigated", (frame) => {
       if (frame === page.mainFrame()) void this.announce(session);
     });
@@ -195,6 +217,8 @@ export class Sessions {
     } catch (error) {
       if (error instanceof WorkerError) throw error;
       const message = (error as Error).message;
+      // Opening a file URL starts a download instead of a page; the page itself stays put.
+      if (/Download is starting/i.test(message)) return;
       if (/ERR_TUNNEL_CONNECTION_FAILED|ERR_PROXY|403/.test(message))
         throw new WorkerError("That address is blocked or unreachable", 422);
       if (/Timeout/i.test(message)) throw new WorkerError("The page took too long to load", 504);
@@ -203,6 +227,65 @@ export class Sessions {
     // Give client-side apps a moment to render, without waiting forever on busy pages.
     await session.page.waitForLoadState("load", { timeout: 5000 }).catch(() => {});
     await writeFile(join(this.dir(session.id), "last-url"), session.page.url()).catch(() => {});
+  }
+
+  /** Keep a finished download only if it is a PDF under the size limit. */
+  private async captureDownload(session: Session, download: Download) {
+    const tmp = await download.path().catch(() => null);
+    try {
+      if (!tmp || (await download.failure())) return;
+      const size = (await stat(tmp)).size;
+      const head = Buffer.alloc(5);
+      const handle = await open(tmp, "r");
+      await handle.read(head, 0, 5, 0).finally(() => handle.close());
+      if (size > maxDownloadBytes || head.toString("latin1") !== "%PDF-") return;
+      const folder = join(this.dir(session.id), "downloads");
+      await mkdir(folder, { recursive: true, mode: 0o700 });
+      if ((await this.downloads(session.id)).length >= maxPendingDownloads) return;
+      const info: DownloadInfo = {
+        id: randomUUID(),
+        name:
+          download
+            .suggestedFilename()
+            .replace(/[^\w .()-]/g, "_")
+            .slice(0, 180) || "download.pdf",
+        size,
+        savedAt: new Date().toISOString(),
+      };
+      await copyFile(tmp, join(folder, `${info.id}.pdf`));
+      await writeFile(join(folder, `${info.id}.json`), JSON.stringify(info));
+      for (const viewer of session.viewers)
+        viewer({ type: "download", id: info.id, name: info.name });
+    } finally {
+      if (tmp) await rm(tmp, { force: true }).catch(() => {});
+    }
+  }
+
+  async downloads(id: string): Promise<DownloadInfo[]> {
+    const folder = join(this.dir(id), "downloads");
+    const names = await readdir(folder).catch(() => [] as string[]);
+    const list: DownloadInfo[] = [];
+    for (const name of names.filter((n) => n.endsWith(".json")))
+      list.push(JSON.parse(await readFile(join(folder, name), "utf8")) as DownloadInfo);
+    return list.sort((a, b) => a.savedAt.localeCompare(b.savedAt));
+  }
+
+  private downloadPath(id: string, downloadId: string) {
+    if (!/^[a-f0-9-]{36}$/.test(downloadId)) throw new WorkerError("Invalid download id", 400);
+    return join(this.dir(id), "downloads", downloadId);
+  }
+
+  async downloadBytes(id: string, downloadId: string) {
+    const path = this.downloadPath(id, downloadId);
+    return readFile(`${path}.pdf`).catch(() => {
+      throw new WorkerError("Download not found", 404);
+    });
+  }
+
+  async removeDownload(id: string, downloadId: string) {
+    const path = this.downloadPath(id, downloadId);
+    await rm(`${path}.pdf`, { force: true });
+    await rm(`${path}.json`, { force: true });
   }
 
   private async state(session: Session): Promise<PageState> {

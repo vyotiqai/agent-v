@@ -1,15 +1,24 @@
-import type { ActionStatus, PlanStep, TaskEventKind, TaskStatus, ToolCall } from "@agent-v/shared";
+import type {
+  ActionStatus,
+  PdfField,
+  PlanStep,
+  TaskEventKind,
+  TaskStatus,
+  ToolCall,
+} from "@agent-v/shared";
 import { sql } from "drizzle-orm";
 import {
   bigint,
   boolean,
   index,
+  integer,
   jsonb,
   pgTable,
   text,
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+import type { DemoWorkspaceData } from "../providers/demo.ts";
 
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
 const updatedAt = () =>
@@ -241,6 +250,59 @@ export const browserSessions = pgTable(
   ],
 );
 
+/** A user's connected account. Tokens are encrypted with TOKEN_ENCRYPTION_KEY. */
+export const connections = pgTable(
+  "connections",
+  {
+    id: text("id").primaryKey(),
+    userId: owner(),
+    provider: text("provider").$type<"google">().notNull(),
+    account: text("account").notNull(),
+    scopes: text("scopes").notNull(),
+    refreshToken: text("refresh_token").notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex("connections_user_provider_idx").on(t.userId, t.provider)],
+);
+
+/** Pending OAuth sign-ins: single use, short-lived, bound to the user who started them. */
+export const oauthStates = pgTable("oauth_states", {
+  state: text("state").primaryKey(),
+  userId: owner(),
+  provider: text("provider").notNull(),
+  verifier: text("verifier").notNull(),
+  capability: text("capability").$type<"read" | "write">().notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+});
+
+export const files = pgTable(
+  "files",
+  {
+    id: text("id").primaryKey(),
+    userId: owner(),
+    name: text("name").notNull(),
+    mimeType: text("mime_type").notNull(),
+    size: integer("size").notNull(),
+    sha256: text("sha256").notNull(),
+    parentId: text("parent_id"),
+    source: text("source").notNull(),
+    pageCount: integer("page_count"),
+    fields: jsonb("fields").$type<PdfField[]>().notNull().default(sql`'[]'::jsonb`),
+    createdAt: createdAt(),
+  },
+  (t) => [index("files_user_idx").on(t.userId, t.createdAt.desc())],
+);
+
+/** The fictional mailbox and calendar used before a real account is connected. */
+export const demoWorkspaces = pgTable("demo_workspaces", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  data: jsonb("data").$type<DemoWorkspaceData>().notNull(),
+  updatedAt: updatedAt(),
+});
+
 export const schema = {
   user,
   session,
@@ -255,4 +317,8 @@ export const schema = {
   memories,
   notifications,
   browserSessions,
+  connections,
+  oauthStates,
+  files,
+  demoWorkspaces,
 };

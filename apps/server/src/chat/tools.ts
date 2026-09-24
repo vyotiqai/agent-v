@@ -1,10 +1,12 @@
 import { activeTaskStatuses } from "@agent-v/shared";
 import { tool } from "ai";
 import { z } from "zod";
+import { proposeAction } from "../actions.ts";
 import { type BrowserScope, browseForAgent, scopedAgentAction } from "../browser/service.ts";
 import type { Context } from "../context.ts";
 import { createTask, listTasks } from "../tasks/service.ts";
 import { readWebPage } from "../tools/web.ts";
+import { workspaceDescriptions, workspaceSchemas, workspaceTools } from "../tools/workspace.ts";
 import { addMemory } from "../workspace.ts";
 
 export function chatTools(ctx: Context, userId: string, threadId: string) {
@@ -47,6 +49,45 @@ export function chatTools(ctx: Context, userId: string, threadId: string) {
       },
     }),
     ...(ctx.browser ? browserTools(ctx, userId, { threadId }) : webFetchTool(ctx)),
+    ...mailAndCalendarTools(ctx, userId),
+  };
+}
+
+/** Read mail and calendar, and propose (never perform) sends and calendar changes. */
+function mailAndCalendarTools(ctx: Context, userId: string) {
+  const read = (key: "search_mail" | "read_email_thread" | "list_events") =>
+    tool({
+      description: workspaceDescriptions[key],
+      inputSchema: workspaceSchemas[key] as z.ZodType,
+      execute: async (input) =>
+        (workspaceTools[key] as (c: Context, u: string, i: unknown) => Promise<unknown>)(
+          ctx,
+          userId,
+          input,
+        ),
+    });
+  const propose = (
+    key: "propose_email" | "propose_event",
+    kind: "email.send" | "calendar.create",
+  ) =>
+    tool({
+      description: `${workspaceDescriptions[key]} The owner approves it in the chat.`,
+      inputSchema: workspaceSchemas[key] as z.ZodType,
+      execute: async (payload) => {
+        try {
+          const action = await proposeAction(ctx, userId, { kind, payload });
+          return { actionId: action.id, title: action.title, status: action.status };
+        } catch (error) {
+          return { error: (error as Error).message };
+        }
+      },
+    });
+  return {
+    search_mail: read("search_mail"),
+    read_email_thread: read("read_email_thread"),
+    list_events: read("list_events"),
+    propose_email: propose("propose_email", "email.send"),
+    propose_event: propose("propose_event", "calendar.create"),
   };
 }
 

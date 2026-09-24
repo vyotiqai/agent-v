@@ -1,5 +1,12 @@
-import type { BrowserSession, Memory, ModelOption, Settings } from "@agent-v/shared";
+import type {
+  BrowserSession,
+  Memory,
+  ModelOption,
+  Settings,
+  WorkspaceStatus,
+} from "@agent-v/shared";
 import { router } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -34,6 +41,13 @@ export default function SettingsScreen() {
     ["browser"],
   );
   const [address, setAddress] = useState("");
+  const workspace = useResource<WorkspaceStatus>("/api/workspace", ["connection"]);
+  const connectGoogle = (capability: "read" | "write") =>
+    run(async () => {
+      const { url } = await api<{ url: string }>("/api/google/connect", { body: { capability } });
+      // The result arrives over the live stream when Google redirects back.
+      await WebBrowser.openBrowserAsync(url);
+    });
   const [name, setName] = useState("");
   const [tone, setTone] = useState("");
   const [memory, setMemory] = useState("");
@@ -152,6 +166,71 @@ export default function SettingsScreen() {
                 }
               />
             </View>
+          </Card>
+        </View>
+
+        <View>
+          <Label>Accounts</Label>
+          <Card className="gap-3">
+            <View className="flex-row items-center gap-3">
+              <View className="h-9 w-9 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
+                <Icon name="mail" size={16} />
+              </View>
+              <View className="flex-1">
+                <Text className="text-[15px] font-medium text-zinc-900 dark:text-zinc-100">
+                  Gmail and Calendar
+                </Text>
+                <Muted className="text-xs">
+                  {workspace.data?.source === "google"
+                    ? `${workspace.data.account} · ${workspace.data.canWrite ? "read and send (with your approval)" : "read only"}`
+                    : workspace.data?.source === "demo"
+                      ? "Using a demo mailbox with fictional mail"
+                      : "Not connected"}
+                </Muted>
+              </View>
+            </View>
+            {workspace.data?.googleAvailable ? (
+              workspace.data.source === "google" ? (
+                <View className="flex-row gap-2">
+                  {!workspace.data.canWrite ? (
+                    <Button
+                      title="Allow sending"
+                      variant="secondary"
+                      className="flex-1"
+                      onPress={() => void connectGoogle("write")}
+                    />
+                  ) : null}
+                  <Button
+                    title="Disconnect"
+                    variant="danger"
+                    className="flex-1"
+                    onPress={() => void run(() => api("/api/google/disconnect", { body: {} }))}
+                  />
+                </View>
+              ) : (
+                <View className="flex-row gap-2">
+                  <Button
+                    title="Connect Google"
+                    className="flex-1"
+                    onPress={() => void connectGoogle("read")}
+                  />
+                  <Button
+                    title="With sending"
+                    variant="secondary"
+                    className="flex-1"
+                    onPress={() => void connectGoogle("write")}
+                  />
+                </View>
+              )
+            ) : (
+              <Muted className="text-xs">
+                To use your real Gmail and Calendar, the server needs GOOGLE_CLIENT_ID,
+                GOOGLE_CLIENT_SECRET and TOKEN_ENCRYPTION_KEY.
+              </Muted>
+            )}
+            <Muted className="text-xs">
+              Emails and calendar changes always wait for your approval.
+            </Muted>
           </Card>
         </View>
 

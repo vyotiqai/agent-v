@@ -115,6 +115,19 @@ app ──signed WS──▶ API /api/browsers/:id/live ──token WS──▶ 
 - Each chat and each task gets its own session; profiles persist until deleted, and the worker
   recycles idle browsers.
 
+### Mail, calendar and documents
+
+`providers/` exposes one `WorkspaceProvider` per user: Google when connected, otherwise the
+demo workspace. Reads go straight through; every write is an action. An action records the
+account it was prepared for, so an approval can never send from a different account than the
+one reviewed. Google errors that leave the outcome uncertain (network drops, 5xx after a
+send) are recorded as `outcome_unknown` and are never retried automatically.
+
+Files are stored under `DATA_DIR` by server-generated ids, with a SHA-256 checked on every
+read, and are served through signed, 15-minute links (framing allowed only for the app's own
+origins). Filling a PDF always produces a new file and removes document, page and field
+scripts from the copy.
+
 ### Realtime
 
 Mutations call `publish(userId, event)`, which runs `pg_notify`. Every server process listens

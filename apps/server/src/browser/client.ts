@@ -51,6 +51,22 @@ export class BrowserClient {
   close = (id: string) => this.call(`/sessions/${id}/close`, { body: {} });
   remove = (id: string) => this.call(`/sessions/${id}`, { method: "DELETE" });
 
+  downloads = (id: string) =>
+    this.call<{ id: string; name: string; size: number; savedAt: string }[]>(
+      `/sessions/${id}/downloads`,
+    );
+  removeDownload = (id: string, downloadId: string) =>
+    this.call(`/sessions/${id}/downloads/${downloadId}`, { method: "DELETE" });
+
+  async downloadBytes(id: string, downloadId: string): Promise<Uint8Array> {
+    const response = await fetch(`${this.base}/sessions/${id}/downloads/${downloadId}`, {
+      headers: { authorization: `Bearer ${this.token}` },
+      signal: AbortSignal.timeout(30_000),
+    }).catch(() => null);
+    if (!response?.ok) throw new AppError("Download unavailable", 502);
+    return new Uint8Array(await response.arrayBuffer());
+  }
+
   async screenshot(id: string): Promise<ArrayBuffer> {
     const response = await fetch(`${this.base}/sessions/${id}/screenshot`, {
       headers: { authorization: `Bearer ${this.token}` },

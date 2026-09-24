@@ -1,3 +1,6 @@
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type { BaseEvent } from "@ag-ui/core";
 import { readSse } from "@agent-v/shared";
 import type { LanguageModel } from "ai";
@@ -17,6 +20,7 @@ export function testConfig(overrides: Record<string, string> = {}): Config {
     BETTER_AUTH_SECRET: "test-secret-that-is-long-enough-for-better-auth",
     PUBLIC_URL: "http://localhost:8787",
     ALLOW_PRIVATE_NETWORK_FETCH: "true",
+    DATA_DIR: mkdtempSync(join(tmpdir(), "agent-v-data-")),
     ...overrides,
   });
 }
@@ -119,4 +123,10 @@ export async function startTestServer(
   }
 
   return { ...runtime, config, call, json, signUp, run, waitForTask };
+}
+
+/** Narrow a value that the test expects to exist. */
+export function must<T>(value: T | null | undefined, what = "value"): T {
+  if (value === null || value === undefined) throw new Error(`Expected ${what} to exist`);
+  return value;
 }

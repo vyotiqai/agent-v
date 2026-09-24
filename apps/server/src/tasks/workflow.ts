@@ -8,6 +8,17 @@ import { type Context, newId } from "../context.ts";
 import { AppError } from "../errors.ts";
 import { taskSystemPrompt } from "../prompts.ts";
 import { readWebPage } from "../tools/web.ts";
+import { workspaceDescriptions, workspaceSchemas, workspaceTools } from "../tools/workspace.ts";
+
+const workspaceEventTitle = {
+  search_mail: "Searched mail",
+  read_email_thread: "Read an email thread",
+  list_events: "Checked the calendar",
+  import_attachment: "Saved an attachment to Files",
+  inspect_pdf: "Inspected a PDF",
+  fill_pdf: "Saved a filled copy",
+} as const;
+
 import { addMemory, notify } from "../workspace.ts";
 import { addEvent, getTaskRow, updateTask } from "./service.ts";
 
@@ -57,6 +68,15 @@ const allTaskTools = {
       summary: z.string().min(1).max(500),
     }),
   }),
+  ...(Object.fromEntries(
+    (Object.keys(workspaceSchemas) as (keyof typeof workspaceSchemas)[]).map((key) => [
+      key,
+      tool({
+        description: workspaceDescriptions[key],
+        inputSchema: workspaceSchemas[key] as z.ZodType,
+      }),
+    ]),
+  ) as { [K in keyof typeof workspaceSchemas]: ReturnType<typeof tool> }),
   finish_task: tool({
     description: "Finish the task with a summary of the outcome for the owner.",
     inputSchema: z.object({ summary: z.string().min(1).max(8000) }),
@@ -237,16 +257,29 @@ async function runTool(
       );
       return { answer: message.answer };
     }
-    case "propose_webhook": {
-      const input = parsed.data as { url: string; body: Record<string, unknown>; summary: string };
-      const action = await step(`propose:${id}`, async () => {
-        const proposed = await proposeAction(c, userId, {
-          id: `${taskId}:${id}`,
-          taskId,
-          kind: "webhook.post",
-          payload: { url: input.url, body: input.body, summary: input.summary },
-          summary: input.summary,
-        });
+    case "propose_webhook":
+    case "propose_email":
+    case "propose_event": {
+      const data = parsed.data as Record<string, unknown>;
+      const kind =
+        name === "propose_email"
+          ? "email.send"
+          : name === "propose_event"
+            ? "calendar.create"
+            : "webhook.post";
+      const proposal = await step(`propose:${id}`, async () => {
+        let proposed: Awaited<ReturnType<typeof proposeAction>>;
+        try {
+          proposed = await proposeAction(c, userId, {
+            id: `${taskId}:${id}`,
+            taskId,
+            kind,
+            payload: data,
+            summary: typeof data.summary === "string" ? data.summary : undefined,
+          });
+        } catch (error) {
+          return { error: (error as Error).message };
+        }
         await updateTask(
           c,
           userId,
@@ -260,8 +293,10 @@ async function runTool(
           taskId,
           dedupeKey: `review:${proposed.id}`,
         });
-        return proposed;
+        return { action: proposed };
       });
+      if ("error" in proposal) return proposal;
+      const action = proposal.action;
       const seconds = Math.max(
         1,
         Math.ceil((Date.parse(action.expiresAt) - (await DBOS.now())) / 1000),
@@ -287,6 +322,31 @@ async function runTool(
         return finished;
       });
       return { status: outcome.status, result: outcome.result, error: outcome.error };
+    }
+    case "search_mail":
+    case "read_email_thread":
+    case "list_events":
+    case "import_attachment":
+    case "inspect_pdf":
+    case "fill_pdf": {
+      const run = workspaceTools[name] as (
+        ctx: Context,
+        userId: string,
+        input: unknown,
+      ) => Promise<unknown>;
+      return step(`${name}:${id}`, async () => {
+        const result = await run(c, userId, parsed.data);
+        const failed = result && typeof result === "object" && "error" in result;
+        await addEvent(
+          c,
+          userId,
+          taskId,
+          "tool",
+          failed ? `${name.replace(/_/g, " ")} failed` : workspaceEventTitle[name],
+          failed ? String((result as { error: string }).error) : "",
+        );
+        return result;
+      });
     }
     case "finish_task": {
       const { summary } = parsed.data as { summary: string };

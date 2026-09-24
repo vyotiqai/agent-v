@@ -151,6 +151,8 @@ export function Field(props: TextInputProps & { label?: string }) {
         placeholderTextColor="#a1a1aa"
         className={`min-h-11 rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-[15px] text-zinc-900 focus:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 ${className ?? ""}`}
         style={[webInput, style]}
+        // The visible label names the input for screen readers too.
+        accessibilityLabel={label}
         {...rest}
       />
     </View>

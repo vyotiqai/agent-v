@@ -36,14 +36,28 @@ OpenMuse plus multi-user SaaS, MCP connectors, push notifications and voice.
 - [ ] Next: WebRTC take-over (native dialogs, clipboard), one container per user for hard
       isolation, and agent form-filling behind approvals.
 
-## Phase 3 — Google workspace and documents
+## Phase 3 — Google workspace and documents (this change)
 
-- Google OAuth per user (PKCE, encrypted refresh tokens, incremental scopes).
-- Gmail search/read/draft/send and Calendar CRUD, all writes through approvals.
-- PDF import, form fill (pdf-lib), viewer (expo-pdf native, pdf.js on web).
-- Browser PDF downloads captured into Files.
-- S3-compatible storage (local FS → Garage/R2).
-- The permission-slip flow end to end.
+- [x] Google OAuth per user: PKCE, single-use state bound to the user, read or read+send scopes,
+      refresh tokens sealed with AES-256-GCM (bound to owner), revoke on disconnect, automatic
+      removal when access is revoked.
+- [x] Mail/calendar provider layer: Gmail search, full threads (HTML converted to text, odd
+      charsets tolerated, one bad message never breaks a list), attachments; Calendar list.
+- [x] Writes only through approvals: `email.send` (MIME with CRLF, RFC 2047 subjects, reply
+      threading, attachments, header-injection checks), `calendar.create`, `calendar.delete`
+      (ETag `If-Match`). Each is pinned to the reviewed account; uncertain Google failures end
+      as `outcome_unknown`. Proposals made outside tasks run as soon as they are approved.
+- [x] Demo workspace: a fictional inbox (with a real fillable permission slip) and calendar,
+      so everything works offline and in tests.
+- [x] Files: PDF upload (10 MB), signed downloads, integrity check, viewer (web: in app; native:
+      system viewer), form fill into a new copy with scripts stripped, browser PDF downloads.
+- [x] Agent tools in chat and tasks: `search_mail`, `read_email_thread`, `list_events`,
+      `import_attachment`, `inspect_pdf`, `fill_pdf`, `propose_email`, `propose_event`.
+- [x] App: Inbox (mail + calendar), email threads with reply-for-review, Files, file detail
+      with form filling, approval cards in chat and tasks, Accounts in Settings.
+- [x] The permission-slip flow end to end.
+- [ ] Next: S3-compatible storage (Garage/R2), embedded native PDF renderer (expo-pdf, dev
+      build), calendar edits and recurrence, Gmail drafts, more PDF field types and OCR.
 
 ## Phase 4 — Linux computer
 

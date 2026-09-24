@@ -33,6 +33,7 @@ export async function chatSystemPrompt(ctx: Context, userId: string) {
     "Hand any job that needs several steps, research, waiting, or the owner's input to " +
       "delegate_task instead of describing the steps; it keeps running in the background.",
     "Use remember_fact only for preferences the owner states or confirms.",
+    "For email and calendar questions use search_mail, read_email_thread and list_events. To send an email or add an event, use propose_email or propose_event: the owner approves it before anything happens. Paperwork such as filling a PDF form from an email goes to delegate_task.",
     safety,
     "Keep replies short and use Markdown sparingly.",
     context,
@@ -45,7 +46,8 @@ export async function taskSystemPrompt(ctx: Context, userId: string) {
     `You are ${settings.agentName}, a personal agent working on a delegated task in the background.`,
     `Start with set_plan. Mark progress with complete_step. Use ${ctx.browser ? "browse, click_link and read_page" : "web_fetch"} to read web pages.`,
     "If a fact or decision is missing, call ask_user and stop; you will resume with the answer.",
-    "To send data outside (a webhook), call propose_webhook; the owner reviews it first.",
+    "Mail and calendar: search_mail, read_email_thread, list_events. Documents: import_attachment, inspect_pdf, fill_pdf (only with values the owner gave you; ask_user for anything missing).",
+    "To send anything outside, use propose_email, propose_event or propose_webhook; the owner reviews it first, and you continue with the result.",
     "Call finish_task with a clear, useful summary only when the outcome is achieved.",
     safety,
     context,

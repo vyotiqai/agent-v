@@ -2,6 +2,7 @@ import type { TaskDetail } from "@agent-v/shared";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import { ActionReview } from "../../src/components/ActionReview";
 import { Markdown } from "../../src/components/Markdown";
 import {
   Button,
@@ -93,51 +94,7 @@ export default function TaskScreen() {
         </Card>
       ) : null}
 
-      {action && task.status === "waiting_approval" && action.status === "awaiting_review" ? (
-        <Card className="gap-3 border-amber-200 dark:border-amber-900">
-          <View className="flex-row items-center gap-2">
-            <Icon name="shield" size={16} className="text-amber-600" />
-            <Text className="text-[15px] font-semibold text-zinc-900 dark:text-zinc-100">
-              Review before it runs
-            </Text>
-          </View>
-          <Text className="text-[15px] text-zinc-800 dark:text-zinc-200">{action.summary}</Text>
-          <Muted>{action.title}</Muted>
-          <View className="rounded-xl bg-zinc-100 p-3 dark:bg-zinc-800">
-            <Text selectable className="font-mono text-xs text-zinc-700 dark:text-zinc-300">
-              {JSON.stringify(action.payload, null, 2)}
-            </Text>
-          </View>
-          <Muted>Expires {ago(action.expiresAt)}. Nothing is sent unless you approve.</Muted>
-          <View className="flex-row gap-2">
-            <Button
-              title="Approve"
-              className="flex-1"
-              busy={busy === "approve"}
-              onPress={() =>
-                void act("approve", () =>
-                  api(`/api/actions/${action.id}/decide`, {
-                    body: { hash: action.hash, decision: "approve" },
-                  }),
-                )
-              }
-            />
-            <Button
-              title="Decline"
-              variant="secondary"
-              className="flex-1"
-              busy={busy === "deny"}
-              onPress={() =>
-                void act("deny", () =>
-                  api(`/api/actions/${action.id}/decide`, {
-                    body: { hash: action.hash, decision: "deny" },
-                  }),
-                )
-              }
-            />
-          </View>
-        </Card>
-      ) : null}
+      {action ? <ActionReview action={action} onDecided={() => void detail.reload()} /> : null}
 
       {task.result ? (
         <Card className="gap-2">

@@ -133,7 +133,18 @@ export interface Settings {
 
 /** Pushed on GET /api/events whenever something the user owns changes. */
 export interface WorkspaceEvent {
-  type: "task" | "thread" | "notification" | "memory" | "action" | "settings" | "browser";
+  type:
+    | "task"
+    | "thread"
+    | "notification"
+    | "memory"
+    | "action"
+    | "settings"
+    | "browser"
+    | "connection"
+    | "mail"
+    | "calendar"
+    | "file";
   id: string;
 }
 

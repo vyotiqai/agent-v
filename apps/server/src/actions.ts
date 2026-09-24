@@ -1,20 +1,26 @@
 import { createHash } from "node:crypto";
 import type { Action } from "@agent-v/shared";
+import { emailDraftSchema, eventDeleteSchema, eventDraftSchema } from "@agent-v/shared";
 import { and, eq, gt } from "drizzle-orm";
 import { z } from "zod";
 import { type Context, newId } from "./context.ts";
 import { actions } from "./db/schema.ts";
 import { AppError, notFound } from "./errors.ts";
+import { getFileRow, readFileBytes } from "./files/service.ts";
 import { safeFetch } from "./net/safe-fetch.ts";
+import { workspaceFor } from "./providers/index.ts";
 
 /**
  * External writes. Each kind validates its payload, describes itself for review, and executes
- * only after the owner approves the exact payload hash.
+ * only after the owner approves the exact payload hash. Mail and calendar payloads record the
+ * account they were reviewed for; if the connected account changes, they refuse to run.
  */
 interface Executor<T> {
   schema: z.ZodType<T>;
   title(payload: T): string;
-  run(ctx: Context, payload: T): Promise<string>;
+  /** Called when proposing: check references and pin the account. */
+  prepare?(ctx: Context, userId: string, payload: T): Promise<T>;
+  run(ctx: Context, userId: string, payload: T): Promise<string>;
 }
 
 const webhookPayload = z.object({
@@ -22,12 +28,36 @@ const webhookPayload = z.object({
   body: z.record(z.string(), z.unknown()),
   summary: z.string().max(500).optional(),
 });
+const account = { account: z.string().max(320).optional() };
+const emailPayload = emailDraftSchema.extend(account);
+const eventPayload = eventDraftSchema.and(z.object(account));
+const deletePayload = eventDeleteSchema.extend(account);
+
+async function pinAccount<T extends { account?: string }>(
+  ctx: Context,
+  userId: string,
+  payload: T,
+) {
+  const provider = await workspaceFor(ctx, userId);
+  if (!provider.canWrite)
+    throw new AppError("Grant write access to Google in Settings before preparing this", 409);
+  return { ...payload, account: provider.account };
+}
+
+async function providerFor(ctx: Context, userId: string, pinned: string | undefined) {
+  const provider = await workspaceFor(ctx, userId);
+  if (!pinned || provider.account !== pinned)
+    throw new Error(
+      `This was reviewed for ${pinned ?? "another account"}, but ${provider.account} is connected now. Prepare it again.`,
+    );
+  return provider;
+}
 
 export const executors = {
   "webhook.post": {
     schema: webhookPayload,
     title: (p) => `POST to ${new URL(p.url).host}`,
-    async run(ctx, p) {
+    async run(ctx, _userId, p) {
       const response = await safeFetch(p.url, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -41,6 +71,43 @@ export const executors = {
       return `Delivered (${response.status})`;
     },
   } satisfies Executor<z.infer<typeof webhookPayload>>,
+  "email.send": {
+    schema: emailPayload,
+    title: (p) => `Email “${p.subject}” to ${p.to.join(", ")}`,
+    async prepare(ctx, userId, p) {
+      for (const id of p.attachmentIds) await getFileRow(ctx, userId, id);
+      return pinAccount(ctx, userId, p);
+    },
+    async run(ctx, userId, p) {
+      const provider = await providerFor(ctx, userId, p.account);
+      const attachments = [];
+      for (const id of p.attachmentIds) {
+        const { row, bytes } = await readFileBytes(ctx, userId, id);
+        attachments.push({ name: row.name, mimeType: row.mimeType, bytes });
+      }
+      return provider.sendMail(p, attachments);
+    },
+  } satisfies Executor<z.infer<typeof emailPayload>>,
+  "calendar.create": {
+    schema: eventPayload,
+    title: (p) => `Add “${p.title}” to the calendar`,
+    prepare: (ctx, userId, p) => pinAccount(ctx, userId, p),
+    async run(ctx, userId, p) {
+      return (await providerFor(ctx, userId, p.account)).createEvent(p);
+    },
+  } satisfies Executor<z.infer<typeof eventPayload>>,
+  "calendar.delete": {
+    schema: deletePayload,
+    title: (p) => `Delete “${p.title}” from the calendar`,
+    prepare: (ctx, userId, p) => pinAccount(ctx, userId, p),
+    async run(ctx, userId, p) {
+      return (await providerFor(ctx, userId, p.account)).deleteEvent(
+        p.calendarId,
+        p.eventId,
+        p.etag,
+      );
+    },
+  } satisfies Executor<z.infer<typeof deletePayload>>,
 } as const;
 export type ActionKind = keyof typeof executors;
 
@@ -70,8 +137,9 @@ export async function proposeAction(
   userId: string,
   input: { id?: string; taskId?: string; kind: ActionKind; payload: unknown; summary?: string },
 ) {
-  const executor = executors[input.kind];
-  const payload = executor.schema.parse(input.payload);
+  const executor = executors[input.kind] as Executor<Record<string, unknown>>;
+  const parsed = executor.schema.parse(input.payload);
+  const payload = executor.prepare ? await executor.prepare(ctx, userId, parsed) : parsed;
   const [row] = await ctx.db
     .insert(actions)
     .values({
@@ -169,14 +237,18 @@ export async function executeAction(ctx: Context, userId: string, id: string): P
     await ctx.realtime.publish(userId, { type: "action", id });
     return toAction(unknown ?? current);
   }
-  const executor = executors[claimed.kind as ActionKind];
+  const executor = executors[claimed.kind as ActionKind] as
+    | Executor<Record<string, unknown>>
+    | undefined;
   let patch: Partial<typeof actions.$inferInsert>;
   try {
     if (!executor) throw new Error(`Unknown action kind ${claimed.kind}`);
-    const result = await executor.run(ctx, executor.schema.parse(claimed.payload));
+    const result = await executor.run(ctx, userId, executor.schema.parse(claimed.payload));
     patch = { status: "succeeded", result };
   } catch (error) {
-    patch = { status: "failed", error: (error as Error).message };
+    // A write that may have happened is never retried or reported as failed.
+    const unknown = (error as { outcomeUnknown?: boolean }).outcomeUnknown === true;
+    patch = { status: unknown ? "outcome_unknown" : "failed", error: (error as Error).message };
   }
   const [done] = await ctx.db.update(actions).set(patch).where(eq(actions.id, id)).returning();
   await ctx.realtime.publish(userId, { type: "action", id });

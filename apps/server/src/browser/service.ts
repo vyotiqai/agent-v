@@ -3,6 +3,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { type Context, newId } from "../context.ts";
 import { browserSessions } from "../db/schema.ts";
 import { AppError, notFound } from "../errors.ts";
+import { storeFile } from "../files/service.ts";
 import type { BrowserClient } from "./client.ts";
 
 const maxSessionsPerUser = 20;
@@ -162,4 +163,23 @@ export async function scopedAgentAction(
   } catch (error) {
     return { error: (error as Error).message };
   }
+}
+
+/** Move a browser's captured PDF downloads into the owner's Files. */
+export async function importDownloads(ctx: Context, userId: string, id: string) {
+  const row = await getBrowserRow(ctx, userId, id);
+  const client = browserOf(ctx);
+  const saved = [];
+  for (const download of await client.downloads(row.id)) {
+    const bytes = await client.downloadBytes(row.id, download.id);
+    saved.push(
+      await storeFile(ctx, userId, {
+        name: download.name,
+        bytes,
+        source: `Downloaded from ${row.title || row.url}`,
+      }),
+    );
+    await client.removeDownload(row.id, download.id);
+  }
+  return saved;
 }

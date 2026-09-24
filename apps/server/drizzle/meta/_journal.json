@@ -15,6 +15,13 @@
       "when": 1790255599151,
       "tag": "0001_browser_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790256753905,
+      "tag": "0002_workspace",
+      "breakpoints": true
     }
   ]
 }

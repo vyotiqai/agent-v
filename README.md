@@ -8,9 +8,9 @@ Agent V is a from-scratch rebuild of the ideas in
 [CopilotKit/OpenMuse](https://github.com/CopilotKit/openmuse), designed for many users and with
 no required hosted service apart from your model provider.
 
-> **Status: phases 1–2 of 7.** Chat, durable background tasks, approvals, memory, live updates
-> and a cloud browser you can watch and take over work end to end. Gmail/Calendar, documents,
-> the Linux computer, goals/tracking, MCP connectors, push and voice follow; see the
+> **Status: phases 1–3 of 7.** Chat, durable background tasks, approvals, memory, live updates,
+> a cloud browser you can watch and take over, Gmail/Calendar and PDF documents work end to end.
+> The Linux computer, goals/tracking, MCP connectors, push and voice follow; see the
 > [roadmap](docs/ROADMAP.md).
 
 ## What works today
@@ -23,6 +23,8 @@ no required hosted service apart from your model provider.
 | **Background tasks** | Durable DBOS workflows. Every model call and tool call is checkpointed, so restarts resume. Tasks have plans, progress, questions for you, cancel, resume, and retry from the failed step. |
 | **Approvals** | External writes (webhooks today; mail and calendar next) run only after you approve that exact payload (hash-bound, expiring, run at most once, `outcome_unknown` on crashes). |
 | **Cloud browser** | Real Chromium per chat and per task (`apps/browser`). The agent can `browse`, `click_link` and `read_page`. You watch it live in chat and **Take control** by tapping, typing, scrolling or using the address bar. Logins persist per session. All traffic goes through an egress proxy that blocks private networks. |
+| **Mail and calendar** | Connect Google per user (OAuth with PKCE; refresh tokens encrypted with AES-256-GCM). The agent searches and reads mail, checks the calendar, and *proposes* emails and events. You approve the exact message, and it is sent from the account you reviewed. Without Google, a fictional demo mailbox lets you try everything. |
+| **Documents** | Upload PDFs, save email attachments or browser downloads to Files, view them in the app, and fill supported forms into a new copy with scripts removed. The permission-slip flow works end to end: find the email, fill the form with your answers, then reply with it attached after your review. |
 | **Web reading** | Without a browser worker, `web_fetch` reads static pages. It pins DNS and blocks private, loopback, link-local and metadata addresses, including after redirects. |
 | **Memory and inbox** | Facts you ask the agent to remember, and notifications for results, questions and reviews. |
 | **Live updates** | One SSE stream per device, fed by Postgres LISTEN/NOTIFY. No polling. |
@@ -56,6 +58,11 @@ Open http://localhost:8081, create an account, and try:
 - **Remember that I prefer window seats.** This saves a memory.
 - **Summarize https://example.com.** The agent reads the page.
 - In Tasks, **"Book a table and ask me first about the budget"**. The task pauses for your answer.
+- **Complete the permission slip.** The agent finds the form, asks for your details, fills the PDF and prepares the reply for you to approve.
+- **Reply to Sam: count me in!** An approval card appears in chat, and nothing is sent until you approve.
+
+To use your real Gmail and Calendar, add a Google OAuth client and an encryption key (see
+`.env.example`), then open **Settings → Accounts → Connect Google**.
 
 For a real model, set for example `DEFAULT_MODEL=anthropic/claude-sonnet-5` and
 `ANTHROPIC_API_KEY=…`, and list extra choices in `ALLOWED_MODELS`. Local models:

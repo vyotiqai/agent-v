@@ -14,6 +14,7 @@ import WebSocket from "ws";
 import { createWorkerApp } from "../../browser/src/app.ts";
 import { type EgressProxy, startEgressProxy } from "../../browser/src/proxy.ts";
 import { Sessions } from "../../browser/src/sessions.ts";
+import { permissionSlipPdf } from "../src/providers/demo.ts";
 import { startTestServer, type TestServer } from "./helpers.ts";
 
 // Use CHROMIUM_PATH, Playwright's own download, or a preinstalled Chromium; skip if none.
@@ -94,7 +95,15 @@ function scriptedBrowser(url: string) {
 
 beforeAll(async () => {
   if (!chromiumPath) return;
+  const slip = Buffer.from(await permissionSlipPdf());
   site = createServer((req, res) => {
+    if (req.url === "/slip.pdf")
+      return res
+        .writeHead(200, {
+          "content-type": "application/pdf",
+          "content-disposition": 'attachment; filename="slip.pdf"',
+        })
+        .end(slip);
     const pages: Record<string, string> = {
       "/": `<title>Garden</title><p>Tomatoes need sun.</p><a href="/next">Next page</a>`,
       "/next": `<title>Watering</title><p>Water in the morning.</p>`,
@@ -251,6 +260,42 @@ describe.skipIf(!chromiumPath)("cloud browser", () => {
     expect(detail.events.map((e: { title: string }) => e.title)).toContain("Browsed Garden");
     const sessionsList = await server.json("/api/browsers", { token: a });
     expect(sessionsList[0]).toMatchObject({ taskId: created.id, title: "Garden" });
+  });
+
+  it("imports PDF downloads into Files", async () => {
+    const { token: a } = await server.signUp();
+    const b = await server.signUp();
+    const opened = await server.json(
+      "/api/browsers",
+      { token: a, body: { url: `${origin}/` } },
+      201,
+    );
+    await server.json(`/api/browsers/${opened.id}/navigate`, {
+      token: a,
+      body: { url: `${origin}/slip.pdf` },
+    });
+    let downloads: { name: string }[] = [];
+    for (let i = 0; i < 50 && !downloads.length; i++) {
+      downloads = await server.json(`/api/browsers/${opened.id}/downloads`, { token: a });
+      if (!downloads.length) await new Promise((r) => setTimeout(r, 100));
+    }
+    expect(downloads.map((d) => d.name)).toEqual(["slip.pdf"]);
+    await server.json(
+      `/api/browsers/${opened.id}/downloads/import`,
+      { token: b.token, body: {} },
+      404,
+    );
+    const [file] = await server.json(
+      `/api/browsers/${opened.id}/downloads/import`,
+      { token: a, body: {} },
+      201,
+    );
+    expect(file).toMatchObject({
+      name: "slip.pdf",
+      source: "Downloaded from Garden",
+      pageCount: 1,
+    });
+    expect(await server.json(`/api/browsers/${opened.id}/downloads`, { token: a })).toEqual([]);
   });
 
   it("deletes a session and its profile", async () => {

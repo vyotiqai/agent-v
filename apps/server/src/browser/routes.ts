@@ -8,6 +8,7 @@ import {
   browserOf,
   deleteBrowserSession,
   getBrowserRow,
+  importDownloads,
   listBrowserSessions,
   navigateBrowser,
   openBrowser,
@@ -94,6 +95,13 @@ export function browserRoutes(app: Hono<Env>, ctx: Context) {
     const base = ctx.config.publicUrl.replace(/^http/, "ws");
     return c.json({ url: `${base}${path}?${ctx.signer.sign(userId, path, 60)}` });
   });
+  app.get("/api/browsers/:id/downloads", async (c) => {
+    const row = await getBrowserRow(ctx, c.get("userId"), c.req.param("id"));
+    return c.json(await browserOf(ctx).downloads(row.id));
+  });
+  app.post("/api/browsers/:id/downloads/import", async (c) =>
+    c.json(await importDownloads(ctx, c.get("userId"), c.req.param("id")), 201),
+  );
   app.delete("/api/browsers/:id", async (c) => {
     await deleteBrowserSession(ctx, c.get("userId"), c.req.param("id"));
     return c.body(null, 204);

@@ -60,6 +60,17 @@ export function createWorkerApp(config: WorkerConfig, sessions: Sessions) {
     const image = await sessions.screenshot(c.req.param("id"));
     return c.body(new Uint8Array(image), 200, { "content-type": "image/jpeg" });
   });
+  app.get("/sessions/:id/downloads", async (c) =>
+    c.json(await sessions.downloads(c.req.param("id"))),
+  );
+  app.get("/sessions/:id/downloads/:download", async (c) => {
+    const bytes = await sessions.downloadBytes(c.req.param("id"), c.req.param("download"));
+    return c.body(new Uint8Array(bytes), 200, { "content-type": "application/pdf" });
+  });
+  app.delete("/sessions/:id/downloads/:download", async (c) => {
+    await sessions.removeDownload(c.req.param("id"), c.req.param("download"));
+    return c.json({ ok: true });
+  });
   app.post("/sessions/:id/close", async (c) => {
     await sessions.close(c.req.param("id"));
     return c.json({ ok: true });

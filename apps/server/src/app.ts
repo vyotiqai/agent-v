@@ -18,13 +18,14 @@ import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 import { streamSSE } from "hono/streaming";
 import { z } from "zod";
-import { decideAction, getAction } from "./actions.ts";
+import { decideAction, executeAction, getAction } from "./actions.ts";
 import { type Auth, clientIpHeader } from "./auth.ts";
 import { browserRoutes, signedBrowserRoutes } from "./browser/routes.ts";
 import { runChat } from "./chat/run.ts";
 import { createThread, listMessages, listThreads, updateThread } from "./chat/threads.ts";
 import type { Context } from "./context.ts";
 import { AppError } from "./errors.ts";
+import { publicWorkspaceRoutes, workspaceRoutes } from "./providers/routes.ts";
 import {
   answerTask,
   cancelTask,
@@ -59,7 +60,13 @@ export function createApp(ctx: Context, auth: Auth) {
   const ws = createNodeWebSocket({ app });
   const origins = new Set(ctx.config.allowedOrigins);
 
-  app.use("*", secureHeaders({ crossOriginResourcePolicy: "cross-origin" }));
+  // Framing is decided per route (file previews may be framed by the app's own origins).
+  app.use("*", secureHeaders({ crossOriginResourcePolicy: "cross-origin", xFrameOptions: false }));
+  app.use("/api/*", async (c, next) => {
+    await next();
+    if (!c.res.headers.has("content-security-policy"))
+      c.res.headers.set("content-security-policy", "frame-ancestors 'none'");
+  });
   app.use(
     "/api/*",
     cors({
@@ -71,7 +78,11 @@ export function createApp(ctx: Context, auth: Auth) {
       maxAge: 600,
     }),
   );
-  app.use("/api/*", bodyLimit({ maxSize: 1024 * 1024 }));
+  const smallBodies = bodyLimit({ maxSize: 1024 * 1024 });
+  // Uploads carry their own, larger limit on the route.
+  app.use("/api/*", (c, next) =>
+    c.req.method === "POST" && c.req.path === "/api/files" ? next() : smallBodies(c, next),
+  );
   app.onError((error, c) => {
     if (error instanceof AppError) return c.json({ error: error.message }, error.status);
     if (error instanceof z.ZodError)
@@ -93,6 +104,7 @@ export function createApp(ctx: Context, auth: Auth) {
   });
 
   signedBrowserRoutes(app, ctx, ws.upgradeWebSocket);
+  publicWorkspaceRoutes(app, ctx);
 
   app.use("/api/*", async (c, next) => {
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
@@ -174,6 +186,9 @@ export function createApp(ctx: Context, auth: Auth) {
   });
 
   // Reviews
+  app.get("/api/actions/:id", async (c) =>
+    c.json(await getAction(ctx, c.get("userId"), c.req.param("id"))),
+  );
   app.post("/api/actions/:id/decide", async (c) => {
     const userId = c.get("userId");
     const { hash, decision } = await json(c, actionDecisionSchema);
@@ -183,6 +198,9 @@ export function createApp(ctx: Context, auth: Auth) {
       throw new AppError("Resume the task before deciding on its action", 409);
     const action = await decideAction(ctx, userId, pending.id, hash, decision);
     if (task) await DBOS.send(task.workflowId, { actionId: action.id }, "approval");
+    // Actions proposed outside a task run as soon as they are approved.
+    else if (action.status === "approved")
+      return c.json(await executeAction(ctx, userId, action.id));
     return c.json(action);
   });
 
@@ -206,6 +224,7 @@ export function createApp(ctx: Context, auth: Auth) {
   });
 
   browserRoutes(app, ctx);
+  workspaceRoutes(app, ctx);
 
   // Live workspace changes: one SSE stream per device replaces polling.
   app.get("/api/events", (c) => {

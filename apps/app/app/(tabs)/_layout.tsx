@@ -35,6 +35,20 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="inbox"
+        options={{
+          title: "Inbox",
+          tabBarIcon: ({ color }) => <Feather name="inbox" size={20} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="files"
+        options={{
+          title: "Files",
+          tabBarIcon: ({ color }) => <Feather name="folder" size={20} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",

@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import { z } from "zod";
 
 const compatProvider = z.object({
@@ -32,6 +33,18 @@ const envSchema = z.object({
   /** Browser worker (apps/browser). Browser tools are off when unset. */
   BROWSER_URL: z.url().optional(),
   BROWSER_TOKEN: z.string().min(32, "BROWSER_TOKEN must be at least 32 characters").optional(),
+  /** Private files (PDFs, attachments). */
+  DATA_DIR: z.string().default(".agent-v/data"),
+  /** Encrypts connected-account tokens at rest: 32 random bytes, base64. */
+  TOKEN_ENCRYPTION_KEY: z.string().optional(),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  /** Overridable only so tests can point at a fake Google. */
+  GOOGLE_ACCOUNTS_BASE: z.url().default("https://accounts.google.com"),
+  GOOGLE_OAUTH_BASE: z.url().default("https://oauth2.googleapis.com"),
+  GOOGLE_API_BASE: z.url().default("https://www.googleapis.com"),
+  /** A fictional mailbox and calendar for people without a Google connection. */
+  DEMO_WORKSPACE: bool.optional(),
   /** Trust X-Forwarded-For from a reverse proxy in front of the API. */
   TRUST_PROXY: bool.default(false),
   TASK_WORKERS: z.coerce.number().int().min(1).max(64).default(4),
@@ -58,6 +71,17 @@ export interface Config {
   };
   taskWorkers: number;
   browser?: { url: string; token: string };
+  dataDir: string;
+  encryptionKey?: Buffer;
+  google?: {
+    clientId: string;
+    clientSecret: string;
+    redirectUri: string;
+    accountsBase: string;
+    oauthBase: string;
+    apiBase: string;
+  };
+  demoWorkspace: boolean;
   trustProxy: boolean;
   allowPrivateNetworkFetch: boolean;
 }
@@ -74,6 +98,13 @@ export function readConfig(env: Record<string, string | undefined> = process.env
   for (const provider of compat)
     if (reserved.has(provider.name))
       throw new Error(`OpenAI-compatible provider name "${provider.name}" is reserved`);
+  const encryptionKey = e.TOKEN_ENCRYPTION_KEY
+    ? Buffer.from(e.TOKEN_ENCRYPTION_KEY, "base64")
+    : undefined;
+  if (encryptionKey && encryptionKey.length !== 32)
+    throw new Error("TOKEN_ENCRYPTION_KEY must be 32 bytes encoded as base64");
+  if (e.GOOGLE_CLIENT_ID && !encryptionKey)
+    throw new Error("Set TOKEN_ENCRYPTION_KEY (openssl rand -base64 32) before connecting Google");
   const allowed = e.ALLOWED_MODELS.split(",")
     .map((m) => m.trim())
     .filter(Boolean);
@@ -105,6 +136,20 @@ export function readConfig(env: Record<string, string | undefined> = process.env
       e.BROWSER_URL && e.BROWSER_TOKEN
         ? { url: e.BROWSER_URL.replace(/\/$/, ""), token: e.BROWSER_TOKEN }
         : undefined,
+    dataDir: resolve(e.DATA_DIR),
+    encryptionKey,
+    google:
+      e.GOOGLE_CLIENT_ID && e.GOOGLE_CLIENT_SECRET
+        ? {
+            clientId: e.GOOGLE_CLIENT_ID,
+            clientSecret: e.GOOGLE_CLIENT_SECRET,
+            redirectUri: `${e.PUBLIC_URL.replace(/\/$/, "")}/api/google/callback`,
+            accountsBase: e.GOOGLE_ACCOUNTS_BASE.replace(/\/$/, ""),
+            oauthBase: e.GOOGLE_OAUTH_BASE.replace(/\/$/, ""),
+            apiBase: e.GOOGLE_API_BASE.replace(/\/$/, ""),
+          }
+        : undefined,
+    demoWorkspace: e.DEMO_WORKSPACE ?? e.NODE_ENV !== "production",
     trustProxy: e.TRUST_PROXY,
     allowPrivateNetworkFetch: e.ALLOW_PRIVATE_NETWORK_FETCH,
   };

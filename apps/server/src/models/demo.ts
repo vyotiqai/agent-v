@@ -128,6 +128,42 @@ function chatTurn(input: string, results: ToolOutcome[], tools: Set<string>) {
         `I've started **${String(output.title ?? "your task")}**. It keeps running in the background — follow it in Tasks, and I'll ask if I need anything.`,
       );
     if (done.toolName === "remember_fact") return say("Got it. I'll remember that.");
+    if (done.toolName === "search_mail") {
+      const mail = (Array.isArray(done.output) ? done.output : []) as MailRow[];
+      const reply = replyIntent(input);
+      if (reply && mail[0] && tools.has("propose_email"))
+        return [proposeReply(mail[0], reply.body)];
+      if (!mail.length) return say("I didn't find any matching email.");
+      return say(
+        `Here's what I found:\n\n${mail
+          .slice(0, 5)
+          .map(
+            (m) =>
+              `- **${m.subject}** — ${m.from.replace(/\s*<.*>/, "")}${m.attachments?.length ? " · 📎" : ""}`,
+          )
+          .join("\n")}`,
+      );
+    }
+    if (done.toolName === "list_events") {
+      const events = (Array.isArray(done.output) ? done.output : []) as {
+        title: string;
+        start: string;
+      }[];
+      if (!events.length) return say("Your calendar is clear for the next week.");
+      return say(
+        `Coming up:\n\n${events
+          .slice(0, 6)
+          .map(
+            (e) =>
+              `- **${e.title}** — ${e.start.length > 10 ? new Date(e.start).toUTCString().slice(0, 22) : e.start}`,
+          )
+          .join("\n")}`,
+      );
+    }
+    if (done.toolName === "propose_email" || done.toolName === "propose_event")
+      return say(
+        `I've prepared **${String(output.title ?? "it")}**. Review it below; nothing happens until you approve.`,
+      );
     if (done.toolName === "web_fetch" || done.toolName === "browse")
       return say(
         `I read **${String(output.title || output.url)}**. Here's the start of it:\n\n${String(
@@ -147,9 +183,28 @@ function chatTurn(input: string, results: ToolOutcome[], tools: Set<string>) {
   const reader = tools.has("browse") ? "browse" : "web_fetch";
   if (url && tools.has(reader) && !/\b(task|monitor|watch)\b/i.test(input))
     return [call(reader, { url })];
+  const reply = replyIntent(input);
+  if (reply && tools.has("search_mail")) return [call("search_mail", { query: reply.name })];
+  const addEvent = /^add (.+?) to my calendar(?: on (\d{4}-\d{2}-\d{2}))?/i.exec(input.trim());
+  if (addEvent?.[1] && tools.has("propose_event")) {
+    const start = addEvent[2] ?? new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+    const end = new Date(Date.parse(start) + 86_400_000).toISOString().slice(0, 10);
+    return [call("propose_event", { title: addEvent[1], start, end, allDay: true })];
+  }
+  if (
+    tools.has("list_events") &&
+    /\b(calendar|agenda|schedule this week|what'?s on)\b/i.test(input)
+  )
+    return [call("list_events", { days: 7 })];
+  if (
+    tools.has("search_mail") &&
+    /\b(inbox|emails?|mail)\b/i.test(input) &&
+    !/\b(permission|form|slip|task)\b/i.test(input)
+  )
+    return [call("search_mail", { query: "" })];
   if (
     tools.has("delegate_task") &&
-    /\b(task|research|plan|organi[sz]e|prepare|draft|compare|find|book|schedule|help me)\b/i.test(
+    /\b(task|research|plan|organi[sz]e|prepare|draft|compare|find|book|schedule|help me|complete|fill|permission slip)\b/i.test(
       input,
     )
   )
@@ -158,19 +213,33 @@ function chatTurn(input: string, results: ToolOutcome[], tools: Set<string>) {
     "Hi! I'm running on the built-in demo model, so I follow simple rules. Try:\n\n" +
       "- **Plan a weekend trip to Lisbon** → I start a background task\n" +
       "- **Remember that I prefer window seats** → I save a memory\n" +
-      "- **Summarize https://example.com** → I read the page\n\n" +
+      "- **Summarize https://example.com** → I read the page\n" +
+      "- **What's in my inbox?** / **What's on my calendar?**\n" +
+      "- **Reply to Sam: count me in!** → I prepare a reply for your approval\n" +
+      "- **Complete the permission slip** → I fill the PDF and prepare the reply\n\n" +
       "Choose a real model in Settings for open-ended work.",
   );
 }
 
 function taskTurn(prompt: string, results: ToolOutcome[], tools: Set<string>) {
   const called = new Set(results.map((r) => r.toolName));
+  const paperwork = /\b(permission|slip|form)\b/i.test(prompt) && tools.has("search_mail");
   if (!called.has("set_plan"))
     return [
       call("set_plan", {
-        steps: ["Understand the request", "Gather what's needed", "Write up the result"],
+        steps: paperwork
+          ? [
+              "Find the form in your inbox",
+              "Fill it in with your details",
+              "Send it back after your review",
+            ]
+          : ["Understand the request", "Gather what's needed", "Write up the result"],
       }),
     ];
+  if (paperwork) {
+    const paperwork = paperworkTurn(results, called);
+    if (paperwork) return paperwork;
+  }
   const url = urlPattern.exec(prompt)?.[0];
   const reader = tools.has("browse") ? "browse" : "web_fetch";
   if (url && !called.has(reader) && !/\b(webhook|post to)\b/i.test(prompt))
@@ -198,6 +267,96 @@ function taskTurn(prompt: string, results: ToolOutcome[], tools: Set<string>) {
     "This result comes from the demo model; connect a real model for real reasoning.",
   ].filter(Boolean);
   return [call("finish_task", { summary: lines.join("\n") })];
+}
+
+interface MailRow {
+  id: string;
+  threadId: string;
+  from: string;
+  subject: string;
+  attachments?: { id: string; name: string }[];
+}
+
+/** "Reply to Sam: count me in" → { name: "Sam", body: "count me in" } */
+function replyIntent(input: string) {
+  const match = /^reply to ([\w .'-]{2,40}?)\s*[:,-]\s*(.+)$/is.exec(input.trim());
+  return match?.[1] && match[2] ? { name: match[1].trim(), body: match[2].trim() } : null;
+}
+
+const emailOf = (from: string) => /<([^>]+)>/.exec(from)?.[1] ?? from.trim();
+
+function proposeReply(mail: MailRow, body: string, attachmentIds: string[] = []) {
+  return call("propose_email", {
+    to: [emailOf(mail.from)],
+    subject: /^re:/i.test(mail.subject) ? mail.subject : `Re: ${mail.subject}`,
+    body,
+    attachmentIds,
+    replyTo: { threadId: mail.threadId, messageId: mail.id },
+  });
+}
+
+/** Find the form in the inbox, fill it with the owner's answers, and prepare the reply. */
+function paperworkTurn(results: ToolOutcome[], called: Set<string>) {
+  const output = (name: string) =>
+    results.findLast((r) => r.toolName === name)?.output as Record<string, unknown> | undefined;
+  if (!called.has("search_mail")) return [call("search_mail", { query: "permission slip" })];
+  const mail = (results.find((r) => r.toolName === "search_mail")?.output ?? []) as MailRow[];
+  const source = Array.isArray(mail) ? mail.find((m) => m.attachments?.length) : undefined;
+  if (!source) return null;
+  if (!called.has("read_email_thread"))
+    return [call("read_email_thread", { threadId: source.threadId })];
+  const attachment = source.attachments?.[0];
+  if (!called.has("import_attachment") && attachment)
+    return [call("import_attachment", { messageId: source.id, attachmentId: attachment.id })];
+  const imported = output("import_attachment") as
+    | { fileId?: string; fields?: { name: string; type: string }[] }
+    | undefined;
+  if (!imported?.fileId) return null;
+  const fields = (imported.fields ?? []).filter((f) => f.type !== "unsupported");
+  const completed = results.filter((r) => r.toolName === "complete_step").length;
+  if (completed < 1) return [call("complete_step", { index: 0 })];
+  if (!called.has("ask_user"))
+    return [
+      call("ask_user", {
+        question: `Which values should I put on the form? Fields: ${fields
+          .map((f) => (f.type === "checkbox" ? `${f.name} (yes/no)` : f.name))
+          .join(
+            ", ",
+          )}. Reply like “${fields[0]?.name ?? "Name"}: …; ${fields[1]?.name ?? "Other"}: …”.`,
+      }),
+    ];
+  const answer = String((output("ask_user") as { answer?: string } | undefined)?.answer ?? "");
+  if (!called.has("fill_pdf")) {
+    const values: Record<string, string | boolean> = {};
+    for (const piece of answer.split(/[;\n]/)) {
+      const [key, ...rest] = piece.split(":");
+      const field = fields.find((f) => f.name.toLowerCase() === key?.trim().toLowerCase());
+      const value = rest.join(":").trim();
+      if (field && value)
+        values[field.name] = field.type === "checkbox" ? /^(y|yes|true|x)/i.test(value) : value;
+    }
+    return [call("fill_pdf", { fileId: imported.fileId, values })];
+  }
+  const filled = output("fill_pdf") as { fileId?: string; error?: string } | undefined;
+  if (!filled?.fileId) return null;
+  if (completed < 2) return [call("complete_step", { index: 1 })];
+  if (!called.has("propose_email"))
+    return [
+      proposeReply(
+        source,
+        "Hello,\n\nPlease find the completed permission slip attached.\n\nThank you!",
+        [filled.fileId],
+      ),
+    ];
+  const sent = output("propose_email") as { status?: string } | undefined;
+  return [
+    call("finish_task", {
+      summary:
+        sent?.status === "succeeded"
+          ? `Filled in “${attachment?.name ?? "the form"}” and sent it back to ${emailOf(source.from)}.`
+          : `Filled in “${attachment?.name ?? "the form"}”. The reply was ${sent?.status ?? "not sent"}; the filled copy is in Files.`,
+    }),
+  ];
 }
 
 function titleFrom(input: string) {
