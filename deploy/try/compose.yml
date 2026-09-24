@@ -17,7 +17,7 @@ services:
     ports: ["127.0.0.1:8787:8787"]
     environment:
       PUBLIC_URL: http://localhost:8787
-      ALLOWED_ORIGINS: http://localhost:8787,http://127.0.0.1:8787
+      ALLOWED_ORIGINS: http://localhost:8787,http://127.0.0.1:8787,tauri://localhost,http://tauri.localhost
       DATABASE_URL: postgresql://agentv:agentv@postgres:5432/agentv
       BETTER_AUTH_SECRET: try-agent-v-locally-not-a-real-secret-000
       BROWSER_URL: http://browser:8790

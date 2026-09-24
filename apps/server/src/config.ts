@@ -19,7 +19,13 @@ const envSchema = z.object({
   HOST: z.string().default("127.0.0.1"),
   PORT: z.coerce.number().int().min(1).max(65535).default(8787),
   PUBLIC_URL: z.url().default("http://localhost:8787"),
-  ALLOWED_ORIGINS: z.string().default("http://localhost:8081,http://127.0.0.1:8081"),
+  // The Expo web dev server, plus the desktop app (tauri://localhost on macOS/Linux,
+  // http://tauri.localhost on Windows).
+  ALLOWED_ORIGINS: z
+    .string()
+    .default(
+      "http://localhost:8081,http://127.0.0.1:8081,tauri://localhost,http://tauri.localhost",
+    ),
   DATABASE_URL: z.string().min(1),
   BETTER_AUTH_SECRET: z.string().min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
   DEFAULT_MODEL: z.string().default("demo/agent-v"),
