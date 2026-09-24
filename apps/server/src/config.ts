@@ -81,6 +81,11 @@ const envSchema = z.object({
   ALLOW_PRIVATE_NETWORK_FETCH: bool.default(false),
   /** A built-in MCP server with sample tools, so connectors can be tried without setup. */
   MCP_DEMO: bool.optional(),
+  /**
+   * No sign-in: everyone who opens the app on this computer is the one built-in account.
+   * Only for a server on your own machine; it answers only requests addressed to localhost.
+   */
+  SINGLE_USER: bool.default(false),
   /** Expo push service (iOS/Android). The token is optional unless push security is enabled. */
   EXPO_ACCESS_TOKEN: z.string().optional(),
   EXPO_PUSH_URL: z.url().default("https://exp.host/--/api/v2/push"),
@@ -226,6 +231,7 @@ export interface Config {
   trustProxy: boolean;
   allowPrivateNetworkFetch: boolean;
   mcpDemo: boolean;
+  singleUser: boolean;
   push: {
     expo: { url: string; accessToken?: string };
     webPush?: { publicKey: string; privateKey: string; subject: string };
@@ -373,6 +379,7 @@ export function readConfig(env: Record<string, string | undefined> = process.env
     trustProxy: e.TRUST_PROXY,
     allowPrivateNetworkFetch: e.ALLOW_PRIVATE_NETWORK_FETCH,
     mcpDemo: e.MCP_DEMO ?? !production,
+    singleUser: e.SINGLE_USER,
     push: {
       expo: { url: e.EXPO_PUSH_URL.replace(/\/$/, ""), accessToken: e.EXPO_ACCESS_TOKEN },
       webPush: webPush && { ...webPush, subject: e.WEB_PUSH_SUBJECT },

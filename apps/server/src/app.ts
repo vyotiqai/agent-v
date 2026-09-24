@@ -35,6 +35,7 @@ import { connectorRoutes, publicConnectorRoutes } from "./mcp/routes.ts";
 import { publicWorkspaceRoutes, workspaceRoutes } from "./providers/routes.ts";
 import { pushRoutes } from "./push/routes.ts";
 import { MemoryStore, PostgresStore, rateLimiter } from "./ratelimit.ts";
+import { singleUserRoutes } from "./single-user.ts";
 import {
   answerTask,
   cancelTask,
@@ -130,6 +131,7 @@ export function createApp(ctx: Context, auth: Auth, options: { tracing?: boolean
   publicWorkspaceRoutes(app, ctx);
   publicConnectorRoutes(app, ctx);
   publicAccountRoutes(app, ctx);
+  singleUserRoutes(app, ctx, auth);
 
   app.use("/api/*", async (c, next) => {
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
@@ -164,6 +166,7 @@ export function createApp(ctx: Context, auth: Auth, options: { tracing?: boolean
         browser: Boolean(ctx.browser),
         computer: Boolean(ctx.config.computer),
         sampleConnector: ctx.config.mcpDemo,
+        singleUser: ctx.config.singleUser,
         transcription: transcriptionAvailable(ctx),
       },
     });

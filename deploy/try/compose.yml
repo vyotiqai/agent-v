@@ -22,13 +22,17 @@ services:
       BETTER_AUTH_SECRET: try-agent-v-locally-not-a-real-secret-000
       BROWSER_URL: http://browser:8790
       BROWSER_TOKEN: try-agent-v-locally-browser-token-00000000
+      # No sign-in: the app opens straight into your account. Set SINGLE_USER=false to get
+      # sign-up and sign-in (and teams, invitations, admin) back.
+      SINGLE_USER: ${SINGLE_USER:-true}
       # Offline demo features.
       DEMO_MODEL: "true"
       DEMO_WORKSPACE: "true"
       MCP_DEMO: "true"
-      # Plans and usage meters; sign up with this email to see the Admin screen.
+      # Plans and usage meters. The built-in account (and anyone signing up with the other
+      # email) also gets the Admin screen.
       PLANS: default
-      ADMIN_EMAILS: ${ADMIN_EMAILS:-admin@example.com}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-me@agent-v.local,admin@example.com}
       # Real models (optional).
       DEFAULT_MODEL: ${DEFAULT_MODEL:-demo/agent-v}
       ALLOWED_MODELS: ${ALLOWED_MODELS:-}

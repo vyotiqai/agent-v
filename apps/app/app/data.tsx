@@ -5,6 +5,7 @@ import { Button, Card, ConfirmButton, ErrorText, Field, Label, Muted } from "../
 import { downloadExport } from "../src/lib/account";
 import { api } from "../src/lib/api";
 import { useAuth } from "../src/lib/auth";
+import { useMe } from "../src/lib/me";
 
 const deleted = [
   "Chats, tasks, approvals and notifications",
@@ -16,6 +17,8 @@ const deleted = [
 
 export default function DataScreen() {
   const { signOut } = useAuth();
+  // Single-user mode has no password to confirm with; delete the database instead.
+  const singleUser = useMe().data?.features.singleUser ?? false;
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState<"export" | "delete" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,48 +60,50 @@ export default function DataScreen() {
         </Card>
       </View>
 
-      <View>
-        <Label>Delete your account</Label>
-        <Card className="gap-4">
-          <Muted>This permanently deletes, everywhere it's stored:</Muted>
-          <View className="gap-1">
-            {deleted.map((line) => (
-              <Text key={line} className="text-sm text-zinc-700 dark:text-zinc-300">
-                · {line}
-              </Text>
-            ))}
-          </View>
-          <Muted className="text-xs">
-            It can't be undone. Download your data first if you want a copy. If you own a team with
-            other members, make someone else the owner first.
-          </Muted>
-          <Field
-            label="Your password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            autoComplete="current-password"
-          />
-          <ConfirmButton
-            title="Delete my account"
-            confirmTitle="Tap again to delete everything"
-            disabled={!password}
-            busy={busy === "delete"}
-            onConfirm={async () => {
-              setBusy("delete");
-              setError(null);
-              try {
-                await api("/api/account/delete", { body: { password } });
-                await signOut();
-                router.replace("/sign-in");
-              } catch (e) {
-                setError((e as Error).message);
-                setBusy(null);
-              }
-            }}
-          />
-        </Card>
-      </View>
+      {singleUser ? null : (
+        <View>
+          <Label>Delete your account</Label>
+          <Card className="gap-4">
+            <Muted>This permanently deletes, everywhere it's stored:</Muted>
+            <View className="gap-1">
+              {deleted.map((line) => (
+                <Text key={line} className="text-sm text-zinc-700 dark:text-zinc-300">
+                  · {line}
+                </Text>
+              ))}
+            </View>
+            <Muted className="text-xs">
+              It can't be undone. Download your data first if you want a copy. If you own a team
+              with other members, make someone else the owner first.
+            </Muted>
+            <Field
+              label="Your password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoComplete="current-password"
+            />
+            <ConfirmButton
+              title="Delete my account"
+              confirmTitle="Tap again to delete everything"
+              disabled={!password}
+              busy={busy === "delete"}
+              onConfirm={async () => {
+                setBusy("delete");
+                setError(null);
+                try {
+                  await api("/api/account/delete", { body: { password } });
+                  await signOut();
+                  router.replace("/sign-in");
+                } catch (e) {
+                  setError((e as Error).message);
+                  setBusy(null);
+                }
+              }}
+            />
+          </Card>
+        </View>
+      )}
     </ScrollView>
   );
 }

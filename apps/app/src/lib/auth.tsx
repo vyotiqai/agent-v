@@ -15,11 +15,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthState["status"]>("loading");
 
   useEffect(() => {
+    // A server in single-user mode hands out a session, so there is no sign-in screen.
+    const noToken = async () => {
+      const ok = await accounts.singleUser().catch(() => false);
+      setStatus(ok ? "signed-in" : "signed-out");
+    };
     session.onUnauthorized(() => {
       void session.save(null);
-      setStatus("signed-out");
+      setStatus("loading");
+      void noToken();
     });
-    void session.load().then((token) => setStatus(token ? "signed-in" : "signed-out"));
+    void session.load().then((token) => (token ? setStatus("signed-in") : noToken()));
   }, []);
 
   // The live stream runs for as long as someone is signed in.

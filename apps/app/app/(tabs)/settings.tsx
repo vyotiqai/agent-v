@@ -432,7 +432,9 @@ export default function SettingsScreen() {
               </View>
             ) : null}
             <Muted className="text-xs">Server: {API_URL}</Muted>
-            <Button title="Sign out" variant="danger" onPress={() => void signOut()} />
+            {me.data?.features.singleUser ? null : (
+              <Button title="Sign out" variant="danger" onPress={() => void signOut()} />
+            )}
           </Card>
         </View>
       </ScrollView>

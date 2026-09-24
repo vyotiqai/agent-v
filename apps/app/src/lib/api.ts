@@ -88,13 +88,29 @@ async function parse<T>(response: Response): Promise<T> {
   return data as T;
 }
 
+/**
+ * fetch, but a network failure (server down, wrong address, or the server not allowing this
+ * app's origin, which browsers report the same way) says which server it couldn't reach.
+ */
+async function send(url: string, init: RequestInit, run: typeof fetch = fetch) {
+  try {
+    return await run(url, init);
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") throw error;
+    throw new ApiError(
+      `Can't reach the Agent V server at ${API_URL}. Check that it's running and that its ALLOWED_ORIGINS includes this app.`,
+      0,
+    );
+  }
+}
+
 export async function api<T = unknown>(
   path: string,
   init: { method?: string; body?: unknown; signal?: AbortSignal } = {},
 ): Promise<T> {
   await ready;
   const json = init.body !== undefined;
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await send(`${API_URL}${path}`, {
     method: init.method ?? (json ? "POST" : "GET"),
     headers: headers(json),
     body: json ? JSON.stringify(init.body) : undefined,
@@ -111,18 +127,22 @@ export async function stream(
   await ready;
   const json = init.body !== undefined;
   const run = Platform.OS === "web" ? fetch : (expoFetch as unknown as typeof fetch);
-  const response = await run(`${API_URL}${path}`, {
-    method: json ? "POST" : "GET",
-    headers: { ...headers(json), accept: "text/event-stream" },
-    body: json ? JSON.stringify(init.body) : undefined,
-    signal: init.signal,
-  });
+  const response = await send(
+    `${API_URL}${path}`,
+    {
+      method: json ? "POST" : "GET",
+      headers: { ...headers(json), accept: "text/event-stream" },
+      body: json ? JSON.stringify(init.body) : undefined,
+      signal: init.signal,
+    },
+    run,
+  );
   if (!response.ok || !response.body) await parse(response);
   return response.body as ReadableStream<Uint8Array>;
 }
 
 async function authenticate(path: string, body: Record<string, string>) {
-  const response = await fetch(`${API_URL}/api/auth/${path}`, {
+  const response = await send(`${API_URL}/api/auth/${path}`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
@@ -138,6 +158,14 @@ export const accounts = {
   signIn: (email: string, password: string) => authenticate("sign-in/email", { email, password }),
   signUp: (name: string, email: string, password: string) =>
     authenticate("sign-up/email", { name, email, password }),
+  /** On a SINGLE_USER server, get a session without signing in. False when it isn't one. */
+  async singleUser() {
+    const response = await send(`${API_URL}/api/single-user/session`, { method: "POST" });
+    if (response.status === 404) return false;
+    const { token } = await parse<{ token: string }>(response);
+    await session.save(token);
+    return true;
+  },
   async signOut() {
     await api("/api/auth/sign-out", { body: {} }).catch(() => {});
     await session.save(null);
@@ -153,7 +181,7 @@ export async function upload<T>(
   await ready;
   const form = new FormData();
   form.append("file", file as unknown as Blob, "name" in file ? file.name : fallbackName);
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await send(`${API_URL}${path}`, {
     method: "POST",
     headers: headers(false),
     body: form,

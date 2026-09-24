@@ -52,8 +52,8 @@ git clone https://github.com/vyotiqai/agent-v.git && cd agent-v
 docker compose -f deploy/try/compose.yml up --build
 ```
 
-The first build takes a few minutes. Then open http://localhost:8787 and create an account.
-Sign up as `admin@example.com` to also see the Admin screen. Everything works offline with the
+The first build takes a few minutes. Then open http://localhost:8787: there is no sign-in,
+it opens straight into your account (`SINGLE_USER=true`; start with `SINGLE_USER=false` for accounts). Everything works offline with the
 demo model, a demo mailbox and sample tools. For real AI, start it with a key, for example
 `ANTHROPIC_API_KEY=… DEFAULT_MODEL=anthropic/claude-sonnet-5 docker compose -f deploy/try/compose.yml up --build`.
 Stop with Ctrl+C; `docker compose -f deploy/try/compose.yml down -v` also deletes the data.
@@ -81,7 +81,8 @@ pnpm dev:browser
 # or: docker compose up -d browser
 ```
 
-Open http://localhost:8081, create an account, and try:
+Open http://localhost:8081, create an account (or set `SINGLE_USER=true` in `.env` to skip
+signing in), and try:
 
 - **Plan a weekend trip to Lisbon.** A background task starts; follow it in Tasks.
 - **Remember that I prefer window seats.** This saves a memory.

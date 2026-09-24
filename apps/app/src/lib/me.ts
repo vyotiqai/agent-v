@@ -17,6 +17,8 @@ export interface Me {
     computer: boolean;
     sampleConnector: boolean;
     transcription: boolean;
+    /** No sign-in: this server has one built-in account. */
+    singleUser: boolean;
   };
 }
 

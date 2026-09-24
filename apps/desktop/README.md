@@ -40,6 +40,9 @@ The desktop app is served from `tauri://localhost` (macOS, Linux) or `http://tau
 ALLOWED_ORIGINS=https://your-web-app,tauri://localhost,http://tauri.localhost
 ```
 
+For no sign-in, run the server on the same computer with `SINGLE_USER=true`: the app then
+opens straight into the one built-in account.
+
 It signs in with a bearer token, like the phone apps (kept in the webview's local storage, as on
 the web).
 
