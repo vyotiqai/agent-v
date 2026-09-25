@@ -4,6 +4,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import type { AddressInfo } from 'node:net';
 import { join } from 'node:path';
 import { after, before, describe, test } from 'node:test';
+import { recommended } from '../src/ai/catalog.ts';
 import type { ProviderClient, Turn } from '../src/ai/types.ts';
 import { createEgress, type Egress } from '../src/egress/client.ts';
 import { createGateway } from '../src/egress/gateway.ts';
@@ -27,6 +28,13 @@ import { ADD, clientFor, finish, NOT_A_KEY, run, SCENARIOS } from './scenarios.t
  */
 
 const env = process.env;
+
+// Each provider is checked with the model the catalog recommends for quick steps: the cheapest.
+const quick = (provider: 'anthropic' | 'openai' | 'google') => {
+  const m = recommended(provider, 'quick');
+  if (!m) throw new Error(`The catalog has no quick-step model for ${provider}.`);
+  return m.id;
+};
 const captureDir = env['CAPTURE_DIR'];
 const secrets: string[] = [];
 
@@ -42,19 +50,19 @@ const targets: Target[] = [
     label: 'anthropic',
     client: (egress) => clientFor('anthropic', egress),
     key: env['ANTHROPIC_TEST_KEY'],
-    model: env['ANTHROPIC_TEST_MODEL'] || 'claude-haiku-4-5',
+    model: env['ANTHROPIC_TEST_MODEL'] || quick('anthropic'),
   },
   {
     label: 'openai',
     client: (egress) => clientFor('openai', egress),
     key: env['OPENAI_TEST_KEY'],
-    model: env['OPENAI_TEST_MODEL'] || 'gpt-5-mini',
+    model: env['OPENAI_TEST_MODEL'] || quick('openai'),
   },
   {
     label: 'google',
     client: (egress) => clientFor('google', egress),
     key: env['GOOGLE_TEST_KEY'],
-    model: env['GOOGLE_TEST_MODEL'] || 'gemini-2.5-flash',
+    model: env['GOOGLE_TEST_MODEL'] || quick('google'),
   },
 ];
 for (const [i, line] of (env['COMPATIBLE_TEST_ENDPOINTS'] ?? '')
