@@ -1,6 +1,6 @@
 # Stage 6 — Technical design
 
-**Status:** part 1 in draft on 2026-09-25: the provider facts it relies on are being checked before it is proposed. Part 2 follows once part 1 is agreed.
+**Status:** part 1 proposed on 2026-09-25, waiting for review. Part 2 follows once part 1 is agreed.
 **Builds on:** stages [1](01-foundations.md) to [5](05-design-system.md), and the
 [rules for building Agent V](README.md#rules-for-building-agent-v).
 
@@ -22,6 +22,8 @@ Asked on 2026-09-25 and recorded as decisions below:
 | Where it runs | Google Cloud, one US region at launch, with room for an EU region later (D84) |
 | The cloud browser and the agent's computer | Built by us and run on our own Google Cloud infrastructure: no browser or sandbox provider (D85). The owner first chose providers, then on the same day set the rule: everything custom |
 | Speech to text | On the phone (D86) |
+| Web search | No search service: the person's provider's own web search when it has one, otherwise public search engines in our own browser (D99) |
+| Sign-in | Apple or Google only; email codes dropped, which changes D44 (D100) |
 | Memory search | Our own small open embedding model, the same for everyone (D87) |
 | Everything custom | No AI agent SDKs and no vendor client libraries; we don't buy what we can build. Only what no one's code can replace (the person's AI provider, their Gmail and Outlook, Apple and Google sign-in and push) is called, by our own small clients (D88, and [rule 6](README.md#rules-for-building-agent-v)) |
 
@@ -50,8 +52,7 @@ flowchart LR
     Push["APNs and FCM,<br/>to the phone"]
   end
 
-  App -->|"HTTPS, live stream"| API
-  App -.->|"live view: watch,<br/>take control, via the API"| API
+  App -->|"HTTPS, live stream,<br/>live view"| API
   API --> DB
   API --> Side
   API -.->|"live view frames and input"| Browser
@@ -89,8 +90,9 @@ Two principles run through every section:
 
 ### Stack
 
-- **React Native with Expo** (D82), in TypeScript, with Expo's native build and store services.
-  Only general-purpose libraries; no UI kit. The components are our own, built to the
+- **React Native with Expo** (D82), in TypeScript. Expo's open-source framework and modules only;
+  where the store builds are made (our own build machines or a build service) is settled in part 2
+  with releases. No UI kit. The components are our own, built to the
   24-component specification of stage 5 (D79).
 - **One shared package** of types and checks with the server (D83): every request and response,
   every job state and every Needs you item is defined once. A change that would break the app
@@ -153,18 +155,20 @@ computers run in a separate sandboxed fleet (sections 7 and 8).
   renews it; if a worker dies, the lease runs out and another worker carries on. One store means
   the queue can never disagree with the data: a job and the work to continue it are written in
   the same transaction.
-- A general-purpose Postgres job-queue library is used for the lease and retry mechanics (the
-  choice is confirmed in part 2 after a code review of the candidates); the agent's own logic is
-  ours (D88).
+- The queue is our own (rule 6): one table, the lease, its renewal, retries with growing waits
+  and a limit per person, in a few hundred lines we fully understand and test.
 - Times: repeating jobs, watches, reminders and the 24-hour limits are rows with a "next due"
   time; workers pick up whatever is due. There is no separate scheduler to keep in step.
 
-### Sign-in (D44)
+### Sign-in (D44, D100)
 
-- **Apple and Google:** the app signs in with the platform, and sends the identity token; the API
-  verifies its signature, audience and expiry against Apple's and Google's published keys.
-- **Email code:** a six-digit code, valid for 10 minutes, five tries. How the email is sent under
-  rule 6 is an open question for the owner (below).
+- **Apple or Google, and nothing else** (D100). The app signs in with the phone's own sheet, and
+  sends the identity token; the API verifies its signature, audience and expiry against Apple's
+  and Google's published keys. The account is tied to the stable id inside the token, never to
+  the email address, which can change or be hidden by Apple.
+- **No email codes.** Sending them would need our own mail server, whose mail often lands in spam
+  and would block sign-in, or an email service, which rule 6 rules out. D100 changes D44 (stage 3)
+  and removes the Check your email screen (stage 4).
 - **Sessions:** a short-lived access token (15 minutes) and a refresh token that rotates on every
   use and is stored only in the phone's secure store. A reused refresh token signs that device out
   (it means the token was copied). Each phone is listed in settings and can be signed out.
@@ -210,11 +214,12 @@ are safe.
   submits a form) gets an **idempotency key** written to the record before it runs.
 - If a worker stops between "about to run" and the result, the next worker checks the outside
   service before trying again. An email is first saved as a draft, and the draft's id is
-  recorded; it is then sent from the draft. On a retry, a draft that no longer exists was sent, and
-  the sent message is found by its thread (Gmail), or by the `internetMessageId` set on the draft
-  (Outlook, through Microsoft Graph). A Google Calendar event is created with an id made from the key, so a
-  second create is refused; an Outlook event carries the key as its `transactionId`, which Graph
-  uses to refuse duplicates. If it happened, the result is recorded; if it didn't, it's run once.
+  recorded; it is then sent from the draft. On a retry, a draft that no longer exists was sent,
+  and the sent message is found by its thread (Gmail), or by the `internetMessageId` set on the
+  draft (Outlook, through Microsoft Graph). A Google Calendar event is created with an id made
+  from the key, so a second create is refused; an Outlook event carries the key as its
+  `transactionId`, which Graph uses to refuse duplicates. If it happened, the result is
+  recorded; if it didn't, it's run once.
 - Where an outside service offers no way to check (some websites), the step is **not** repeated
   blindly: it becomes a Needs you item asking you to check, in plain words.
 - Short failures (a network error, a slow site) are retried up to 3 times with growing waits;
@@ -263,6 +268,22 @@ A notification's **Sign and send** (J4, Act as you only) carries the fingerprint
 the notification. It works only on an unlocked phone and goes through the same check. Offline,
 nothing is signed or queued (D58).
 
+### Research on the web (D99)
+
+There is no web search service. The agent searches in one of two ways, both our own code:
+
+1. **The provider's own web search**, when the person's AI provider offers one as part of its API
+   (OpenAI, Anthropic and Google do). It is switched on in the request by our own client, billed
+   to the person's key like any other use, and its sources are kept in the record.
+2. **Otherwise, the way a person does:** in its own cloud browser (section 7), it opens a public
+   search engine, reads the results page, and opens the pages worth reading. If a search engine
+   shows a CAPTCHA, it tries another; only if all of them block does it become a moment to take
+   control (D49).
+
+Either way, what it read, and from where, goes into the record, so every claim in a result can be
+traced to its source. Which search engines it uses, and how their terms of use are respected, is
+settled in part 2.
+
 ### Repeating jobs, watches and ideas
 
 - A **repeating job** is a job with a repeat rule; each run is a child run with its own record,
@@ -293,8 +314,9 @@ into our own few kinds (key declined, out of credit, rate-limited, model gone, p
 Those kinds drive the Needs you items of J9.
 Each client also keeps its provider's rules for a conversation with tools: for example, Gemini's
 thought signatures are sent back with every function call, and OpenAI's Responses API is called
-with storage turned off, so the conversation lives only in our record. Each client is tested against the real provider with
-a real key (part 2); nothing in the shipped app imitates a provider (rule 1).
+with storage turned off, so the conversation lives only in our record. Each client is tested
+against the real provider with a real key (part 2); nothing in the shipped app imitates a
+provider (rule 1).
 
 ### Keys
 
@@ -326,7 +348,7 @@ network (stage 1, section 8).
 
 | Account | How it connects | How changes arrive |
 |---|---|---|
-| Gmail and Google Calendar | Google sign-in with the smallest scopes each ability needs; Gmail's read and send scopes are restricted and need Google's security assessment (D11) | Gmail push notifications through Cloud Pub/Sub, then a read of what changed; calendar change notifications |
+| Gmail and Google Calendar | Google sign-in with the smallest scopes each ability needs. Reading Gmail is a restricted scope and needs Google's yearly security assessment (CASA); sending is a sensitive scope and needs Google's app verification (D11) | Gmail push notifications through Cloud Pub/Sub, then a read of what changed; calendar change notifications |
 | Outlook mail and calendar | Microsoft sign-in, Microsoft Graph | Graph change notifications, renewed before they expire |
 
 - Tokens are encrypted like AI keys (section 5), refreshed by workers, and erased at once on
@@ -354,8 +376,9 @@ Our own browsers, on our own infrastructure (D85, rule 6).
   Playwright (rule 6). The agent sees each page as its text and structure plus a screenshot, and
   acts by clicking, typing and scrolling, each action classified (section 4).
 - **The live view (J5):** our own. The browser sends the page as a stream of frames over the
-  DevTools Protocol (screencast); the API, as a second DevTools client of the same browser, relays them to the app over a web socket, and the app
-  draws them, with where the agent is pointing. Frames are shown, never stored.
+  DevTools Protocol (screencast); the API, as a second DevTools client of the same browser,
+  relays them to the app over a web socket, and the app draws them, with where the agent is
+  pointing. Frames are shown, never stored.
 - **Taking control (D49, D60):** the job pauses; your taps, scrolls and typing go back over the same
   socket and are sent to the browser as DevTools input events. While you're in control, the agent
   neither acts nor records screenshots or keystrokes. "Done, carry on" hands back; after 10 idle
@@ -496,15 +519,17 @@ export and deletion (part 2) are complete by construction.
 | D93 | One live stream per open app, catching up on reconnect; push notifications when the app is closed | Live without polling; nothing missed |
 | D94 | The phone keeps the last known state, job pages opened in 30 days and files opened in 7; all erased on sign-out | Fast, useful offline, and bounded |
 | D95 | The app's theme is generated from `tokens.py` and checked in the build | One source for design and app (D71) |
-| D96 | Sign-in is our own: Apple and Google identity tokens verified by the API, email codes, rotating refresh tokens; no passwords, no sign-in vendor | Small, standard and fully ours |
+| D96 | Sign-in is our own: Apple and Google identity tokens verified by the API, rotating refresh tokens; no passwords, no sign-in vendor | Small, standard and fully ours |
 | D97 | Workers let a waiting job go; any worker resumes it when the wait is over | Long waits cost nothing, and restarts are safe |
 | D98 | Support references are random short codes tied to trace ids; logs never hold personal content | Support can find a problem without seeing your data |
+| D99 | No web search service: the agent uses the person's provider's own web search when it has one, and otherwise searches public search engines in its own browser; every source is recorded | The owner's choice, following rule 6: nobody can build their own index of the web, and Google's and Bing's search APIs are gone; this stays our own code |
+| D100 | Sign in with Apple or Google only; no email codes. **Changes D44** (stage 3) and removes the Check your email screen (stage 4) | The owner's choice, following rule 6: email codes would need our own mail server (often filtered as spam, which blocks sign-in) or an email service |
 
 ## Open questions for part 2
 
 | Question |
 |---|
-| How the agent searches the web, and how sign-in codes are emailed, under rule 6 (asked of the owner with part 1) |
+| Which public search engines the agent's browser uses, and how their terms of use are respected (D99) |
 | Every outside service that remains, with its data handling |
 | Fair-use limits (browser time, computer time and storage, jobs at once, watches) and the running cost per person |
 | The defence against instructions hidden in web pages and emails (prompt injection), in full |

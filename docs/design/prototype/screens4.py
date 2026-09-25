@@ -50,44 +50,9 @@ def NWelcome():
   <div style="position: absolute; left: 16px; right: 16px; bottom: 28px; display: flex; flex-direction: column; gap: 8px">
     <a href="NConnect.dc.html" style="height: 56px; border-radius: 999px; background: {ON_DARK}; color: {DARK}; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600">Continue with Apple</a>
     <a href="NConnect.dc.html" style="height: 56px; border-radius: 999px; background: {GLASS}; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600">Continue with Google</a>
-    <a href="NSignIn.dc.html" style="height: 48px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 500; color: {MUTED_DARK}">Continue with email</a>
     <p style="margin: 0; text-align: center; font-size: 12px; color: {MUTED_DARK}">By continuing you agree to the Terms and the Privacy Policy.</p>
   </div>'''
     return page('Welcome', body, ground=DARK, color=ON_DARK)
-
-
-# ---------------------------------------------------------------- Email sign-in
-
-@screen
-def NSignIn():
-    boxes = ''.join(
-        f'<span style="height: 56px; border-radius: 16px; background: {SURFACE}; {"box-shadow: inset 0 0 0 2px " + INK + ";" if i == 4 else ""} '
-        f'display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 500">{d}</span>'
-        for i, d in enumerate(['4', '8', '1', '9', '', '']))
-    head = dark_header(f'''{top_row(round_link('NWelcome.dc.html', 'back', 'Back'), spacer(0), spacer())}
-    <h1 style="{H1}; margin-top: 22px">Check your email</h1>
-    <p style="{SUB_DARK}; margin-top: 8px">I sent a 6-digit code to ajay@gmail.com.</p>''', bottom_pad=24)
-    body = f'''
-  <div style="padding: 16px 16px 0; display: flex; flex-direction: column; gap: 14px">
-    <label for="code" style="{LABEL}; padding-left: 4px">Code</label>
-    <div id="code" role="group" aria-label="6-digit code" style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px">{boxes}</div>
-    <button type="button" onClick="{{{{resend}}}}" disabled="{{{{waiting}}}}" style="align-self: flex-start; height: 44px; padding: 0 4px; border: 0; background: transparent; font-family: inherit; font-size: 14px; font-weight: 500; color: {MUTED}">{{{{resendLabel}}}}</button>
-  </div>''' + bottom(primary('NConnect.dc.html', 'Continue')) + undo_bar(100)
-    return page('Check your email', head + body, script=logic("""
-    // A new code can be sent every 30 seconds.
-    const left = st.left || 0;
-    out.waiting = left > 0;
-    out.resendLabel = left > 0 ? 'Send a new code in ' + left + ' s' : 'Send a new code';
-    out.resend = () => {
-      this.flash('A new code is on its way to ajay@gmail.com.');
-      this.setState({ left: 30 });
-      clearInterval(this.tick);
-      this.tick = setInterval(() => {
-        const l = ((this.state || {}).left || 0) - 1;
-        this.setState({ left: Math.max(0, l) });
-        if (l <= 0) clearInterval(this.tick);
-      }, 1000);
-    };"""))
 
 
 # ---------------------------------------------------------------- Connect your AI

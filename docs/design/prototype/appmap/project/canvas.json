@@ -368,7 +368,7 @@
    "page": "clean",
    "title": "Connect your AI (step 1)",
    "w": 390,
-   "x": 940,
+   "x": 470,
    "y": 3732
   },
   "NControl.dc.html": {
@@ -404,7 +404,7 @@
    "page": "clean",
    "title": "Get a key",
    "w": 390,
-   "x": 1410,
+   "x": 940,
    "y": 3732
   },
   "NGoal.dc.html": {
@@ -485,7 +485,7 @@
    "page": "clean",
    "title": "Paste and test key",
    "w": 390,
-   "x": 1880,
+   "x": 1410,
    "y": 3732
   },
   "NKeyDeclined.dc.html": {
@@ -512,7 +512,7 @@
    "page": "clean",
    "title": "Connect accounts (step 3)",
    "w": 390,
-   "x": 2820,
+   "x": 2350,
    "y": 3732
   },
   "NLock.dc.html": {
@@ -547,7 +547,7 @@
    "page": "clean",
    "title": "Choose models (step 2)",
    "w": 390,
-   "x": 2350,
+   "x": 1880,
    "y": 3732
   },
   "NNotifs.dc.html": {
@@ -565,7 +565,7 @@
    "page": "clean",
    "title": "Notifications (step 4)",
    "w": 390,
-   "x": 3290,
+   "x": 2820,
    "y": 3732
   },
   "NPlan.dc.html": {
@@ -610,7 +610,7 @@
    "page": "clean",
    "title": "Ready",
    "w": 390,
-   "x": 3760,
+   "x": 3290,
    "y": 3732
   },
   "NReplay.dc.html": {
@@ -675,15 +675,6 @@
    "w": 390,
    "x": 2820,
    "y": 0
-  },
-  "NSignIn.dc.html": {
-   "h": 844,
-   "is_interactive": true,
-   "page": "clean",
-   "title": "Email sign-in",
-   "w": 390,
-   "x": 470,
-   "y": 3732
   },
   "NSignOffline.dc.html": {
    "h": 844,
@@ -998,7 +989,7 @@
    "page": "dark",
    "title": "Connect your AI (step 1) (dark)",
    "w": 390,
-   "x": 940,
+   "x": 470,
    "y": 3732
   },
   "NControlDark.dc.html": {
@@ -1034,7 +1025,7 @@
    "page": "dark",
    "title": "Get a key (dark)",
    "w": 390,
-   "x": 1410,
+   "x": 940,
    "y": 3732
   },
   "NGoalDark.dc.html": {
@@ -1115,7 +1106,7 @@
    "page": "dark",
    "title": "Paste and test key (dark)",
    "w": 390,
-   "x": 1880,
+   "x": 1410,
    "y": 3732
   },
   "NKeyDeclinedDark.dc.html": {
@@ -1142,7 +1133,7 @@
    "page": "dark",
    "title": "Connect accounts (step 3) (dark)",
    "w": 390,
-   "x": 2820,
+   "x": 2350,
    "y": 3732
   },
   "NLockDark.dc.html": {
@@ -1177,7 +1168,7 @@
    "page": "dark",
    "title": "Choose models (step 2) (dark)",
    "w": 390,
-   "x": 2350,
+   "x": 1880,
    "y": 3732
   },
   "NNotifsDark.dc.html": {
@@ -1195,7 +1186,7 @@
    "page": "dark",
    "title": "Notifications (step 4) (dark)",
    "w": 390,
-   "x": 3290,
+   "x": 2820,
    "y": 3732
   },
   "NPlanDark.dc.html": {
@@ -1240,7 +1231,7 @@
    "page": "dark",
    "title": "Ready (dark)",
    "w": 390,
-   "x": 3760,
+   "x": 3290,
    "y": 3732
   },
   "NReplayDark.dc.html": {
@@ -1305,15 +1296,6 @@
    "w": 390,
    "x": 2820,
    "y": 0
-  },
-  "NSignInDark.dc.html": {
-   "h": 844,
-   "is_interactive": true,
-   "page": "dark",
-   "title": "Email sign-in (dark)",
-   "w": 390,
-   "x": 470,
-   "y": 3732
   },
   "NSignOfflineDark.dc.html": {
    "h": 844,
@@ -1918,7 +1900,6 @@
   "NBriefing.dc.html",
   "NPrivacy.dc.html",
   "NWelcome.dc.html",
-  "NSignIn.dc.html",
   "NConnect.dc.html",
   "NGetKey.dc.html",
   "NKey.dc.html",
@@ -1991,7 +1972,6 @@
   "NSearchErrorDark.dc.html",
   "NShareDark.dc.html",
   "NSignDark.dc.html",
-  "NSignInDark.dc.html",
   "NSignOfflineDark.dc.html",
   "NSpendDark.dc.html",
   "NSpendingDark.dc.html",

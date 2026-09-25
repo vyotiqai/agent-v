@@ -36,8 +36,8 @@ confusing on the way.
 
 | Step | Screen | What happens |
 |---|---|---|
-| 1 | Welcome | "Hand it off." Continue with Apple, Google, or email |
-| 2 | Check your email *(email only)* | A 6-digit code, no password. The phone offers to fill in the code where the system supports it |
+| 1 | Welcome | "Hand it off." Continue with Apple or Google *(email removed by D100, stage 6)* |
+| 2 | ~~Check your email *(email only)*~~ | *Removed by D100 (stage 6): there is no email sign-in.* It was: a 6-digit code, no password |
 | 3 | Connect your AI (step 1) | Pick a provider. "Get a key" opens a two-minute guide; "I have a key" goes straight to pasting |
 | 4 | Get a key *(if needed)* | Three short steps and a button that opens the provider's key page in the browser. Coming back to the app lands on Paste your key |
 | 5 | Paste your key | Pasted keys are tested at once with a real call. Success shows how many models can run jobs |
@@ -49,7 +49,7 @@ confusing on the way.
 
 **Rules**
 
-- No passwords. Sign-in is Apple, Google, or an email code (D44).
+- No passwords. Sign-in is Apple or Google (D44, changed by D100 in stage 6: no email code).
 - The key can be skipped with "Later" in step 3. Nothing is lost: see "Before there's a key" below.
 - The first job must be one that can't do harm: it only reads (Look level). With Gmail
   connected it's the inbox and calendar briefing; with nothing connected it's a research or
@@ -290,7 +290,7 @@ Both app stores require deleting the account from inside the app; this meets tha
 
 | ID | Decision | Why |
 |---|---|---|
-| D44 | Sign in with Apple, Google, or an email code. No passwords; passkeys can come later | Fast and safe. Apple's App Store rules require a privacy-focused option such as Sign in with Apple when Google sign-in is offered |
+| D44 | Sign in with Apple, Google~~, or an email code~~. No passwords; passkeys can come later. *Changed by [D100](06-technical-design.md#decisions-in-this-stage-part-1) on 2026-09-25: no email code, since sending codes would need our own mail server or an email service (rule 6)* | Fast and safe. Apple's App Store rules require a privacy-focused option such as Sign in with Apple when Google sign-in is offered |
 | D45 | Getting started order: account, AI key, models, accounts (optional), notifications, a first job | The key is the one thing it can't work without; everything else can wait |
 | D46 | The key step can be skipped. Before a key works, Today shows "Connect your AI to start", and handed-off jobs wait and start by themselves once it works | Nobody is stuck at a form, and nothing handed off is lost |
 | D47 | The first suggested job only reads, and fits what was connected (the inbox briefing with Gmail; a watch or research job without) | A first job must be useful and can't do harm |

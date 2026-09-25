@@ -155,10 +155,6 @@ const tests = {
     await p.getByRole('button', { name: 'Change photo' }).click();
     ok(await shown(bar(p)), 'Change photo says what opens');
   },
-  async NSignIn(p, ok) {
-    await p.getByRole('button', { name: 'Send a new code' }).click();
-    ok(await shown(p.getByRole('button', { name: /Send a new code in 3\d s|Send a new code in 29 s/ })), 'a new code can be sent again only after 30 s');
-  },
   async NTodayOffline(p, ok) {
     await p.getByRole('button', { name: 'Don’t send this' }).click();
     ok(!(await shown(p.getByText('Book a table for Friday at 8'))), 'a waiting hand-off can be cancelled');

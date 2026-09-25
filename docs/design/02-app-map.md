@@ -111,7 +111,7 @@ drawn in stage 4. A full dark appearance is designed in stage 5. Screens marked 
 | Screen | Purpose |
 |---|---|
 | ◆ Welcome | "Hand it off." What Agent V does in one sentence; sign-in choices |
-| ◆ Sign in / create account | Methods decided in stage 3 |
+| ◆ Sign in / create account | Methods decided in stage 3. *Since D100 (stage 6): Apple or Google, through the phone's own sign-in sheet, so there is no screen of our own* |
 | ◆ Connect your AI | Pick a provider: Anthropic, OpenAI, Google, or any OpenAI-compatible address |
 | ◆ Get a key | A short guide per provider, with a button to the provider's key page |
 | ◆ Paste and test key | The key is tested with a real call before continuing |
