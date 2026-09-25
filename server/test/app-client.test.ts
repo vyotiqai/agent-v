@@ -11,6 +11,7 @@ import { loadMigrations, MIGRATIONS, migrate } from '../src/db/migrate.ts';
 import { createLogger } from '../src/log.ts';
 import { withDatabase } from './db.ts';
 import { TestIssuer } from './google-tokens.ts';
+import { unusedAi } from './stand-ins.ts';
 
 // The app's own API client (app/src/api/client.ts) against the real API and a real Postgres:
 // everything about signing in except the phone's native sign-in sheet and secure chip.
@@ -48,7 +49,13 @@ async function withEnv(fn: (env: Env) => Promise<void>): Promise<void> {
       audience: issuer.audience,
       fetch: issuer.fetcher().fetch,
     });
-    const server = createApi({ sql, logger, schema: shipped.length, verifyGoogle });
+    const server = createApi({
+      sql,
+      logger,
+      schema: shipped.length,
+      verifyGoogle,
+      ai: unusedAi(logger),
+    });
     server.listen(0, '127.0.0.1');
     await once(server, 'listening');
     const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;

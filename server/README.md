@@ -23,15 +23,16 @@ build step: the code in the image is the code in this folder.
 | Database | `src/db/` | [`postgres`](https://github.com/porsager/postgres) as the driver; our own migration runner (see [migrations/README.md](migrations/README.md)) |
 | Encryption | `src/crypto/envelope.ts`, `src/crypto/cloud.ts` | A data key per person; secrets sealed with AES-256-GCM, bound to what they are; data keys kept only wrapped by Cloud KMS, in a bucket where deletion is final (D126). Our own small clients for Cloud KMS and Cloud Storage, with the service's own token from the metadata server (`src/cloud/token.ts`) |
 | Egress | `src/egress/` | Public addresses only: every address of a name is checked, the checked address is the one connected to, redirects are never followed, nothing about destinations is logged. `client.ts` is how the server calls out on someone's behalf: always tunnelled through the gateway, https only, TLS end to end with the provider |
-| AI providers (slice 2) | `src/ai/` | Our own clients for the four wire formats (D88): Anthropic Messages, OpenAI Responses (storage off), Google's Gemini Interactions (storage off, D147) and Chat Completions for every other provider. One shape for a conversation, the streamed answer and usage (`types.ts`); a model's own turn goes back to it exactly as it came; each provider's errors become our few kinds. The streamed answers are read by our own server-sent events reader (`sse.ts`). `catalog.ts` holds the recommended models and their prices |
+| Search (slice 2) | `src/search/brave.ts` | Our own client for Brave's Web Search API, with the person's own key |
+| AI providers (slice 2) | `src/ai/` | Our own clients for the four wire formats (D88): Anthropic Messages, OpenAI Responses (storage off), Google's Gemini Interactions (storage off, D147) and Chat Completions for every other provider. One shape for a conversation, the streamed answer and usage (`types.ts`); a model's own turn goes back to it exactly as it came; each provider's errors become our few kinds. The streamed answers are read by our own server-sent events reader (`sse.ts`). `catalog.ts` holds the recommended models and their prices; `keys.ts` is Your AI: keys tested before they are kept, sealed with the person's data key, the models chosen, the monthly limit and this month's spend in the person's own time zone |
 | Processes | `src/process.ts` | Crashes logged by kind before exiting; an orderly stop on SIGTERM |
 | Accounts | `src/auth/` | Google identity tokens checked by our own code against Google's published keys (`jwt.ts`, `google.ts`); people, phones, sessions and one-time nonces (`accounts.ts`) |
 | Rate limits | `src/ratelimit.ts` | Counted in Postgres per minute, so every API instance agrees; addresses kept only as hashes |
 
 ## The API's routes
 
-Requests and responses are defined once, in [`shared/src/accounts.ts`](../shared/src/accounts.ts),
-for the app and the server alike.
+Requests and responses are defined once, in [`shared/src/accounts.ts`](../shared/src/accounts.ts)
+and [`shared/src/ai.ts`](../shared/src/ai.ts), for the app and the server alike.
 
 | Route | Needs a signed-in phone | What it does |
 |---|---|---|
@@ -41,8 +42,19 @@ for the app and the server alike.
 | `POST /v1/auth/sign-out` | Yes | Signs this phone out |
 | `GET /v1/phones` | Yes | The person's signed-in phones, this one first (D137) |
 | `DELETE /v1/phones/{id}` | Yes | Signs out another of the person's phones |
+| `GET /v1/me` | Yes | The person's name, email and time zone, for the top of You |
+| `PUT /v1/me/time-zone` | Yes | The phone's time zone, which says when the person's month begins |
+| `GET /v1/ai` | Yes | Your AI: the keys (last four characters only), their models, the models chosen for jobs and quick steps, the monthly limit, this month's spend and when the month ends, the search key |
+| `POST /v1/ai/keys` | Yes | Adds a key, or replaces the one for the same provider (and address): tested with a real, small call and kept only if it works; `422 key-refused` with the reason otherwise |
+| `POST /v1/ai/keys/{id}/check` | Yes | Tests a kept key again, and records if it's declined or out of credit |
+| `DELETE /v1/ai/keys/{id}` | Yes | Removes a key at once, and the models chosen from it |
+| `PUT /v1/ai/models` | Yes | The models for jobs and quick steps, from the person's own keys; one that can't use tools can't run jobs |
+| `PUT /v1/ai/limit` | Yes | The monthly limit, $1 to $1,000 |
+| `PUT /v1/ai/search-key`, `DELETE /v1/ai/search-key` | Yes | A Brave Search key, tested with a real search and kept only if it works; or removed |
 
-Nonce and sign-in requests together are limited to 20 a minute per network address, refreshes to 60.
+Nonce and sign-in requests together are limited to 20 a minute per network address, refreshes to 60;
+checking keys (adding or testing one) to 10 a minute per person, since each is a paid call to their
+provider.
 Errors are `{ "error": kind }` with the kinds in `shared/src/accounts.ts`; the app turns them into
 words.
 
@@ -52,6 +64,9 @@ words.
 |---|---|---|
 | `DATABASE_URL` | API, migrate | The Postgres connection |
 | `GOOGLE_CLIENT_ID` | API | Agent V's server client id in Google Cloud: the audience Google's identity tokens are issued for |
+| `EGRESS_GATEWAY` | API | `host:port` of the egress gateway, which every call made on someone's behalf goes through |
+| `KMS_KEY` | API | The Cloud KMS key that wraps each person's data key: `projects/…/locations/…/keyRings/…/cryptoKeys/…` |
+| `KEYS_BUCKET` | API | The Cloud Storage bucket of wrapped data keys (no soft delete, no versions; D126) |
 | `PORT` | API (8080), egress (3128) | Where to listen; Cloud Run sets it |
 | `GOOGLE_CLOUD_PROJECT` | all | Links log lines to their traces in Google Cloud |
 

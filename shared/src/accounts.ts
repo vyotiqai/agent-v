@@ -68,6 +68,8 @@ export type ApiErrorCode =
   | 'not-found'
   | 'method-not-allowed'
   | 'too-many-requests'
+  /** A key the provider refused (Your AI): the answer says why. */
+  | 'key-refused'
   | 'internal';
 
 export interface ApiError {

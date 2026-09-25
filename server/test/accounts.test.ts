@@ -1,88 +1,12 @@
 import assert from 'node:assert/strict';
 import { generateKeyPairSync } from 'node:crypto';
-import { once } from 'node:events';
-import type { AddressInfo } from 'node:net';
 import { test } from 'node:test';
 import type { Phone, Session } from '@agentv/shared/accounts.ts';
-import { createApi } from '../src/api/app.ts';
 import { tidy } from '../src/auth/accounts.ts';
-import { createGoogleVerifier } from '../src/auth/google.ts';
-import type { Sql } from '../src/db/connect.ts';
-import { loadMigrations, MIGRATIONS, migrate } from '../src/db/migrate.ts';
-import { createLogger } from '../src/log.ts';
-import { withDatabase } from './db.ts';
-import { TestIssuer } from './google-tokens.ts';
+import { issuer, phoneKey, withApi } from './harness.ts';
 
 // Signing in, sessions and phones, end to end through the API, on a real Postgres (slice 1).
 // Google's side is played by TestIssuer; everything on our side is the code that ships.
-
-const issuer = new TestIssuer();
-
-/** A P-256 public key, as a phone's secure chip would give it. */
-function phoneKey(): string {
-  const { publicKey } = generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
-  return publicKey.export({ format: 'der', type: 'spki' }).toString('base64');
-}
-
-interface Api {
-  base: string;
-  sql: Sql;
-  logs: string[];
-  call: (
-    method: string,
-    path: string,
-    body?: unknown,
-    token?: string,
-    headers?: Record<string, string>,
-  ) => Promise<{ status: number; json: unknown; headers: Headers }>;
-  signIn: (sub?: string, model?: string) => Promise<Session>;
-}
-
-async function withApi(fn: (api: Api) => Promise<void>): Promise<void> {
-  await withDatabase(async (sql) => {
-    const logs: string[] = [];
-    const logger = createLogger({ write: (l) => logs.push(l) });
-    const shipped = await loadMigrations(MIGRATIONS);
-    await migrate(sql, shipped, logger);
-    const verifyGoogle = createGoogleVerifier({
-      audience: issuer.audience,
-      fetch: issuer.fetcher().fetch,
-    });
-    const server = createApi({ sql, logger, schema: shipped.length, verifyGoogle });
-    server.listen(0, '127.0.0.1');
-    await once(server, 'listening');
-    const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-    const call: Api['call'] = async (method, path, body, token, headers = {}) => {
-      const res = await fetch(`${base}${path}`, {
-        method,
-        headers: {
-          ...(body !== undefined ? { 'content-type': 'application/json' } : {}),
-          ...(token ? { authorization: `Bearer ${token}` } : {}),
-          ...headers,
-        },
-        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-      });
-      const text = await res.text();
-      return { status: res.status, json: text ? JSON.parse(text) : null, headers: res.headers };
-    };
-    const signIn: Api['signIn'] = async (sub = '110248495921238986420', model = 'Pixel 8') => {
-      const { json } = await call('POST', '/v1/auth/nonce', {});
-      const nonce = (json as { nonce: string }).nonce;
-      const r = await call('POST', '/v1/auth/google', {
-        idToken: issuer.token({ nonce, sub }),
-        nonce,
-        phone: { platform: 'android', model, signingKey: phoneKey() },
-      });
-      assert.equal(r.status, 200, JSON.stringify(r.json));
-      return r.json as Session;
-    };
-    try {
-      await fn({ base, sql, logs, call, signIn });
-    } finally {
-      server.close();
-    }
-  });
-}
 
 test('signing in makes the person once and a phone per sign-in, listed with this phone first', async () => {
   await withApi(async ({ call, signIn, sql }) => {

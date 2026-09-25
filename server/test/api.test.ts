@@ -10,6 +10,7 @@ import { loadMigrations, MIGRATIONS, migrate } from '../src/db/migrate.ts';
 import { createLogger } from '../src/log.ts';
 import { withDatabase } from './db.ts';
 import { TestIssuer } from './google-tokens.ts';
+import { unusedAi } from './stand-ins.ts';
 
 const issuer = new TestIssuer();
 const verifyGoogle = createGoogleVerifier({
@@ -29,7 +30,13 @@ test('liveness, readiness and the answers for unknown routes and methods', async
     const lines: Record<string, unknown>[] = [];
     const logger = createLogger({ write: (l) => lines.push(JSON.parse(l)) });
     await migrate(sql, shipped, logger);
-    const server = createApi({ sql, logger, schema: shipped.length, verifyGoogle });
+    const server = createApi({
+      sql,
+      logger,
+      schema: shipped.length,
+      verifyGoogle,
+      ai: unusedAi(logger),
+    });
     const base = await serve(server);
     try {
       const health = await fetch(`${base}/healthz`);
@@ -67,7 +74,7 @@ test('liveness, readiness and the answers for unknown routes and methods', async
 test('not ready while the database is behind the code', async () => {
   await withDatabase(async (sql) => {
     const logger = createLogger({ write: () => {} });
-    const server = createApi({ sql, logger, schema: 99, verifyGoogle });
+    const server = createApi({ sql, logger, schema: 99, verifyGoogle, ai: unusedAi(logger) });
     const base = await serve(server);
     try {
       const r = await fetch(`${base}/readyz`);
@@ -83,7 +90,7 @@ test('not ready when the database cannot be reached, and the error is logged by 
   const lines: Record<string, unknown>[] = [];
   const logger = createLogger({ write: (l) => lines.push(JSON.parse(l)) });
   const sql = connect('postgres://nobody@127.0.0.1:1/none', { max: 1 });
-  const server = createApi({ sql, logger, schema: 0, verifyGoogle });
+  const server = createApi({ sql, logger, schema: 0, verifyGoogle, ai: unusedAi(logger) });
   const base = await serve(server);
   try {
     const r = await fetch(`${base}/readyz`);

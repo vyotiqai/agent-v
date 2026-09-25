@@ -3,7 +3,16 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { clientFor, NOT_A_KEY, run, SCENARIOS, type Scenario } from '../../live/scenarios.ts';
+import {
+  clientFor,
+  NOT_A_KEY,
+  run,
+  runSearch,
+  SCENARIOS,
+  type Scenario,
+  SEARCH_SCENARIOS,
+  type SearchScenario,
+} from '../../live/scenarios.ts';
 import type { Egress } from '../egress/client.ts';
 
 /**
@@ -24,15 +33,21 @@ interface Capture {
 }
 
 const dir = fileURLToPath(new URL('./captures', import.meta.url));
-const pattern = new RegExp(`^(.+)-(${SCENARIOS.join('|')})(?:-(\\d+))?\\.json$`);
+const names = [...new Set([...SCENARIOS, ...SEARCH_SCENARIOS])];
+const pattern = new RegExp(`^(.+)-(${names.join('|')})(?:-(\\d+))?\\.json$`);
 
 // label → scenario → exchanges, in the order they were made.
-const found = new Map<string, Map<Scenario, Capture[]>>();
+const found = new Map<string, Map<Scenario | SearchScenario, Capture[]>>();
 for (const file of existsSync(dir) ? readdirSync(dir).sort() : []) {
   const m = pattern.exec(file);
   if (!m) continue;
-  const [, label, scenario, n] = m as unknown as [string, string, Scenario, string | undefined];
-  const byScenario = found.get(label) ?? new Map<Scenario, Capture[]>();
+  const [, label, scenario, n] = m as unknown as [
+    string,
+    string,
+    Scenario | SearchScenario,
+    string | undefined,
+  ];
+  const byScenario = found.get(label) ?? new Map<Scenario | SearchScenario, Capture[]>();
   found.set(label, byScenario);
   const list = byScenario.get(scenario) ?? [];
   list[Number(n ?? 1) - 1] = JSON.parse(readFileSync(join(dir, file), 'utf8')) as Capture;
@@ -70,8 +85,13 @@ for (const [label, scenarios] of found) {
       const first = exchanges[0] as Capture;
       test(`${scenario} (captured ${first.capturedAt})`, async () => {
         const replay = replaying(exchanges);
-        const client = clientFor(label, replay.egress, baseOf(first.request.url));
-        await run(scenario, client, scenario === 'declined' ? NOT_A_KEY : 'k', first.model);
+        const key = scenario === 'declined' ? NOT_A_KEY : 'k';
+        if (label === 'brave') {
+          await runSearch(scenario as SearchScenario, replay.egress, key);
+        } else {
+          const client = clientFor(label, replay.egress, baseOf(first.request.url));
+          await run(scenario as Scenario, client, key, first.model);
+        }
         assert.equal(replay.used(), exchanges.length, 'not every captured call was made');
       });
     }

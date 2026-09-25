@@ -32,6 +32,9 @@ export const EVENTS = {
   'auth.signed-out': 'INFO',
   'auth.phone-signed-out': 'INFO',
   'api.rate-limited': 'WARNING',
+  'ai.key-saved': 'INFO',
+  'ai.key-refused': 'INFO',
+  'ai.key-removed': 'INFO',
 } as const;
 
 export type EventName = keyof typeof EVENTS;
@@ -53,6 +56,13 @@ export const ERROR_KINDS = [
   'sign-in-failed',
   'keys-unavailable',
   'rate-limited',
+  // Why a provider refused a call (server/src/ai/types.ts).
+  'declined',
+  'no-credit',
+  'model-gone',
+  'provider-down',
+  'unreachable',
+  'address-not-allowed',
 ] as const;
 export type ErrorKind = (typeof ERROR_KINDS)[number];
 
@@ -69,6 +79,15 @@ export const ROUTES = [
   'auth-sign-out',
   'phones',
   'phone',
+  'me',
+  'me-time-zone',
+  'ai',
+  'ai-keys',
+  'ai-key',
+  'ai-key-check',
+  'ai-models',
+  'ai-limit',
+  'ai-search-key',
   'not-found',
 ] as const;
 export type Route = (typeof ROUTES)[number];

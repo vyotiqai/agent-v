@@ -20,7 +20,9 @@ docker run --rm --network host -e DATABASE_URL="$URL" "$IMAGE" node src/migrate/
   | grep -q '"message":"migrate.done"' || fail "migrate did not finish"
 
 docker run -d --name smoke-api --network host -e DATABASE_URL="$URL" -e PORT=18080 \
-  -e GOOGLE_CLIENT_ID=agent-v-smoke.apps.googleusercontent.com "$IMAGE" >/dev/null
+  -e GOOGLE_CLIENT_ID=agent-v-smoke.apps.googleusercontent.com -e EGRESS_GATEWAY=127.0.0.1:13128 \
+  -e KMS_KEY=projects/agent-v-smoke/locations/global/keyRings/r/cryptoKeys/data-keys \
+  -e KEYS_BUCKET=agent-v-smoke-keys "$IMAGE" >/dev/null
 docker run -d --name smoke-egress --network host -e PORT=13128 "$IMAGE" node src/egress/main.ts >/dev/null
 for _ in $(seq 1 50); do
   curl -sf http://127.0.0.1:18080/readyz >/dev/null && curl -sf http://127.0.0.1:13128/healthz >/dev/null && break

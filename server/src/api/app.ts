@@ -1,6 +1,27 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { type ApiErrorCode, parseGoogleSignIn, parseRefresh } from '@agentv/shared/accounts.ts';
 import {
+  parseAddKey,
+  parseChooseModels,
+  parseLimit,
+  parseSearchKey,
+  parseTimeZone,
+} from '@agentv/shared/ai.ts';
+import {
+  type AiDeps,
+  addKey,
+  aiView,
+  checkKey,
+  chooseModels,
+  me,
+  type Outcome,
+  removeKey,
+  removeSearchKey,
+  setLimit,
+  setSearchKey,
+  setTimeZone,
+} from '../ai/keys.ts';
+import {
   authenticate,
   BadSigningKey,
   type Caller,
@@ -39,6 +60,8 @@ export interface ApiOptions {
   /** The schema version this code needs: the number of migrations it ships. */
   schema: number;
   verifyGoogle: VerifyGoogle;
+  /** Your AI's outside parts: the data keys, the provider clients and search. */
+  ai: Omit<AiDeps, 'sql' | 'logger'>;
 }
 
 interface Context {
@@ -52,7 +75,7 @@ interface Context {
 type Reply = { status: number; body?: unknown };
 
 interface RouteDef {
-  method: 'GET' | 'POST' | 'DELETE';
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
   path: RegExp;
   name: Route;
   signedIn: boolean;
@@ -63,12 +86,27 @@ const MAX_BODY = 16 * 1024;
 
 const fail = (status: number, error: ApiErrorCode): Reply => ({ status, body: { error } });
 
-export function createApi({ sql, logger, schema, verifyGoogle }: ApiOptions): Server {
+export function createApi({ sql, logger, schema, verifyGoogle, ai }: ApiOptions): Server {
+  const aiDeps: AiDeps = { sql, logger, ...ai };
   const limited = async (ctx: Context, scope: string, limit: number): Promise<boolean> => {
     if (await allow(sql, addressKey(scope, ctx.address), limit)) return false;
     logger.log('api.rate-limited', { errorKind: 'rate-limited' });
     return true;
   };
+  // Checking a key makes a paid call to the person's provider: at most 10 a minute each.
+  const checksLimited = async (caller: Caller): Promise<boolean> => {
+    if (await allow(sql, `key-check:${caller.personId}`, 10)) return false;
+    logger.log('api.rate-limited', { errorKind: 'rate-limited' });
+    return true;
+  };
+  const outcome = (o: Outcome): Reply =>
+    o.ok
+      ? { status: 200, body: o.view }
+      : { status: 422, body: { error: 'key-refused', problem: o.problem } };
+  const view = async (ctx: Context): Promise<Reply> => ({
+    status: 200,
+    body: await aiView(sql, (ctx.caller as Caller).personId),
+  });
 
   const routes: RouteDef[] = [
     {
@@ -187,6 +225,121 @@ export function createApi({ sql, logger, schema, verifyGoogle }: ApiOptions): Se
           : fail(404, 'not-found');
       },
     },
+    {
+      method: 'GET',
+      path: /^\/v1\/me$/,
+      name: 'me',
+      signedIn: true,
+      handle: async (ctx) => ({
+        status: 200,
+        body: await me(sql, (ctx.caller as Caller).personId),
+      }),
+    },
+    {
+      method: 'PUT',
+      path: /^\/v1\/me\/time-zone$/,
+      name: 'me-time-zone',
+      signedIn: true,
+      handle: async (ctx) => {
+        const request = parseTimeZone(ctx.body);
+        if (!request) return fail(400, 'bad-request');
+        const ok = await setTimeZone(sql, (ctx.caller as Caller).personId, request.timeZone);
+        return ok ? { status: 204 } : fail(400, 'bad-request');
+      },
+    },
+    {
+      method: 'GET',
+      path: /^\/v1\/ai$/,
+      name: 'ai',
+      signedIn: true,
+      handle: view,
+    },
+    {
+      method: 'POST',
+      path: /^\/v1\/ai\/keys$/,
+      name: 'ai-keys',
+      signedIn: true,
+      handle: async (ctx) => {
+        const caller = ctx.caller as Caller;
+        if (await checksLimited(caller)) return fail(429, 'too-many-requests');
+        const request = parseAddKey(ctx.body);
+        if (!request) return fail(400, 'bad-request');
+        return outcome(await addKey(aiDeps, caller.personId, request));
+      },
+    },
+    {
+      method: 'DELETE',
+      path: /^\/v1\/ai\/keys\/([^/]+)$/,
+      name: 'ai-key',
+      signedIn: true,
+      handle: async (ctx) => {
+        const id = ctx.params[0] ?? '';
+        if (!isId(id)) return fail(404, 'not-found');
+        const removed = await removeKey(aiDeps, (ctx.caller as Caller).personId, id);
+        return removed ? view(ctx) : fail(404, 'not-found');
+      },
+    },
+    {
+      method: 'POST',
+      path: /^\/v1\/ai\/keys\/([^/]+)\/check$/,
+      name: 'ai-key-check',
+      signedIn: true,
+      handle: async (ctx) => {
+        const caller = ctx.caller as Caller;
+        const id = ctx.params[0] ?? '';
+        if (!isId(id)) return fail(404, 'not-found');
+        if (await checksLimited(caller)) return fail(429, 'too-many-requests');
+        const checked = await checkKey(aiDeps, caller.personId, id);
+        return checked ? outcome(checked) : fail(404, 'not-found');
+      },
+    },
+    {
+      method: 'PUT',
+      path: /^\/v1\/ai\/models$/,
+      name: 'ai-models',
+      signedIn: true,
+      handle: async (ctx) => {
+        const request = parseChooseModels(ctx.body);
+        if (!request) return fail(400, 'bad-request');
+        const chosen = await chooseModels(sql, (ctx.caller as Caller).personId, request);
+        return chosen === 'ok' ? view(ctx) : fail(400, 'bad-request');
+      },
+    },
+    {
+      method: 'PUT',
+      path: /^\/v1\/ai\/limit$/,
+      name: 'ai-limit',
+      signedIn: true,
+      handle: async (ctx) => {
+        const request = parseLimit(ctx.body);
+        if (!request) return fail(400, 'bad-request');
+        await setLimit(sql, (ctx.caller as Caller).personId, request.monthlyLimitCents);
+        return view(ctx);
+      },
+    },
+    {
+      method: 'PUT',
+      path: /^\/v1\/ai\/search-key$/,
+      name: 'ai-search-key',
+      signedIn: true,
+      handle: async (ctx) => {
+        const caller = ctx.caller as Caller;
+        if (await checksLimited(caller)) return fail(429, 'too-many-requests');
+        const request = parseSearchKey(ctx.body);
+        if (!request) return fail(400, 'bad-request');
+        return outcome(await setSearchKey(aiDeps, caller.personId, request.key));
+      },
+    },
+    {
+      method: 'DELETE',
+      path: /^\/v1\/ai\/search-key$/,
+      name: 'ai-search-key',
+      signedIn: true,
+      handle: async (ctx) => {
+        await removeSearchKey(aiDeps, (ctx.caller as Caller).personId);
+        return view(ctx);
+      },
+    },
   ];
 
   function signInFailed(): Reply {
@@ -234,7 +387,7 @@ export function createApi({ sql, logger, schema, verifyGoogle }: ApiOptions): Se
     const ctx: Context = {
       req,
       params: (route.path.exec(path) ?? []).slice(1),
-      body: req.method === 'POST' ? await readJson(req) : null,
+      body: req.method === 'POST' || req.method === 'PUT' ? await readJson(req) : null,
       caller: null,
       address: clientAddress(req),
     };

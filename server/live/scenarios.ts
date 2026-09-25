@@ -11,6 +11,7 @@ import {
   type Turn,
 } from '../src/ai/types.ts';
 import type { Egress } from '../src/egress/client.ts';
+import { braveSearch } from '../src/search/brave.ts';
 
 /**
  * The checks each client passes against its real provider (./providers.test.ts), and again, in
@@ -20,6 +21,10 @@ import type { Egress } from '../src/egress/client.ts';
 
 export const SCENARIOS = ['declined', 'models', 'text', 'tools', 'model-gone'] as const;
 export type Scenario = (typeof SCENARIOS)[number];
+
+/** Brave Search's checks: a declined key, and a real search. */
+export const SEARCH_SCENARIOS = ['declined', 'search'] as const;
+export type SearchScenario = (typeof SEARCH_SCENARIOS)[number];
 
 /** A key no provider accepts, for the declined check; it needs no real key. */
 export const NOT_A_KEY = 'agent-v-not-a-real-key';
@@ -146,4 +151,18 @@ export async function run(
       return;
     }
   }
+}
+
+export async function runSearch(
+  scenario: SearchScenario,
+  egress: Egress,
+  key: string,
+): Promise<void> {
+  if (scenario === 'declined') {
+    await assert.rejects(braveSearch(egress, NOT_A_KEY, 'agent v'), isKind('declined'));
+    return;
+  }
+  const results = await braveSearch(egress, key, 'Wikipedia', { count: 3 });
+  assert.ok(results.length > 0, 'no results');
+  assert.ok(results.every((r) => r.url.startsWith('http') && r.title));
 }

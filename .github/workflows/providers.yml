@@ -12,6 +12,7 @@ on:
     paths:
       - server/src/ai/**
       - server/src/egress/**
+      - server/src/search/**
       - server/live/**
       - .github/workflows/providers.yml
   schedule:
@@ -55,6 +56,7 @@ jobs:
           ANTHROPIC_TEST_KEY: ${{ secrets.ANTHROPIC_TEST_KEY }}
           OPENAI_TEST_KEY: ${{ secrets.OPENAI_TEST_KEY }}
           GOOGLE_TEST_KEY: ${{ secrets.GOOGLE_TEST_KEY }}
+          BRAVE_TEST_KEY: ${{ secrets.BRAVE_TEST_KEY }}
           COMPATIBLE_TEST_ENDPOINTS: ${{ secrets.COMPATIBLE_TEST_ENDPOINTS }}
       - name: Commit the captures
         # Also after a failed check: its real responses are what show what went wrong.

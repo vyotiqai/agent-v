@@ -75,6 +75,10 @@ test('migrate applies the schema and exits 0; the API then starts ready and stop
       DATABASE_URL: url,
       PORT: String(port),
       GOOGLE_CLIENT_ID: 'agent-v-test.apps.googleusercontent.com',
+      // Needed to start; nothing here adds a key, so none of them is called.
+      EGRESS_GATEWAY: '127.0.0.1:3128',
+      KMS_KEY: 'projects/agent-v-test/locations/global/keyRings/r/cryptoKeys/data-keys',
+      KEYS_BUCKET: 'agent-v-test-keys',
     });
     try {
       const ready = await waitFor(`http://127.0.0.1:${port}/readyz`);

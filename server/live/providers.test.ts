@@ -9,14 +9,24 @@ import type { ProviderClient, Turn } from '../src/ai/types.ts';
 import { createEgress, type Egress } from '../src/egress/client.ts';
 import { createGateway } from '../src/egress/gateway.ts';
 import { createLogger } from '../src/log.ts';
-import { ADD, clientFor, finish, NOT_A_KEY, run, SCENARIOS } from './scenarios.ts';
+import {
+  ADD,
+  clientFor,
+  finish,
+  NOT_A_KEY,
+  run,
+  runSearch,
+  SCENARIOS,
+  SEARCH_SCENARIOS,
+} from './scenarios.ts';
 
 /**
  * Each client against the real provider, with the owner's test keys (stage 6, section 22; stage
  * 7, slice 2). Every call goes through a real egress gateway with the real public-address rule,
  * as in production.
  *
- * Settings (repository secrets in CI): ANTHROPIC_TEST_KEY, OPENAI_TEST_KEY, GOOGLE_TEST_KEY, and
+ * Settings (repository secrets in CI): ANTHROPIC_TEST_KEY, OPENAI_TEST_KEY, GOOGLE_TEST_KEY,
+ * BRAVE_TEST_KEY, and
  * COMPATIBLE_TEST_ENDPOINTS, one endpoint per line as "<base URL> <model> <key>". A provider
  * without a key is skipped, saying so; the checks that need no key (a declined key) always run.
  * The model each uses can be changed with ANTHROPIC_TEST_MODEL, OPENAI_TEST_MODEL and
@@ -176,6 +186,19 @@ for (const t of targets) {
     }
   });
 }
+
+// Brave Search, with the owner's key in BRAVE_TEST_KEY.
+describe('brave', () => {
+  const key = env['BRAVE_TEST_KEY'];
+  for (const s of SEARCH_SCENARIOS) {
+    test(s, { skip: s !== 'declined' && !key && 'no key' }, async () => {
+      scenario = `brave-${s}`;
+      currentModel = '';
+      await runSearch(s, egress, key ?? NOT_A_KEY);
+    });
+  }
+});
+if (env['BRAVE_TEST_KEY']) secrets.push(env['BRAVE_TEST_KEY']);
 
 /** A turn from one provider carried to another: its words and calls, without its reasoning. */
 test('a conversation moves between providers', async (ctx) => {
