@@ -1,7 +1,6 @@
 # Stage 4 — Every screen in detail
 
-**Status:** part 1 (shared states) agreed on 2026-09-25. Part 2 (screen by screen) proposed on
-2026-09-25, waiting for review.
+**Status:** agreed on 2026-09-25 (part 1 and part 2).
 **Builds on:** [stage 2, the app map](02-app-map.md) and [stage 3, the key journeys](03-journeys.md).
 Drawings are on the canvas page "Stage 4 · States"; screen names below are the ones drawn there
 and on "New direction".
@@ -142,6 +141,9 @@ Rules that hold on every screen:
 
 New drawings in this part, on the canvas page "Stage 4 · States", third row: **A watch**,
 **Jobs, done**, **Appearance**, **Help and feedback**, **Speaking, microphone off**.
+Fourth row, added when every button on the canvas was wired to work: **Goal options** (the
+goal's menu), **Delete your account** (the can't-be-undone page from J10) and **Tell us**
+(report a problem or send feedback).
 
 ### Every day
 
@@ -194,6 +196,7 @@ New drawings in this part, on the canvas page "Stage 4 · States", third row: **
 | **Privacy and your data** | Export everything; what I remember; files on my computer; how your data is kept; sign out; delete my account | Export being prepared: "Preparing your export… we'll email a link" | Export: asks once, then emails a link (J10). Sign out: asks. Delete my account: the can't-be-undone page (J10) |
 | **Appearance** (drawn) | Automatic, Light, Dark, each with a small picture; text size follows the phone (D69) | — | Pick one: applies at once |
 | **Help and feedback** (drawn) | Guides; Report a problem; Send feedback; version, Terms, Privacy Policy | Offline: guides stored on the phone open; reports wait and send when online | A guide: opens it. Report a problem: pick a job; the job's reference and the app's version are added, never your content unless you choose to add it |
+| **Tell us** (drawn) | A problem or Feedback; for a problem, which job and a switch to add the job's details (its reference and the app version, never emails or files); what happened | Send is off until something is written. Sent: "Thanks. It's sent." and when to expect a reply. Offline: waits and sends when online | Back. Send. Back to help |
 
 ### Getting started
 
