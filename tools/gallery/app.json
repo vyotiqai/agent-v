@@ -1,0 +1,7 @@
+{
+  "expo": {
+    "name": "Agent V component gallery",
+    "slug": "agent-v-gallery",
+    "web": { "output": "single", "bundler": "metro" }
+  }
+}

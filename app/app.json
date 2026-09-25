@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "Agent V",
+    "slug": "agent-v",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#EFEFEC",
+    "ios": {
+      "supportsTablet": false
+    },
+    "android": {
+      "predictiveBackGestureEnabled": false
+    }
+  }
+}

@@ -39,6 +39,31 @@ jobs:
         env:
           TEST_DATABASE_URL: postgres://postgres@127.0.0.1:5432/postgres
 
+  app:
+    name: App
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CI: 1
+      EXPO_OFFLINE: 1
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # The app's theme and icons are exactly what the design's own source makes (D95).
+      - run: python3 tools/theme/generate.py --check
+      # The app compiles for both phones.
+      - run: npx expo export --platform android --platform ios --output-dir "$RUNNER_TEMP/app-bundles"
+        working-directory: app
+      # The components behave as they say: signing by holding, switches, filters, the focus ring.
+      - run: npm run build -w tools/gallery
+      - run: npx playwright install --with-deps chromium
+        working-directory: tools/gallery
+      - run: node --test tools/gallery/interact.ts
+
   server-image:
     name: Server image
     runs-on: ubuntu-24.04

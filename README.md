@@ -12,12 +12,15 @@ before the next. Start with the [design overview](docs/design/README.md); progre
 
 | Folder | What it holds |
 |---|---|
+| [`app/`](app/README.md) | The app for Android and iPhone: React Native with Expo |
 | [`server/`](server/README.md) | The API, the workers and the egress gateway: one TypeScript codebase |
+| [`tools/`](tools/README.md) | The theme generator and the component gallery: design and support tooling |
 | [`docs/design/`](docs/design/README.md) | The agreed design, stages 1 to 7 |
 | [`docs/build/`](docs/build/README.md) | Each build slice: what it delivers, how it was verified, the decisions made |
 
-The app (`app/`), shared types (`shared/`), the browser image (`browser/`), the cloud setup
-(`infra/`) and support tools (`tools/`) are added by the slices that need them (stage 7, D123).
+Shared types (`shared/`), the browser image (`browser/`) and the cloud setup (`infra/`) are added
+by the slices that need them (stage 7, D123).
 
-Checks, from the root with Node 24: `npm ci`, then `npm run check` (lint, types, unit tests);
-integration tests need a Postgres (see [server/README.md](server/README.md)).
+Checks, from the root with Node 24 and Python 3: `npm ci`, then `npm run check` (lint, types, the
+generated theme, unit tests); integration tests need a Postgres (see
+[server/README.md](server/README.md)).
