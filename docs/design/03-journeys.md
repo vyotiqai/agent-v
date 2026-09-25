@@ -1,6 +1,6 @@
 # Stage 3 — Key journeys
 
-**Status:** proposed on 2026-09-25, waiting for review.
+**Status:** agreed on 2026-09-25.
 **Builds on:** [stage 1, foundations](01-foundations.md) and [stage 2, the app map](02-app-map.md).
 Screen names below are the ones drawn on the canvas page "New direction".
 
