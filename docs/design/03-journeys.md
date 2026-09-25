@@ -153,7 +153,7 @@ before it starts.
 - After 24 hours without an answer it reminds you once; after that the step is skipped and the
   job says so (foundations, section 6).
 - Signing works only online; offline, the button says "You're offline" and nothing is queued to
-  send later (D53).
+  send later (D53). *Stage 4 refined the wording to "Signing needs a connection" (D58).*
 
 **Done when:** the queue is empty and every decision is recorded on its job.
 

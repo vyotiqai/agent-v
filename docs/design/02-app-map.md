@@ -102,8 +102,8 @@ The exact colours, sizes and spacing are settled in stage 5.
 ## 3. Every screen
 
 Screens marked ◆ are drawn in the new direction (D34). Not drawn, because they reuse drawn
-screens or are plain lists: Add provider (the getting-started steps again), Appearance, and Help
-and feedback. A full dark appearance is designed in stage 5. Screens marked ✚ were added on
+screens: Add provider (the getting-started steps again). Appearance and Help and feedback were
+drawn in stage 4. A full dark appearance is designed in stage 5. Screens marked ✚ were added on
 2026-09-25 after comparing Agent V with OpenMuse (D36–D43).
 
 ### Getting started
@@ -139,6 +139,7 @@ and feedback. A full dark appearance is designed in stage 5. Screens marked ✚ 
 | ◆ Live browser | The agent's browser, live, with where it's pointing; Take control |
 | ◆ A filed result | A finished report; share or save as PDF; follow up |
 | ◆✚ Spending summary | A filed result from an imported statement: totals by category, recurring charges, a savings goal |
+| ◆✚ A watch | A watch's own page: the value now, the last 30 days as a chart with the alert line, recent checks. *Added in stage 4 (D67)* |
 
 ### Find your work
 
@@ -165,8 +166,8 @@ and feedback. A full dark appearance is designed in stage 5. Screens marked ✚ 
 | ◆ Morning briefing | Time, days, and what it includes |
 | ◆ Notifications | What may interrupt you; signatures and questions are always on |
 | ◆ Privacy and your data | Export everything; delete the account (required by both stores) |
-| Appearance | Automatic, light or dark |
-| Help and feedback | Guides, contact, report a problem |
+| ◆ Appearance | Automatic, light or dark. *Drawn in stage 4* |
+| ◆ Help and feedback | Guides, contact, report a problem. *Drawn in stage 4* |
 
 ### Outside the app
 
