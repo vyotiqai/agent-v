@@ -42,10 +42,11 @@ build plan (stage 7) and all code that follows.
    example the Vercel AI SDK, LangChain, LlamaIndex, Mastra, the OpenAI Agents SDK or the Claude
    Agent SDK), and no AI vendor's client library: every AI provider is called over plain HTTPS
    by our own small client. We don't buy what we can build: the cloud browser, the live view and
-   Take control, saved logins and the agent's computer run on our own infrastructure, as our own
-   code. Services that can't be replaced by anyone's code (the person's own AI provider, Gmail
-   and Outlook for their accounts, Apple and Google for sign-in and push notifications) are
-   called by our own small clients over their standard protocols and REST APIs. Only
+   Take control, and saved logins run on our own infrastructure, as our own code. Services that
+   can't be replaced by anyone's code (the person's own AI provider, including the web search,
+   page reading and code sandbox it offers on their key; Gmail and Outlook for their accounts;
+   Apple and Google for sign-in and push notifications) are called by our own small clients over
+   their standard protocols and REST APIs. Only
    general-purpose libraries are used, such as a Postgres driver, Playwright to drive a browser
    over the Chrome DevTools Protocol, and a PDF library. *Set by the owner on 2026-09-25.*
 

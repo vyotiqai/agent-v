@@ -177,7 +177,7 @@ Whatever the settings, it never:
 | **Ideas** | Suggests jobs on its own, with why and the evidence; you decide |
 | **Goals** | Goals with milestones and a target date; jobs roll up into them |
 | **Saved logins** | The cloud browser stays signed in to sites you signed in to once |
-| **The agent's computer** | A private cloud computer with a terminal and files, for data, spreadsheets and scripts |
+| **The agent's computer** | A private cloud computer with a terminal and files, for data, spreadsheets and scripts. *Since D102 (stage 6): it runs in the person's own AI provider's code sandbox, on their key* |
 | **Spending summary** | Import a statement; totals by category, recurring charges, a savings goal. Read-only |
 
 **Later, one at a time:** shopping and payments;

@@ -20,7 +20,9 @@ Asked on 2026-09-25 and recorded as decisions below:
 | How the phone apps are built | React Native with Expo, one TypeScript codebase for iPhone and Android (D82) |
 | The server's language | TypeScript on Node, sharing its types with the app (D83) |
 | Where it runs | Google Cloud, one US region at launch, with room for an EU region later (D84) |
-| The cloud browser and the agent's computer | Built by us and run on our own Google Cloud infrastructure: no browser or sandbox provider (D85). The owner first chose providers, then on the same day set the rule: everything custom |
+| Who pays for the heavy work | The person, through their own AI key: web search, reading pages and the agent's computer use their provider's own tools, so they cost Agent V nothing (D101, D102). Asked after the owner said the running costs must stay near zero |
+| The cloud browser | Our own, but only for sign-ins, forms and Take control, with a monthly allowance per person, so its cost is small and capped (D85) |
+| The person's own computer | A free desktop app, after launch, lets the agent use the person's own computer and browser (D103) |
 | Speech to text | On the phone (D86) |
 | Web search | No search service: the person's provider's own web search when it has one, otherwise public search engines in our own browser (D99) |
 | Sign-in | Apple or Google only; email codes dropped, which changes D44 (D100) |
@@ -41,14 +43,13 @@ flowchart LR
     DB[("Postgres + pgvector<br/>the truth, the queue,<br/>the schedules")]
     Side["Cloud Storage, Cloud KMS,<br/>embedding service"]
     Egress["Egress gateway<br/>public addresses only"]
-    subgraph Fleet["Sandboxed fleet, GKE Sandbox (gVisor)"]
-      Browser["Browsers<br/>one per session"]
-      Sandbox["Agent's computers<br/>one per person"]
+    subgraph Fleet["Browser fleet, GKE Sandbox (gVisor)"]
+      Browser["Browsers, one per session:<br/>sign-ins, forms, Take control"]
     end
   end
 
   subgraph Outside["Outside services"]
-    Net["The person's AI provider,<br/>Gmail, Outlook, calendars"]
+    Net["The person's AI provider, on their key:<br/>the model, web search, page reading,<br/>the agent's computer (code sandbox)<br/>Gmail, Outlook, calendars; web pages"]
     Push["APNs and FCM,<br/>to the phone"]
   end
 
@@ -60,9 +61,7 @@ flowchart LR
   Workers --> Side
   Workers --> Egress --> Net
   Workers -->|"DevTools Protocol"| Browser
-  Workers -->|"commands, files"| Sandbox
   Browser --> Egress
-  Sandbox --> Egress
   Workers --> Push
 ```
 
@@ -76,15 +75,18 @@ flowchart LR
 | **Cloud KMS** | Keeps the keys that encrypt people's AI keys, account tokens and saved logins | Envelope encryption (section 5) |
 | **Egress gateway** | All calls to the internet leave through it: a fixed address, and a check that the destination is a public address, never our own network | Section 5 |
 | **Embedding service** | Turns text into vectors for memory search, on our own servers | A small open model on CPU (section 9) |
-| **Sandboxed fleet** | The cloud browsers (one per session) and the agent's computers (one per person), each in its own gVisor sandbox, with no route into our own network | Our own code on GKE Sandbox (sections 7 and 8) |
-| **Outside services** | Only what no one's code can replace: the person's AI provider, their email and calendar, push delivery through Apple and Google | Our own small clients over HTTPS and standard protocols (D88) |
+| **Browser fleet** | Cloud browsers for sign-ins, forms and Take control only, one per session, each in its own gVisor sandbox, with no route into our own network | Our own code on GKE Sandbox (section 7) |
+| **Outside services** | Only what no one's code can replace: the person's AI provider (the model, and its web search, page reading and code sandbox, all on their key), their email and calendar, push delivery through Apple and Google | Our own small clients over HTTPS and standard protocols (D88) |
 
-Two principles run through every section:
+Three principles run through every section:
 
 - **The server decides; the model proposes.** The AI model plans and chooses tools, but what it
   may do, when it must ask, and what counts as signed are enforced by our code (section 4).
 - **Postgres is the truth.** Every change to a job is written there before anything else
   happens, so a crash, a restart or a deploy never loses work or repeats an action (D89, D90).
+- **Agent V's own running cost stays near zero.** Heavy work runs on the person's own AI key,
+  nothing of ours runs while nobody needs it, and the one heavy thing we host, the browser, is
+  capped (section 13, D104).
 
 ## 2. The app
 
@@ -143,13 +145,14 @@ The server is one TypeScript codebase (D83) that starts as either:
 
 Both run on **Cloud Run** in one US region (D84). The API is a Cloud Run service and scales with
 traffic. Workers are a Cloud Run **worker pool**, made for background work that answers no
-requests; our own code scales it with the length of the queue. The browsers and the agent's
-computers run in a separate sandboxed fleet (sections 7 and 8).
+requests; our own code scales it with the length of the queue. The browsers run in a separate
+sandboxed fleet (section 7).
 
 ### Postgres is the truth, and the queue (D89)
 
-- **Cloud SQL for PostgreSQL**, with high availability across two zones, automatic backups and
-  point-in-time recovery (the numbers are set in part 2).
+- **Cloud SQL for PostgreSQL**, with automatic backups and point-in-time recovery. It starts at
+  the smallest size, and moves to a larger one with a standby in a second zone as usage grows;
+  part 2 sets when (section 13).
 - **The work queue and every schedule live in Postgres**, not in a separate queue service. A
   worker takes an item with `SELECT … FOR UPDATE SKIP LOCKED`, holds a lease while it works and
   renews it; if a worker dies, the lease runs out and another worker carries on. One store means
@@ -268,21 +271,26 @@ A notification's **Sign and send** (J4, Act as you only) carries the fingerprint
 the notification. It works only on an unlocked phone and goes through the same check. Offline,
 nothing is signed or queued (D58).
 
-### Research on the web (D99)
+### Research on the web (D99, D101)
 
-There is no web search service. The agent searches in one of two ways, both our own code:
+There is no web search service. The agent researches in this order, cheapest first, all through
+our own code:
 
-1. **The provider's own web search**, when the person's AI provider offers one as part of its API
-   (OpenAI, Anthropic and Google do). It is switched on in the request by our own client, billed
-   to the person's key like any other use, and its sources are kept in the record.
-2. **Otherwise, the way a person does:** in its own cloud browser (section 7), it opens a public
-   search engine, reads the results page, and opens the pages worth reading. If a search engine
-   shows a CAPTCHA, it tries another; only if all of them block does it become a moment to take
-   control (D49).
+1. **The provider's own tools, on the person's key:** OpenAI, Anthropic and Google each offer web
+   search and page reading as part of their API. Our client switches them on in the request; the
+   provider bills the person, like any other use. At today's prices a search costs about 1 cent
+   (OpenAI and Anthropic: $10 per 1,000; Google: 5,000 free a month, then $14 per 1,000), and
+   reading a page costs only its tokens.
+2. **A plain page fetch by our own server**, for pages the provider can't read and for people
+   whose provider has no web tools: the worker downloads the page through the egress gateway and
+   reads its text. It costs us almost nothing. For those people, searching is a fetch of a public
+   search engine's results page.
+3. **Our own browser, only when a page needs one**: it must be signed in to, a form must be filled,
+   or it only works with JavaScript (section 7).
 
 Either way, what it read, and from where, goes into the record, so every claim in a result can be
-traced to its source. Which search engines it uses, and how their terms of use are respected, is
-settled in part 2.
+traced to its source. Which search engines are used for people without provider search, and how
+their terms of use are respected, is settled in part 2.
 
 ### Repeating jobs, watches and ideas
 
@@ -311,7 +319,9 @@ Four wire formats cover every provider in stage 1, section 8:
 Each client is small and ours: it builds the request, parses the streamed answer (server-sent
 events) into one common shape of text, tool calls and usage, and turns each provider's errors
 into our own few kinds (key declined, out of credit, rate-limited, model gone, provider down).
-Those kinds drive the Needs you items of J9.
+Those kinds drive the Needs you items of J9. Google now marks its generate content API as
+"legacy" and recommends its newer Interactions API; the Google client is built on whichever of
+the two lets the conversation live only in our record, decided in the first build slice.
 Each client also keeps its provider's rules for a conversation with tools: for example, Gemini's
 thought signatures are sent back with every function call, and OpenAI's Responses API is called
 with storage turned off, so the conversation lives only in our record. Each client is tested
@@ -361,15 +371,19 @@ network (stage 1, section 8).
 
 ## 7. The cloud browser
 
-Our own browsers, on our own infrastructure (D85, rule 6).
+Our own browsers, on our own infrastructure (D85, rule 6), used only where nothing cheaper
+works: signing in to a site, filling in and submitting a form, a page that only works with
+JavaScript, and Take control. Research and reading go through cheaper routes first (section 4,
+D99). The browser is the only heavy thing Agent V pays for, so it is capped.
 
 - **Where it runs:** each browser session is a Chromium in its own container, in a **GKE
   Sandbox** node pool on Google Kubernetes Engine. GKE Sandbox runs every container inside
   **gVisor**, Google's own sandbox (the one Cloud Run uses), so a hostile page that breaks out of
   Chromium still meets a second wall. One session per container, never shared, deleted when the
-  session ends. Our own small fleet controller (part of the worker code) starts and stops these
-  containers through the Kubernetes API, keeps a few warm ones ready so a session starts in about
-  a second, and removes anything left over.
+  session ends. The cluster is GKE **Autopilot**, which bills only for the containers that are
+  running, per second; its management fee is covered by Google's free tier. Our own small fleet
+  controller (part of the worker code) starts and stops these containers through the Kubernetes
+  API and removes anything left over. With nothing running, the fleet costs nothing.
 - **Its network:** browsers reach only the public internet, through the egress gateway (section
   5); they can't reach Agent V's own services, the cloud's metadata server or each other.
 - **Driving it:** a worker connects to its browser over the **Chrome DevTools Protocol** with
@@ -391,30 +405,45 @@ Our own browsers, on our own infrastructure (D85, rule 6).
 - **Sites that block automation:** there is no CAPTCHA-solving service. A CAPTCHA, login or code is
   a moment to take control (D49), and a site that keeps blocking is reported honestly (stage 1,
   section 13).
-- **Sessions are closed** as soon as a step no longer needs them, and are capped in length (part 2),
-  since browser time is Agent V's own cost.
+- **Sessions are closed** as soon as a step no longer needs them.
+- **A monthly allowance per person** (for example 60 browser minutes; part 2 sets the number).
+  Time you spend in Take control doesn't count. When the allowance runs out, jobs that need the
+  browser wait, with one Needs you item that says so and when it renews; everything else carries
+  on.
+- **Cheaper capacity for background work:** a session that starts while nobody is watching runs
+  on Google's discounted Spot capacity; if Google takes it back, the step resumes from the record
+  (D90). Sessions started while you watch, and every Take control, run on regular capacity.
 
 ## 8. The agent's computer
 
-A private computer per person, ours as well (D85, rule 6).
+The agent's computer runs in **the person's own AI provider's code sandbox**, on their key (D102).
+Anthropic and OpenAI both offer one as part of their API: a private Linux container with Python,
+its data libraries and command-line tools, where the model runs commands and makes files. It
+costs Agent V nothing. Anthropic includes 1,550 container hours a month in each account before
+charging (then about 5 cents an hour); OpenAI charges about 3 cents per container.
 
-- **Where it runs:** a container of its own in the same GKE Sandbox fleet, inside gVisor, from our
-  own Linux image with the tools data work needs (Python with its data libraries, a spreadsheet
-  engine, command-line tools). Never shared.
-- **Isolation:** no route into Agent V's own network or to other computers; it reaches the public
-  internet only through the egress gateway, under rules we set (part 2).
-- **Your files persist:** each person's workspace is their own persistent disk. When the computer
-  is idle it stops, and the disk stays; the next command starts it again with the files in place,
-  in seconds. What was running in memory doesn't survive a stop, so long commands keep it awake
-  until they finish. The workspace counts toward the storage allowance (J8).
-- **Our own small agent inside:** a tiny program of ours in the image runs commands, streams their
-  output, and reads and writes files, over one authenticated connection from the workers. It is
-  the only way in.
-- **Every command is recorded:** the command, its output (trimmed for very long output, with the
-  full output kept as a file) and its exit code go into the job's record, so Jobs → Computer shows
-  every command it ran (D39).
-- **No keys inside:** the computer never holds your AI key or account tokens. The agent runs on
-  the workers and only sends commands in.
+- **What works where:**
+
+  | The person's provider | The agent's computer |
+  |---|---|
+  | Anthropic | Full: commands, files, Python and its data libraries. The same container is used again for up to 30 days |
+  | OpenAI | Full: commands, files, Python and its data libraries. A container ends after 20 idle minutes; its files are kept by Agent V (below) |
+  | Google | Short Python work only (up to 30 seconds a run, no installed tools); the app says so |
+  | Any other endpoint | Not available; the Computer tab says so in plain words, and says the desktop app will offer your own computer (D103) |
+
+- **Your files persist with Agent V, not the provider:** files the agent makes are copied into
+  Cloud Storage, in your own folder, as soon as a step ends, and put back into a new container
+  when a later step needs them. So a container ending loses nothing. Storage is cheap, and it
+  counts toward the storage allowance (J8).
+- **Every command is recorded:** the code or command, its output (trimmed for very long output,
+  with the full output kept as a file) and its result go into the job's record, so Jobs →
+  Computer shows every command it ran (D39).
+- **Isolation:** the container is the provider's, inside the person's own provider account, with
+  no internet access and no way into Agent V's systems.
+- **No keys inside:** the container never holds your AI key or account tokens. The agent runs on
+  our workers and only sends code in.
+- **Privacy, plainly:** files the agent works on go to the person's own AI provider, as their
+  words already do. Part 2 lists this in the data flows and the stores' privacy forms.
 
 ## 9. Memory
 
@@ -456,7 +485,8 @@ A private computer per person, ours as well (D85, rule 6).
 - **Filling PDF forms** and making files happens on the agent's computer or in the worker, with a
   general-purpose PDF library.
 - **Statements** for the spending summary (D40) are files like any other, read on the agent's
-  computer; no bank connection.
+  computer; no bank connection. For people whose provider has no code sandbox, a CSV statement
+  is read by our own code on the worker instead.
 
 ## 12. The data model
 
@@ -482,11 +512,50 @@ export and deletion (part 2) are complete by construction.
 | `files` | File metadata; the file itself is in Cloud Storage |
 | `saved_logins` | The sites in your browser profile; the profile itself is encrypted in Cloud Storage |
 | `browser_sessions` | Each browser session: its job, its container, when it started and ended |
-| `computers` | Your sandbox computer's id, state and storage used |
+| `computers` | Your provider's current container id, if any, and the storage your files use |
 | `queue` | Work waiting for a worker, with leases |
-| `support_refs` | Support references (section 13) |
+| `support_refs` | Support references (section 14) |
 
-## 13. Answers to questions left for stage 6
+## 13. What it costs to run (D104)
+
+Agent V is free, and the owner has set that its own running cost must stay near zero. The AI and
+the heavy work are paid by each person's own provider account; what's left for Agent V is small,
+and none of it runs while nobody needs it.
+
+**Fixed, each month, at launch** (Google Cloud list prices in the US region, September 2026;
+checked again before launch):
+
+| What | How it stays small | About |
+|---|---|---|
+| Workers | One small always-on worker (half a processor); more start only while there's a queue | $20–30 |
+| API | Runs only while the app is talking to it; Google's free monthly allowance covers a small launch | $0–5 |
+| Database | The smallest Cloud SQL size, with backups; grows when usage does | ~$10 |
+| Embedding service | Runs only while turning text into vectors | $0–5 |
+| Browser fleet | Nothing runs when no one needs a browser; the cluster's management fee is covered by Google's free tier | $0 |
+| Files, keys, logs, Gmail push | Small amounts at low prices | ~$5 |
+| **Total** | | **about $40–60** |
+
+**Per active person, each month:** a few cents. At most 60 browser minutes (the example
+allowance) costs about 3–5 cents on regular capacity, less on Spot; a gigabyte of files about 2
+cents; the live view's network traffic a cent or two. So 1,000 active people add roughly $50–100.
+
+**What keeps it there:**
+
+- The person's own key pays for the model, web search, page reading and the agent's computer
+  (sections 4 and 8).
+- Nothing of ours runs idle: the API, the embedding service and the browser fleet scale to zero;
+  workers keep one small instance.
+- Browser minutes are capped per person, and the owner sets **one monthly ceiling for all browser
+  use**. If it's reached, browser steps wait with a Needs you item that says when they'll resume;
+  nothing else stops. A budget alert warns the owner well before that.
+- **Google for Startups:** its Start tier gives $2,000 of Google Cloud credit for 12 months to a
+  company founded in the last two years with a working product and a website on its own domain.
+  At the costs above, that covers roughly the first year. Larger tiers (up to $200,000 or $350,000)
+  need venture funding.
+- Later, if the owner chooses, an optional paid plan for heavy users (stage 1: pricing after
+  launch).
+
+## 14. Answers to questions left for stage 6
 
 | Question (from) | Answer |
 |---|---|
@@ -496,7 +565,7 @@ export and deletion (part 2) are complete by construction.
 | Memory search needs an embedding model (stage 1) | Our own small open model on our servers, the same for everyone (D87, section 9) |
 | How much is stored on the phone for offline reading, and for how long (stage 4) | Section 2: the last known state, job pages opened in the last 30 days, files opened in the last 7 days; erased on sign-out (D94) |
 | How support references map to server logs without holding personal data (stage 4) | Each error shown with a reference gets a random short code (like `K7Q-4M2`), stored with the request's trace id, the time and the error kind, never the content. Logs carry ids, never personal content, so the reference leads to the logs without exposing anything (D98; logging rules in part 2) |
-| Timeouts and limits: browser time, computer time and storage, jobs at once (stages 1, 2 and 3) | Part 2, with the running costs |
+| Timeouts and limits: browser time, computer time and storage, jobs at once (stages 1, 2 and 3) | The shape is set here: browser minutes per person and an overall ceiling (section 13); the agent's computer runs on the person's key (section 8). The numbers are set in part 2 |
 
 ---
 
@@ -507,8 +576,8 @@ export and deletion (part 2) are complete by construction.
 | D81 | Stage 6 comes in two parts: the system, then running it safely | Each is reviewed properly; neither is rushed |
 | D82 | The phone apps are React Native with Expo, one TypeScript codebase; our own components to the stage 5 specification | The owner's choice: one codebase for both phones, shared types with the server, native modules where needed |
 | D83 | The server is TypeScript on Node, one codebase with two entry points (API and worker), sharing one package of types with the app | The owner's choice: one language end to end, so a breaking change fails the build, not a phone |
-| D84 | Google Cloud, one US region at launch: Cloud Run (a service for the API, a worker pool for workers), GKE Sandbox for the browsers and computers, Cloud SQL for PostgreSQL, Cloud Storage, Cloud KMS, Pub/Sub for Gmail push | The owner's choice: the least infrastructure to run reliably, room for an EU region later |
-| D85 | The cloud browsers and the agent's computers are our own: Chromium and our own Linux image in containers on GKE Sandbox (gVisor), started by our own fleet controller; our own live view and Take control over the DevTools Protocol; saved logins as encrypted profiles in Cloud Storage; persistent disks for the computers | The owner's rule: everything custom. The owner first chose providers, then replaced that the same day. gVisor gives a second wall around every browser and computer without running our own virtual machines |
+| D84 | Google Cloud, one US region at launch: Cloud Run (a service for the API, a worker pool for workers), GKE Autopilot with GKE Sandbox for the browsers, Cloud SQL for PostgreSQL, Cloud Storage, Cloud KMS, Pub/Sub for Gmail push | The owner's choice: the least infrastructure to run reliably, room for an EU region later |
+| D85 | Our own cloud browser, only for sign-ins, forms, pages that need JavaScript, and Take control: Chromium in containers on GKE Autopilot with GKE Sandbox (gVisor), started by our own fleet controller; our own live view and Take control over the DevTools Protocol; saved logins as encrypted profiles in Cloud Storage; a monthly allowance per person | The owner's choices on 2026-09-25, in order: providers; then everything custom, with our own browsers and computers; then, to keep costs near zero, a small capped browser of ours and the heavy work on the person's key (D101). gVisor gives a second wall around every browser |
 | D86 | Speech becomes text on the phone | The owner's choice: free, fast, private, works with every provider |
 | D87 | Memory uses our own small open embedding model on our servers | The owner's choice: works with every provider and survives switching |
 | D88 | Everything custom: no AI agent SDKs or vendor client libraries; the agent loop and every client are our own code over plain HTTPS and standard protocols; only what no one's code can replace is used from outside (the person's AI provider, Gmail and Outlook, Apple and Google sign-in and push) | The owner's rule 6: full control and understanding of every part |
@@ -522,16 +591,20 @@ export and deletion (part 2) are complete by construction.
 | D96 | Sign-in is our own: Apple and Google identity tokens verified by the API, rotating refresh tokens; no passwords, no sign-in vendor | Small, standard and fully ours |
 | D97 | Workers let a waiting job go; any worker resumes it when the wait is over | Long waits cost nothing, and restarts are safe |
 | D98 | Support references are random short codes tied to trace ids; logs never hold personal content | Support can find a problem without seeing your data |
-| D99 | No web search service: the agent uses the person's provider's own web search when it has one, and otherwise searches public search engines in its own browser; every source is recorded | The owner's choice, following rule 6: nobody can build their own index of the web, and Google's and Bing's search APIs are gone; this stays our own code |
+| D99 | No web search service: the agent uses the person's provider's own web search and page reading when it has them; otherwise our server fetches pages (and a public search engine's results page) directly; the browser only when a page needs one; every source is recorded | The owner's choice, following rule 6: nobody can build their own index of the web, and Google's and Bing's search APIs are gone; this stays our own code and costs Agent V almost nothing |
 | D100 | Sign in with Apple or Google only; no email codes. **Changes D44** (stage 3) and removes the Check your email screen (stage 4) | The owner's choice, following rule 6: email codes would need our own mail server (often filtered as spam, which blocks sign-in) or an email service |
+| D101 | The heavy work runs on the person's own AI key: the model, web search, page reading and the agent's computer use their provider's own tools; Agent V hosts only the capped browser | The owner's requirement: Agent V free for people and near zero cost for the owner, while everything still works |
+| D102 | The agent's computer is the person's provider's code sandbox (full with Anthropic and OpenAI, short Python work with Google, not available with other endpoints until the desktop app); its files are kept by Agent V in Cloud Storage; every command is recorded. **Changes D39** (stage 2): the computer is no longer Agent V's own, and its compute is no longer Agent V's cost | The owner's choice (D101); nothing is lost when a provider's container ends |
+| D103 | A free desktop app for Mac and Windows, after launch, lets the agent use the person's own computer and browser, with their real logins and files | The owner's choice: the most private and cheapest way to give every person a full computer and browser; after launch keeps the first release smaller |
+| D104 | Agent V's own running cost stays near zero: nothing runs idle, the smallest sizes at launch, browser minutes capped per person, one owner-set ceiling for all browser use, budget alerts, and an application for Google for Startups credits. About $40–60 a month fixed, plus a few cents per active person | The owner can't carry large running costs; people keep a fully working free app |
 
 ## Open questions for part 2
 
 | Question |
 |---|
-| Which public search engines the agent's browser uses, and how their terms of use are respected (D99) |
-| Every outside service that remains, with its data handling |
-| Fair-use limits (browser time, computer time and storage, jobs at once, watches) and the running cost per person |
+| For people whose provider has no web search: which public search engines our server fetches, and how their terms of use are respected (D99) |
+| Every outside service that remains, with its data handling, including what the person's provider receives when it runs their searches and the agent's computer |
+| The numbers: browser minutes per person, the overall browser ceiling, storage per person, jobs at once, and when the database grows |
 | The defence against instructions hidden in web pages and emails (prompt injection), in full |
 | Encryption, key rotation, access to production, and the audit trail |
 | The data flows for Apple's privacy labels and Google's data safety form; export and deletion |
