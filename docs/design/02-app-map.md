@@ -1,10 +1,12 @@
 # Stage 2 — App map
 
-**Status:** proposed on 2026-09-25. Ledger was replaced by a new, cleaner direction (D34); its
-first screens are waiting for review.
+**Status:** proposed on 2026-09-25. The visual direction (D34) was agreed on 2026-09-25; screens
+are being redrawn in it, a batch at a time.
 **Mockups:** [Agent V — App map](https://claude.ai/artifact/7Y2irrycwGs5zc2bZ1oEf9), a canvas
-at phone size. The page **"New direction (proposal)"** is the latest: Today, Hand something
-off and Speaking. Once the look is agreed, every other screen is redrawn in it. The Ledger pages
+at phone size. The page **"New direction"** is current. The everyday flow is drawn: Today,
+Hand something off, Speaking, Before I start, the Job page, the Live browser, the three things
+that need you (a signature, a question, a can't-be-undone action) and a filed result. Finding
+your work, settings and getting started follow. The Ledger pages
 keep the full list of screens and are kept as history. Press Play on a screen to click through.
 
 This stage lists every screen in the app and how you move between them. What each screen
@@ -52,7 +54,8 @@ chose, when asked:
   screens, day summary);
 - see two screens first, checked visually before review.
 
-The first screens of the new direction are drawn (D34, proposed). Sections 1 and 4 below still
+The first screens of the new direction were drawn and agreed the same day (D34), and the rest of
+the everyday flow followed (D35). Sections 1 and 4 below still
 describe Ledger; they are rewritten once the new direction is agreed. Screens, navigation and
 signing (sections 2 and 3, D18, D20–D22, D24–D26) do not depend on the look and stand.
 
@@ -196,4 +199,5 @@ The hold lasts under a second, fills visibly while held, and cancels if released
 | D31 | *Rejected with the rebalanced Ledger (2026-09-25).* Speaking is a full page, always in the night palette: your words large, older words fading, a live voice level drawn as fine rules | Voice is a main way to hand work off, so it gets a proper screen |
 | D32 | *Rejected with the rebalanced Ledger (2026-09-25).* Night appearance: warm ink with a soft desk-lamp light at the top of main screens. Blue, red and green keep their meanings; the lamp is never used on controls | Dark mode is already in settings. This makes it feel crafted and warm, not just inverted |
 | D33 | *Rejected with the rebalanced Ledger (2026-09-25).* Secondary actions are round icon buttons with a short label under them; the one primary action stays a full-width button | Fewer words, bigger targets, a clear main action |
-| D34 | *Proposed.* New visual direction: one modern sans (Geist), near-black and warm white, one strong blue. Main screens pair a dark top (your day in one sentence, with the key numbers in white) with a light area of a few large rounded blocks. Speaking and handing off are dark, full-screen, with a soft blue light. Blue keeps D27's meaning: it marks what needs you | The owner's choice after the Ledger rounds: clean, structured and modern, drawing on all four groups of references |
+| D34 | *Agreed 2026-09-25.* New visual direction: one modern sans (Geist), near-black and warm white, one strong blue. Main screens pair a dark top (your day in one sentence, with the key numbers in white) with a light area of a few large rounded blocks. Speaking and handing off are dark, full-screen, with a soft blue light. Blue keeps D27's meaning: it marks what needs you | The owner's choice after the Ledger rounds: clean, structured and modern, drawing on all four groups of references |
+| D35 | Refines D27. Blue marks what needs you **and** the agent itself: the microphone, the voice orb, and where it points in the live browser. Red stays only for what can't be undone; green only for a working connection | The agent's presence and your decisions are the two things to notice; a live "recording" dot is blue, not red, so red keeps its single meaning |
