@@ -1,14 +1,12 @@
 # Stage 2 — App map
 
-**Status:** proposed on 2026-09-25. The visual direction (D34) was agreed on 2026-09-25; screens
-are being redrawn in it, a batch at a time.
+**Status:** proposed on 2026-09-25. The visual direction (D34) was agreed on 2026-09-25, and every
+screen is now drawn in it. Waiting for approval of the stage as a whole.
 **Mockups:** [Agent V — App map](https://claude.ai/artifact/7Y2irrycwGs5zc2bZ1oEf9), a canvas
-at phone size. The page **"New direction"** is current. The everyday flow is drawn: Today,
-Hand something off, Speaking, Before I start, the Job page, the Live browser, the three things
-that need you (a signature, a question, a can't-be-undone action) and a filed result. So are
-Jobs (active, goals, the agent's computer), a goal, ideas, search, replay and a spending
-summary. Settings and getting started follow. The Ledger pages
-keep the full list of screens and are kept as history. Press Play on a screen to click through.
+at phone size. The page **"New direction"** is current. It has five rows: every day; finding
+your work, goals and ideas; you and settings; getting started; and menus and surfaces outside the
+app (the job menu, the spend signature, lock-screen notifications, sharing into Agent V). The
+Ledger pages are kept as history. Press Play on a screen to click through.
 
 This stage lists every screen in the app and how you move between them. What each screen
 contains in every state (empty, loading, error, offline) is stage 4; the full design system is
@@ -104,22 +102,24 @@ The exact colours, sizes and spacing are settled in stage 5.
 
 ## 3. Every screen
 
-Screens marked ◆ are drawn in the new direction (D34). Screens marked ✚ were added on
+Screens marked ◆ are drawn in the new direction (D34). Not drawn, because they reuse drawn
+screens or are plain lists: Add provider (the getting-started steps again), Appearance, and Help
+and feedback. A full dark appearance is designed in stage 5. Screens marked ✚ were added on
 2026-09-25 after comparing Agent V with OpenMuse (D36–D43).
 
 ### Getting started
 
 | Screen | Purpose |
 |---|---|
-| Welcome | "Hand it off." What Agent V does in one sentence; sign-in choices |
-| Sign in / create account | Methods decided in stage 3 |
-| Connect your AI | Pick a provider: Anthropic, OpenAI, Google, or any OpenAI-compatible address |
-| Get a key | A short guide per provider, with a button to the provider's key page |
-| Paste and test key | The key is tested with a real call before continuing |
-| Choose models | Suggested models for jobs and for quick steps, changeable later |
-| Connect accounts | Optional: Gmail, Outlook, Google Calendar, Outlook Calendar |
-| Notifications | Why they matter (signatures), then the system permission prompt |
-| Ready | A first suggested job, based on what was connected |
+| ◆Welcome | "Hand it off." What Agent V does in one sentence; sign-in choices |
+| ◆Sign in / create account | Methods decided in stage 3 |
+| ◆Connect your AI | Pick a provider: Anthropic, OpenAI, Google, or any OpenAI-compatible address |
+| ◆Get a key | A short guide per provider, with a button to the provider's key page |
+| ◆Paste and test key | The key is tested with a real call before continuing |
+| ◆Choose models | Suggested models for jobs and for quick steps, changeable later |
+| ◆Connect accounts | Optional: Gmail, Outlook, Google Calendar, Outlook Calendar |
+| ◆Notifications | Why they matter (signatures), then the system permission prompt |
+| ◆Ready | A first suggested job, based on what was connected |
 
 ### Every day
 
@@ -130,12 +130,12 @@ Screens marked ◆ are drawn in the new direction (D34). Screens marked ✚ were
 | ◆ Speaking to Agent V | Full-page voice: your words as you speak, a live level, Type, Hand it off or Cancel |
 | ◆ Before I start | Only when it matters (D2): the plan, which steps need your signature, Start or Change |
 | ◆ Job page | Goal, the plan with live progress, the record of what was done, the result; follow-up line with its queue |
-| Job menu | Pause, stop, change how it repeats, rename, add to a goal, share the result, archive, delete |
+| ◆Job menu | Pause, stop, change how it repeats, rename, add to a goal, share the result, archive, delete |
 | ◆✚ Replay | A finished job step by step from its record, with what the agent saw at each step |
 | ◆✚ An idea | What it suggests, why, and the evidence; Do it (becomes a job), Change, or Not now |
 | ◆ A question | The agent's question with its reason, fixed choices, or an answer by voice |
 | ◆ For your signature | The exact message or action; hold to sign; edit or decline |
-| Spend | The exact amount and what it buys; hold to sign, then Face ID. Not used until spending arrives |
+| ◆Spend | The exact amount and what it buys; hold to sign, then Face ID. Not used until spending arrives |
 | ◆ Can't be undone | What will be lost; hold, then Face ID |
 | ◆ Live browser | The agent's browser, live, with where it's pointing; Take control |
 | ◆ A filed result | A finished report; share or save as PDF; follow up |
@@ -155,17 +155,17 @@ Screens marked ◆ are drawn in the new direction (D34). Screens marked ✚ were
 
 | Screen | Purpose |
 |---|---|
-| You | Hub for everything below |
-| ✚ Profile and tone | Your name and photo; how it writes for you: brief, warm, formal, or in your own words |
-| ✚ Saved logins | Sites the cloud browser stays signed in to; when each was last used; remove any |
-| Your AI | The provider and key status, models per role, other providers, this month's usage and limit |
+| ◆You | Hub for everything below |
+| ◆✚ Profile and tone | Your name and photo; how it writes for you: brief, warm, formal, or in your own words |
+| ◆✚ Saved logins | Sites the cloud browser stays signed in to; when each was last used; remove any |
+| ◆Your AI | The provider and key status, models per role, other providers, this month's usage and limit |
 | Add provider | The same steps as getting started: guide, paste, test, models |
-| Connected accounts | Each account, what it may access, reconnect, remove |
-| What needs your signature | The five action levels, their settings, learned exceptions (each can be undone), hard limits |
-| What I remember | Everything it remembers and where it learned it; edit, forget, or turn learning off |
-| Morning briefing | Time, days, and what it includes |
-| Notifications | What may interrupt you; signatures and questions are always on |
-| Privacy and your data | Export everything; delete the account (required by both stores) |
+| ◆Connected accounts | Each account, what it may access, reconnect, remove |
+| ◆What needs your signature | The five action levels, their settings, learned exceptions (each can be undone), hard limits |
+| ◆What I remember | Everything it remembers and where it learned it; edit, forget, or turn learning off |
+| ◆Morning briefing | Time, days, and what it includes |
+| ◆Notifications | What may interrupt you; signatures and questions are always on |
+| ◆Privacy and your data | Export everything; delete the account (required by both stores) |
 | Appearance | Automatic, light or dark |
 | Help and feedback | Guides, contact, report a problem |
 
@@ -173,8 +173,8 @@ Screens marked ◆ are drawn in the new direction (D34). Screens marked ✚ were
 
 | Surface | Purpose |
 |---|---|
-| Notifications | Signatures (sign from the notification), questions with fixed answers, can't-undo requests (open the app), the briefing, finished jobs, key problems |
-| Share into Agent V | Start a job from a link, file or photo in any app |
+| ◆Notifications | Signatures (sign from the notification), questions with fixed answers, can't-undo requests (open the app), the briefing, finished jobs, key problems |
+| ◆Share into Agent V | Start a job from a link, file or photo in any app |
 
 **Later (not at launch):** home-screen widgets, iPhone Live Activities for running jobs, Siri
 and Android assistant shortcuts, tablet layouts.
