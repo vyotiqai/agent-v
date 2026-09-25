@@ -5,8 +5,9 @@ are being redrawn in it, a batch at a time.
 **Mockups:** [Agent V — App map](https://claude.ai/artifact/7Y2irrycwGs5zc2bZ1oEf9), a canvas
 at phone size. The page **"New direction"** is current. The everyday flow is drawn: Today,
 Hand something off, Speaking, Before I start, the Job page, the Live browser, the three things
-that need you (a signature, a question, a can't-be-undone action) and a filed result. Finding
-your work, settings and getting started follow. The Ledger pages
+that need you (a signature, a question, a can't-be-undone action) and a filed result. So are
+Jobs (active, goals, the agent's computer), a goal, ideas, search, replay and a spending
+summary. Settings and getting started follow. The Ledger pages
 keep the full list of screens and are kept as history. Press Play on a screen to click through.
 
 This stage lists every screen in the app and how you move between them. What each screen
@@ -130,25 +131,25 @@ Screens marked ◆ are drawn in the new direction (D34). Screens marked ✚ were
 | ◆ Before I start | Only when it matters (D2): the plan, which steps need your signature, Start or Change |
 | ◆ Job page | Goal, the plan with live progress, the record of what was done, the result; follow-up line with its queue |
 | Job menu | Pause, stop, change how it repeats, rename, add to a goal, share the result, archive, delete |
-| ✚ Replay | A finished job step by step from its record, with what the agent saw at each step |
-| ✚ An idea | What it suggests, why, and the evidence; Do it (becomes a job), Change, or Not now |
+| ◆✚ Replay | A finished job step by step from its record, with what the agent saw at each step |
+| ◆✚ An idea | What it suggests, why, and the evidence; Do it (becomes a job), Change, or Not now |
 | ◆ A question | The agent's question with its reason, fixed choices, or an answer by voice |
 | ◆ For your signature | The exact message or action; hold to sign; edit or decline |
 | Spend | The exact amount and what it buys; hold to sign, then Face ID. Not used until spending arrives |
 | ◆ Can't be undone | What will be lost; hold, then Face ID |
 | ◆ Live browser | The agent's browser, live, with where it's pointing; Take control |
 | ◆ A filed result | A finished report; share or save as PDF; follow up |
-| ✚ Spending summary | A filed result from an imported statement: totals by category, recurring charges, a savings goal |
+| ◆✚ Spending summary | A filed result from an imported statement: totals by category, recurring charges, a savings goal |
 
 ### Find your work
 
 | Screen | Purpose |
 |---|---|
-| Jobs | Tabs: Active (needs you, working, next up, repeating), Goals, Done (including Couldn't finish and Archived), Computer |
-| ✚ Ideas | Every open idea, and the ones you set aside |
-| ✚ Goal | A goal's milestones and target date, the jobs under it, overall progress, suggested next jobs |
-| ✚ Computer | The agent's own cloud computer: its files (open, edit, share) and the record of commands it ran |
-| Search | One search across jobs, files and what it remembers, with filters; forget a memory in place |
+| ◆ Jobs | Tabs: Active (needs you, working, next up, repeating), Goals, Done (including Couldn't finish and Archived), Computer |
+| ◆✚ Ideas | Every open idea, and the ones you set aside |
+| ◆✚ Goal | A goal's milestones and target date, the jobs under it, overall progress, suggested next jobs |
+| ◆✚ Computer | The agent's own cloud computer: its files (open, edit, share) and the record of commands it ran |
+| ◆ Search | One search across jobs, files and what it remembers, with filters; forget a memory in place |
 
 ### You and settings
 
