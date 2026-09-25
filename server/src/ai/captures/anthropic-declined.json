@@ -1,0 +1,14 @@
+{
+  "capturedAt": "2026-09-25",
+  "model": "claude-haiku-4-5",
+  "request": {
+    "method": "GET",
+    "url": "https://api.anthropic.com/v1/models?limit=1000",
+    "body": null
+  },
+  "response": {
+    "status": 401,
+    "contentType": "application/json",
+    "body": "{\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CfQG2RfYiE1Rv8DHgA6DF\"}"
+  }
+}

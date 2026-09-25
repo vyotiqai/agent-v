@@ -1,0 +1,14 @@
+{
+  "capturedAt": "2026-09-25",
+  "model": "gemini-2.5-flash",
+  "request": {
+    "method": "GET",
+    "url": "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000",
+    "body": null
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=UTF-8",
+    "body": "{\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"API key not valid. Please pass a valid API key.\",\n    \"status\": \"INVALID_ARGUMENT\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.ErrorInfo\",\n        \"reason\": \"API_KEY_INVALID\",\n        \"domain\": \"googleapis.com\",\n        \"metadata\": {\n          \"service\": \"generativelanguage.googleapis.com\"\n        }\n      },\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.LocalizedMessage\",\n        \"locale\": \"en-US\",\n        \"message\": \"API key not valid. Please pass a valid API key.\"\n      }\n    ]\n  }\n}\n"
+  }
+}

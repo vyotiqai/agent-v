@@ -1,0 +1,14 @@
+{
+  "capturedAt": "2026-09-25",
+  "model": "gpt-5-mini",
+  "request": {
+    "method": "GET",
+    "url": "https://api.openai.com/v1/models",
+    "body": null
+  },
+  "response": {
+    "status": 401,
+    "contentType": "application/json",
+    "body": "{\n  \"error\": {\n    \"message\": \"Incorrect API key provided: agent-v-**********-key. You can find your API key at https://platform.openai.com/account/api-keys.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": null,\n    \"code\": \"invalid_api_key\"\n  }\n}"
+  }
+}
