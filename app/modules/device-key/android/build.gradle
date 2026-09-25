@@ -3,6 +3,12 @@ plugins {
   id 'expo-module-gradle-plugin'
 }
 
+// Part of the app, never published as a package of its own, so no Maven publication (which would
+// need a version of its own).
+expoModule {
+  canBePublished false
+}
+
 android {
   namespace "agentv.modules.devicekey"
 }
