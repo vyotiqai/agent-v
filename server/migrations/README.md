@@ -10,4 +10,4 @@ Numbered SQL files, applied in order by `npm run migrate` (the runner is `src/db
   deploy (stage 6, section 21): add the new column or table first; start using it in the next
   release; remove the old one in a release after that.
 
-Slice 0 ships no tables: each slice adds the tables it needs (stage 6, section 12).
+Each slice adds the tables it needs (stage 6, section 12). Slice 1 adds the account tables.

@@ -150,7 +150,12 @@ const tests = {
   async NPrivacy(p, ok) {
     await p.getByRole('button', { name: /Export everything/ }).click();
     ok(await shown(p.getByText('Preparing… I’ll tell you when it’s ready')), 'export starts');
-    await p.getByRole('button', { name: 'Sign out' }).click();
+    await p.getByRole('button', { name: 'Sign out' }).nth(0).click();
+    ok(await shown(p.getByText('Sign out Pixel 6a?')), 'signing out another phone asks first');
+    await p.getByRole('alertdialog').getByRole('button', { name: 'Sign out' }).click();
+    ok(!(await shown(p.getByText('Pixel 6a', { exact: true }))), 'the other phone is signed out');
+    ok(await shown(p.getByText('Pixel 6a is signed out. It will need to sign in again.')), 'and it says so, with no Undo');
+    await p.getByRole('button', { name: 'Sign out', exact: true }).click();
     ok(await shown(p.getByText('Sign out on this phone?')), 'Sign out asks first');
   },
   async NProfile(p, ok) {

@@ -5,6 +5,7 @@
   "workspaces": [
     "app",
     "server",
+    "shared",
     "tools/gallery"
   ],
   "engines": {

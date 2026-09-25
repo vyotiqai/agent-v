@@ -4,10 +4,18 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { test } from 'node:test';
 import { createApi } from '../src/api/app.ts';
+import { createGoogleVerifier } from '../src/auth/google.ts';
 import { connect } from '../src/db/connect.ts';
 import { loadMigrations, MIGRATIONS, migrate } from '../src/db/migrate.ts';
 import { createLogger } from '../src/log.ts';
 import { withDatabase } from './db.ts';
+import { TestIssuer } from './google-tokens.ts';
+
+const issuer = new TestIssuer();
+const verifyGoogle = createGoogleVerifier({
+  audience: issuer.audience,
+  fetch: issuer.fetcher().fetch,
+});
 
 async function serve(server: Server): Promise<string> {
   server.listen(0, '127.0.0.1');
@@ -21,7 +29,7 @@ test('liveness, readiness and the answers for unknown routes and methods', async
     const lines: Record<string, unknown>[] = [];
     const logger = createLogger({ write: (l) => lines.push(JSON.parse(l)) });
     await migrate(sql, shipped, logger);
-    const server = createApi({ sql, logger, schema: shipped.length });
+    const server = createApi({ sql, logger, schema: shipped.length, verifyGoogle });
     const base = await serve(server);
     try {
       const health = await fetch(`${base}/healthz`);
@@ -59,7 +67,7 @@ test('liveness, readiness and the answers for unknown routes and methods', async
 test('not ready while the database is behind the code', async () => {
   await withDatabase(async (sql) => {
     const logger = createLogger({ write: () => {} });
-    const server = createApi({ sql, logger, schema: 1 });
+    const server = createApi({ sql, logger, schema: 99, verifyGoogle });
     const base = await serve(server);
     try {
       const r = await fetch(`${base}/readyz`);
@@ -75,7 +83,7 @@ test('not ready when the database cannot be reached, and the error is logged by 
   const lines: Record<string, unknown>[] = [];
   const logger = createLogger({ write: (l) => lines.push(JSON.parse(l)) });
   const sql = connect('postgres://nobody@127.0.0.1:1/none', { max: 1 });
-  const server = createApi({ sql, logger, schema: 0 });
+  const server = createApi({ sql, logger, schema: 0, verifyGoogle });
   const base = await serve(server);
   try {
     const r = await fetch(`${base}/readyz`);

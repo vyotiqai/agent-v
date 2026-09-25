@@ -12,6 +12,7 @@
     "migrate": "node src/migrate/main.ts"
   },
   "dependencies": {
+    "@agentv/shared": "*",
     "postgres": "3.4.9"
   }
 }

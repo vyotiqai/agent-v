@@ -71,7 +71,11 @@ test('migrate applies the schema and exits 0; the API then starts ready and stop
     assert.ok(done, 'migrate.done was logged');
 
     const port = await freePort();
-    const api = start('src/api/main.ts', { DATABASE_URL: url, PORT: String(port) });
+    const api = start('src/api/main.ts', {
+      DATABASE_URL: url,
+      PORT: String(port),
+      GOOGLE_CLIENT_ID: 'agent-v-test.apps.googleusercontent.com',
+    });
     try {
       const ready = await waitFor(`http://127.0.0.1:${port}/readyz`);
       assert.equal(ready.status, 200);

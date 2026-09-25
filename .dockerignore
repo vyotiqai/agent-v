@@ -5,4 +5,7 @@
 !server/package.json
 !server/src
 !server/migrations
+!shared/package.json
+!shared/src
 server/src/**/*.test.ts
+shared/src/**/*.test.ts

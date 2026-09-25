@@ -8,7 +8,7 @@ build step: the code in the image is the code in this folder.
 
 | Process | Entry point | What it does | Deployed as |
 |---|---|---|---|
-| API | `src/api/main.ts` | The app's only door. Slice 0: liveness (`/healthz`) and readiness (`/readyz`: the database answers and holds the schema this code needs) | A Cloud Run service |
+| API | `src/api/main.ts` | The app's only door: liveness (`/healthz`), readiness (`/readyz`: the database answers and holds the schema this code needs), and the routes below | A Cloud Run service |
 | Egress gateway | `src/egress/main.ts` | The forward proxy every outside connection goes through; refuses anything but public addresses | Decided with the cloud setup (see [slice 0](../docs/build/slice-00-foundations.md)) |
 | Migrate | `src/migrate/main.ts` | Applies database migrations, then exits | A Cloud Run job, run before each deploy |
 | Workers | — | Come with slice 3, when there is work for them | A Cloud Run worker pool |
@@ -24,12 +24,33 @@ build step: the code in the image is the code in this folder.
 | Encryption | `src/crypto/envelope.ts` | A data key per person; secrets sealed with AES-256-GCM, bound to what they are; data keys kept only wrapped by Cloud KMS, in a store where deletion is final (D126) |
 | Egress | `src/egress/` | Public addresses only: every address of a name is checked, the checked address is the one connected to, redirects are never followed, nothing about destinations is logged |
 | Processes | `src/process.ts` | Crashes logged by kind before exiting; an orderly stop on SIGTERM |
+| Accounts | `src/auth/` | Google identity tokens checked by our own code against Google's published keys (`jwt.ts`, `google.ts`); people, phones, sessions and one-time nonces (`accounts.ts`) |
+| Rate limits | `src/ratelimit.ts` | Counted in Postgres per minute, so every API instance agrees; addresses kept only as hashes |
+
+## The API's routes
+
+Requests and responses are defined once, in [`shared/src/accounts.ts`](../shared/src/accounts.ts),
+for the app and the server alike.
+
+| Route | Needs a signed-in phone | What it does |
+|---|---|---|
+| `POST /v1/auth/nonce` | No | A one-time value for the next sign-in (10 minutes) |
+| `POST /v1/auth/google` | No | Signs in with Google's identity token, which must carry that nonce; registers the phone and its signing key; returns the session |
+| `POST /v1/auth/refresh` | No | Swaps a refresh token for a new pair. A refresh token used twice signs its phone out (`401 signed-out`) |
+| `POST /v1/auth/sign-out` | Yes | Signs this phone out |
+| `GET /v1/phones` | Yes | The person's signed-in phones, this one first (D137) |
+| `DELETE /v1/phones/{id}` | Yes | Signs out another of the person's phones |
+
+Nonce and sign-in requests together are limited to 20 a minute per network address, refreshes to 60.
+Errors are `{ "error": kind }` with the kinds in `shared/src/accounts.ts`; the app turns them into
+words.
 
 ## Settings
 
 | Setting | Used by | Meaning |
 |---|---|---|
 | `DATABASE_URL` | API, migrate | The Postgres connection |
+| `GOOGLE_CLIENT_ID` | API | Agent V's server client id in Google Cloud: the audience Google's identity tokens are issued for |
 | `PORT` | API (8080), egress (3128) | Where to listen; Cloud Run sets it |
 | `GOOGLE_CLOUD_PROJECT` | all | Links log lines to their traces in Google Cloud |
 

@@ -1,6 +1,8 @@
 import postgres from 'postgres';
 
 export type Sql = postgres.Sql;
+/** A connection inside a transaction, as `sql.begin` gives it. */
+export type Tx = postgres.TransactionSql;
 
 /**
  * Opens a pool of connections to Postgres. Notices from the server are not printed: they can name

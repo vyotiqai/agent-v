@@ -6,6 +6,7 @@ FROM node:24.21.0-trixie-slim@sha256:8ec5d7557396cfe32d21c3f9c13072355ceab22b584
 WORKDIR /srv
 COPY package.json package-lock.json ./
 COPY server/package.json server/
+COPY shared/package.json shared/
 RUN npm ci --omit=dev --workspace server --ignore-scripts --no-audit --no-fund
 
 FROM node:24.21.0-trixie-slim@sha256:8ec5d7557396cfe32d21c3f9c13072355ceab22b584578ca4bb28af31120cffe
@@ -14,6 +15,8 @@ WORKDIR /srv
 COPY --from=deps /srv/node_modules node_modules
 COPY package.json ./
 COPY server/package.json server/
+COPY shared/package.json shared/
+COPY shared/src shared/src
 COPY server/src server/src
 COPY server/migrations server/migrations
 WORKDIR /srv/server

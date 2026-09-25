@@ -26,6 +26,12 @@ export const EVENTS = {
   'egress.error': 'WARNING',
   'datakey.created': 'INFO',
   'datakey.destroyed': 'INFO',
+  'auth.signed-in': 'INFO',
+  'auth.failed': 'WARNING',
+  'auth.token-reused': 'WARNING',
+  'auth.signed-out': 'INFO',
+  'auth.phone-signed-out': 'INFO',
+  'api.rate-limited': 'WARNING',
 } as const;
 
 export type EventName = keyof typeof EVENTS;
@@ -43,6 +49,10 @@ export const ERROR_KINDS = [
   'connect-failed',
   'migration-edited',
   'migration-unknown',
+  'unauthorized',
+  'sign-in-failed',
+  'keys-unavailable',
+  'rate-limited',
 ] as const;
 export type ErrorKind = (typeof ERROR_KINDS)[number];
 
@@ -50,7 +60,17 @@ export const PROCESSES = ['api', 'worker', 'egress', 'migrate'] as const;
 export type ProcessName = (typeof PROCESSES)[number];
 
 /** The API's routes, by name rather than by path, so a path can never carry content into a log. */
-export const ROUTES = ['healthz', 'readyz', 'not-found'] as const;
+export const ROUTES = [
+  'healthz',
+  'readyz',
+  'auth-nonce',
+  'auth-google',
+  'auth-refresh',
+  'auth-sign-out',
+  'phones',
+  'phone',
+  'not-found',
+] as const;
 export type Route = (typeof ROUTES)[number];
 
 export const METHODS = [

@@ -418,6 +418,20 @@ def NPrivacy():
       <p style="margin: 0; display: flex; gap: 10px; font-size: 14px; line-height: 1.45">{icon('lock', 16)}<span>Encrypted, and never used to train AI models</span></p>
       <p style="margin: 0; display: flex; gap: 10px; font-size: 14px; line-height: 1.45">{icon('key', 16)}<span>Your API key is only ever used on our servers, for your jobs</span></p>
     </section>'''
+    # Every phone signed in to this account (D137): this one, and others that can be signed out from here.
+    other = srow(None, '', 'Pixel 6a', 'Last used 3 days ago',
+                 trail=f'<sc-if value="{{{{menu}}}}" hint-placeholder-val="{{{{ true }}}}">{act("Sign out", "open_phone")}</sc-if>')
+    phones = f'''    <section style="padding: 4px 18px; {BLOCK}">
+      <h2 style="{LABEL}; padding-top: 10px">Your phones</h2>
+{srow(None, '', 'Pixel 8', 'This phone · signed in 25 September', trail='', first=True)}
+{hideable(other, 'phone')}
+      <sc-if value="{{{{p_phone}}}}" hint-placeholder-val="{{{{ false }}}}">
+        <div role="alertdialog" aria-label="Sign out Pixel 6a?" style="margin: 0 0 12px; padding: 14px; border-radius: 18px; background: {SURFACE_2}; display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 14px; line-height: 1.4"><b style="font-weight: 600">Sign out Pixel 6a?</b> It will need to sign in again. Your jobs keep running.</span>
+          <span style="display: flex; gap: 8px">{act('Cancel', 'closePanel', bg=SURFACE)}{act('Sign out', 'signout_phone', bg=INK, fg=ON_INK)}</span>
+        </div>
+      </sc-if>
+    </section>'''
     danger = f'''    <section style="padding: 4px 18px; {BLOCK}">
       <sc-if value="{{{{menu}}}}" hint-placeholder-val="{{{{ true }}}}">
         <button type="button" onClick="{{{{open_signout}}}}" style="width: 100%; padding: 0; border: 0; background: transparent; display: flex; align-items: center; min-height: 56px; font-family: inherit; font-size: 15px; font-weight: 500; color: {INK}">Sign out</button>
@@ -431,7 +445,14 @@ def NPrivacy():
       <a href="NDeleteAccount.dc.html" style="border-top: 1px solid {LINE}; display: flex; align-items: center; gap: 10px; min-height: 56px; font-size: 15px; font-weight: 500; color: {RED_TEXT}">{icon('trash', 18)}Delete my account</a>
     </section>'''
     head = settings_header('NYou.dc.html', 'Privacy and your data')
-    return page('Privacy and your data', head + body_wrap(group(data), promises, danger) + undo_bar(28), script=logic("""    panels(['signout']);
+    return page('Privacy and your data', head + body_wrap(group(data), promises, phones, danger) + undo_bar(28), script=logic("""    panels(['signout', 'phone']);
+    out.show_phone = gone.phone ? 'none' : 'flex';
+    // Signing out another phone can't be undone: it has to sign in again. So it asks first.
+    out.signout_phone = () => {
+      this.setGone('phone', true);
+      this.setState({ panel: null });
+      this.flash('Pixel 6a is signed out. It will need to sign in again.');
+    };
     out.exporting = Boolean(st.exporting);
     out.exportSub = st.exporting ? 'Preparing… I’ll tell you when it’s ready' : 'Jobs, files, memory and settings, as a zip';
     out.export = () => {

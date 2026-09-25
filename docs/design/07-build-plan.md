@@ -130,7 +130,7 @@ slice up.
 
 | ID | Decision | Why |
 |---|---|---|
-| D117 | Build in 14 slices, in the order of section 3, each finished before the next starts | Each slice ends working; the heart of Agent V comes first |
+| D117 | Build in 14 slices, in the order of section 3, each finished before the next starts. *Changed by [D136](../build/slice-01-accounts.md#decisions-made-in-this-slice): a slice's local part may start while an earlier slice's cloud part waits for the owner's outside steps* | Each slice ends working; the heart of Agent V comes first |
 | D118 | A slice is done only when it works end to end on staging with real services, is tested at every level that applies, has nothing pretend, keeps every earlier slice passing, is documented and reviewed, and the owner is told how it was verified | The owner's rules 1 to 4, made checkable |
 | D119 | The owner first uses Agent V when everything in launch scope works, and is the only tester until the 12-tester Google Play closed test just before launch | The owner's choice; Google Play requires the closed test from new personal accounts |
 | D120 | Android first, on the owner's phone; iPhone next, once tested on a real iPhone. **Changes D15** (stage 1) | The owner uses Android; a real iPhone is needed to verify Face ID, notifications and the secure chip |

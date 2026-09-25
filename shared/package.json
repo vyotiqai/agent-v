@@ -1,0 +1,13 @@
+{
+  "name": "@agentv/shared",
+  "private": true,
+  "description": "The types and checks the app and the server share: every request and response is defined once (D83).",
+  "type": "module",
+  "exports": {
+    "./*": "./src/*"
+  },
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "test": "node --test \"src/**/*.test.ts\""
+  }
+}
