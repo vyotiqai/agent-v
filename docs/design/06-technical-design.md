@@ -20,10 +20,10 @@ Asked on 2026-09-25 and recorded as decisions below:
 | How the phone apps are built | React Native with Expo, one TypeScript codebase for iPhone and Android (D82) |
 | The server's language | TypeScript on Node, sharing its types with the app (D83) |
 | Where it runs | Google Cloud, one US region at launch, with room for an EU region later (D84) |
-| The cloud browser and the agent's computer | Proven providers first, behind our own interfaces so either can be swapped or self-hosted later (D85) |
+| The cloud browser and the agent's computer | Built by us and run on our own Google Cloud infrastructure: no browser or sandbox provider (D85). The owner first chose providers, then on the same day set the rule: everything custom |
 | Speech to text | On the phone (D86) |
 | Memory search | Our own small open embedding model, the same for everyone (D87) |
-| AI agent SDKs | None. The agent is our own code; every AI provider and every other service is called by our own small clients over plain HTTPS and standard protocols (D88, and [rule 6](README.md#rules-for-building-agent-v)) |
+| Everything custom | No AI agent SDKs and no vendor client libraries; we don't buy what we can build. Only what no one's code can replace (the person's AI provider, their Gmail and Outlook, Apple and Google sign-in and push) is called, by our own small clients (D88, and [rule 6](README.md#rules-for-building-agent-v)) |
 
 ---
 
@@ -39,24 +39,29 @@ flowchart LR
     DB[("Postgres + pgvector<br/>the truth, the queue,<br/>the schedules")]
     Side["Cloud Storage, Cloud KMS,<br/>embedding service"]
     Egress["Egress gateway<br/>public addresses only"]
+    subgraph Fleet["Sandboxed fleet, GKE Sandbox (gVisor)"]
+      Browser["Browsers<br/>one per session"]
+      Sandbox["Agent's computers<br/>one per person"]
+    end
   end
 
   subgraph Outside["Outside services"]
-    Net["The person's AI provider,<br/>Gmail, Outlook, calendars,<br/>web search"]
-    Browser["Cloud browser"]
-    Sandbox["Sandbox computer"]
+    Net["The person's AI provider,<br/>Gmail, Outlook, calendars"]
     Push["APNs and FCM,<br/>to the phone"]
   end
 
   App -->|"HTTPS, live stream"| API
-  App -.->|"live view: watch,<br/>take control"| Browser
+  App -.->|"live view: watch,<br/>take control, via the API"| API
   API --> DB
   API --> Side
+  API -.->|"live view frames and input"| Browser
   Workers --> DB
   Workers --> Side
   Workers --> Egress --> Net
   Workers -->|"DevTools Protocol"| Browser
-  Workers -->|"REST"| Sandbox
+  Workers -->|"commands, files"| Sandbox
+  Browser --> Egress
+  Sandbox --> Egress
   Workers --> Push
 ```
 
@@ -70,7 +75,8 @@ flowchart LR
 | **Cloud KMS** | Keeps the keys that encrypt people's AI keys, account tokens and saved logins | Envelope encryption (section 5) |
 | **Egress gateway** | All calls to the internet leave through it: a fixed address, and a check that the destination is a public address, never our own network | Section 5 |
 | **Embedding service** | Turns text into vectors for memory search, on our own servers | A small open model on CPU (section 9) |
-| **Outside services** | The person's AI provider, their email and calendar, the cloud browser, the sandbox computer, push delivery, web search | Our own small clients over HTTPS and standard protocols (D88) |
+| **Sandboxed fleet** | The cloud browsers (one per session) and the agent's computers (one per person), each in its own gVisor sandbox, with no route into our own network | Our own code on GKE Sandbox (sections 7 and 8) |
+| **Outside services** | Only what no one's code can replace: the person's AI provider, their email and calendar, push delivery through Apple and Google | Our own small clients over HTTPS and standard protocols (D88) |
 
 Two principles run through every section:
 
@@ -117,7 +123,7 @@ offline: signatures, answers, taking control and settings need a connection (D58
 | Speech to text (D86) | The phone's own speech recognition, on-device where the phone supports it, through a small native module; audio never leaves the phone |
 | Sharing into Agent V from other apps (D21) | An iOS share extension and an Android share target |
 | Haptics on signing | A light tap when a hold starts, a firm success when it completes, and an error pattern if it's cancelled; the same on both platforms through Expo haptics (answers stage 5) |
-| The live browser (J5) | A web view showing the browser provider's live view; in control, your taps and typing go to the cloud browser (section 7) |
+| The live browser (J5) | Our own view that draws the browser's frames as they stream in; in control, your taps, scrolls and typing go back to the cloud browser (section 7) |
 | Sign in with Apple and Google (D44) | The platforms' own sign-in; the app sends the identity token to the API, which verifies it (section 3) |
 
 Widgets, Live Activities and assistant shortcuts stay out of launch (D22).
@@ -133,8 +139,10 @@ The server is one TypeScript codebase (D83) that starts as either:
 - **a worker**: takes work from the queue in Postgres and does it: running jobs, repeating runs,
   watches, ideas, email and calendar sync, reminders, the 24-hour limits, exports and deletions.
 
-Both run on **Cloud Run** in one US region (D84). The API scales with traffic. Workers run with
-their processor always on, since jobs work in the background, and scale with the queue.
+Both run on **Cloud Run** in one US region (D84). The API is a Cloud Run service and scales with
+traffic. Workers are a Cloud Run **worker pool**, made for background work that answers no
+requests; our own code scales it with the length of the queue. The browsers and the agent's
+computers run in a separate sandboxed fleet (sections 7 and 8).
 
 ### Postgres is the truth, and the queue (D89)
 
@@ -155,8 +163,8 @@ their processor always on, since jobs work in the background, and scale with the
 
 - **Apple and Google:** the app signs in with the platform, and sends the identity token; the API
   verifies its signature, audience and expiry against Apple's and Google's published keys.
-- **Email code:** a six-digit code, valid for 10 minutes, five tries, sent through a transactional
-  email service over its REST API (the service is chosen in part 2, with the other processors).
+- **Email code:** a six-digit code, valid for 10 minutes, five tries. How the email is sent under
+  rule 6 is an open question for the owner (below).
 - **Sessions:** a short-lived access token (15 minutes) and a refresh token that rotates on every
   use and is stored only in the phone's secure store. A reused refresh token signs that device out
   (it means the token was copied). Each phone is listed in settings and can be signed out.
@@ -201,9 +209,10 @@ are safe.
 - Every tool call that changes something outside Agent V (sends an email, creates an event,
   submits a form) gets an **idempotency key** written to the record before it runs.
 - If a worker stops between "about to run" and the result, the next worker checks the outside
-  service before trying again. An email is sent with a Message-ID made from the key, and the
-  Sent folder is searched for that Message-ID (Gmail's `rfc822msgid:` search; Microsoft Graph's
-  `internetMessageId`). A Google Calendar event is created with an id made from the key, so a
+  service before trying again. An email is first saved as a draft, and the draft's id is
+  recorded; it is then sent from the draft. On a retry, a draft that no longer exists was sent, and
+  the sent message is found by its thread (Gmail), or by the `internetMessageId` set on the draft
+  (Outlook, through Microsoft Graph). A Google Calendar event is created with an id made from the key, so a
   second create is refused; an Outlook event carries the key as its `transactionId`, which Graph
   uses to refuse duplicates. If it happened, the result is recorded; if it didn't, it's run once.
 - Where an outside service offers no way to check (some websites), the step is **not** repeated
@@ -281,7 +290,10 @@ Four wire formats cover every provider in stage 1, section 8:
 Each client is small and ours: it builds the request, parses the streamed answer (server-sent
 events) into one common shape of text, tool calls and usage, and turns each provider's errors
 into our own few kinds (key declined, out of credit, rate-limited, model gone, provider down).
-Those kinds drive the Needs you items of J9. Each client is tested against the real provider with
+Those kinds drive the Needs you items of J9.
+Each client also keeps its provider's rules for a conversation with tools: for example, Gemini's
+thought signatures are sent back with every function call, and OpenAI's Responses API is called
+with storage turned off, so the conversation lives only in our record. Each client is tested against the real provider with
 a real key (part 2); nothing in the shipped app imitates a provider (rule 1).
 
 ### Keys
@@ -327,36 +339,54 @@ network (stage 1, section 8).
 
 ## 7. The cloud browser
 
-The browser runs at a provider (D85), behind our own small interface: open a session, drive it,
-show it live, keep a person's saved logins, close it. Swapping the provider, or running our own
-browsers later, changes only that interface.
+Our own browsers, on our own infrastructure (D85, rule 6).
 
-- **Driving it:** workers connect to the provider's browser over the **Chrome DevTools Protocol**
-  with Playwright, a general-purpose browser library (rule 6). The agent sees each page as its
-  text and structure plus a screenshot, and acts by clicking, typing and scrolling, each action
-  classified (section 4).
-- **Watching (J5):** the app shows the provider's live view of the session in a web view: the page
-  as it is now, with where the agent is pointing.
-- **Taking control (D49, D60):** the job pauses; the live view becomes interactive and your taps
-  and typing go to the cloud browser. While you're in control, the agent neither acts nor records
-  screenshots or keystrokes. "Done, carry on" hands back; after 10 idle minutes it hands back by
-  itself, and the job waits in Needs you.
-- **Saved logins (D38):** each person has their own browser profile (cookies and site storage),
-  kept by the provider as an encrypted, persistent profile tied to that person only. Signing in
-  once through Take control keeps the site signed in. Each saved site is listed in settings;
-  removing one deletes its cookies. Passwords and codes are only ever typed by you.
+- **Where it runs:** each browser session is a Chromium in its own container, in a **GKE
+  Sandbox** node pool on Google Kubernetes Engine. GKE Sandbox runs every container inside
+  **gVisor**, Google's own sandbox (the one Cloud Run uses), so a hostile page that breaks out of
+  Chromium still meets a second wall. One session per container, never shared, deleted when the
+  session ends. Our own small fleet controller (part of the worker code) starts and stops these
+  containers through the Kubernetes API, keeps a few warm ones ready so a session starts in about
+  a second, and removes anything left over.
+- **Its network:** browsers reach only the public internet, through the egress gateway (section
+  5); they can't reach Agent V's own services, the cloud's metadata server or each other.
+- **Driving it:** a worker connects to its browser over the **Chrome DevTools Protocol** with
+  Playwright (rule 6). The agent sees each page as its text and structure plus a screenshot, and
+  acts by clicking, typing and scrolling, each action classified (section 4).
+- **The live view (J5):** our own. The browser sends the page as a stream of frames over the
+  DevTools Protocol (screencast); the API, as a second DevTools client of the same browser, relays them to the app over a web socket, and the app
+  draws them, with where the agent is pointing. Frames are shown, never stored.
+- **Taking control (D49, D60):** the job pauses; your taps, scrolls and typing go back over the same
+  socket and are sent to the browser as DevTools input events. While you're in control, the agent
+  neither acts nor records screenshots or keystrokes. "Done, carry on" hands back; after 10 idle
+  minutes it hands back by itself, and the job waits in Needs you.
+- **Saved logins (D38):** each person has their own browser profile (cookies and site storage). At
+  the end of a session it is packed, encrypted with that person's own data key (envelope
+  encryption, section 5) and kept in Cloud Storage; the next session unpacks it. Signing in once
+  through Take control keeps the site signed in. Each saved site is listed in settings; removing
+  one deletes its cookies from the profile. Passwords and codes are only ever typed by you.
+- **Sites that block automation:** there is no CAPTCHA-solving service. A CAPTCHA, login or code is
+  a moment to take control (D49), and a site that keeps blocking is reported honestly (stage 1,
+  section 13).
 - **Sessions are closed** as soon as a step no longer needs them, and are capped in length (part 2),
   since browser time is Agent V's own cost.
 
 ## 8. The agent's computer
 
-A private sandbox computer per person, at a provider (D85), behind our own small interface:
-start, run a command, read and write files, pause, resume, delete.
+A private computer per person, ours as well (D85, rule 6).
 
-- **Isolation:** each computer is its own lightweight virtual machine, never shared, with no route
-  into Agent V's own network. It reaches the internet only through rules we set (part 2).
-- **Your files persist:** the computer pauses when idle and resumes with its files; the workspace
-  counts toward the storage allowance (J8).
+- **Where it runs:** a container of its own in the same GKE Sandbox fleet, inside gVisor, from our
+  own Linux image with the tools data work needs (Python with its data libraries, a spreadsheet
+  engine, command-line tools). Never shared.
+- **Isolation:** no route into Agent V's own network or to other computers; it reaches the public
+  internet only through the egress gateway, under rules we set (part 2).
+- **Your files persist:** each person's workspace is their own persistent disk. When the computer
+  is idle it stops, and the disk stays; the next command starts it again with the files in place,
+  in seconds. What was running in memory doesn't survive a stop, so long commands keep it awake
+  until they finish. The workspace counts toward the storage allowance (J8).
+- **Our own small agent inside:** a tiny program of ours in the image runs commands, streams their
+  output, and reads and writes files, over one authenticated connection from the workers. It is
+  the only way in.
 - **Every command is recorded:** the command, its output (trimmed for very long output, with the
   full output kept as a file) and its exit code go into the job's record, so Jobs → Computer shows
   every command it ran (D39).
@@ -368,8 +398,12 @@ start, run a command, read and write files, pause, resume, delete.
 - **What's stored:** short facts and preferences it learned ("prefers morning meetings", "Maya is
   the design lead"), each with where it came from and when. You can see, search and forget any of
   them (stage 1).
-- **How it's found:** each memory is turned into a vector by our own embedding service (D87) and
-  stored in Postgres with pgvector. When a job starts or a step needs context, the closest
+- **How it's found:** each memory is turned into a vector by our own embedding service (D87),
+  which runs a small open multilingual model with a permissive licence on CPU, through a
+  general-purpose inference library. The candidates are IBM's Granite multilingual embedding
+  model (311M parameters, Apache-2.0) and Qwen3-Embedding-0.6B (Apache-2.0); the choice is made by
+  measuring both on real retrieval tests during the build, and recorded then. The vectors
+  are stored in Postgres with pgvector. When a job starts or a step needs context, the closest
   memories are found by vector search combined with plain word search, and the best few go into
   the context.
 - **Why our own model:** memory works whichever AI provider you use, keeps working when you
@@ -380,8 +414,9 @@ start, run a command, read and write files, pause, resume, delete.
 
 - **In the app:** while it's open, the app holds one live stream from the API (server-sent events)
   and receives every change to what it shows: a job's stage, a new record line, a Needs you item.
-  Changes are also stored offline (section 2). When the stream drops, the app asks for everything
-  since the last change it saw, so nothing is missed (D93).
+  Changes are also stored offline (section 2). A stream lasts at most 60 minutes on Cloud
+  Run, and can drop at any time; the app reconnects, and asks for everything since the last change
+  it saw, so nothing is missed (D93).
 - **Outside the app:** push notifications through APNs (iPhone) and FCM (Android): a signature
   waiting, a question, a result, a watch alert, a problem that stops work. The text of a
   signature notification is the exact content, so it can be signed there (J4).
@@ -422,7 +457,8 @@ export and deletion (part 2) are complete by construction.
 | `goals`, `milestones`, `ideas` | Goals, their milestones, ideas with evidence |
 | `memories` | Memory text, its vector, where it came from |
 | `files` | File metadata; the file itself is in Cloud Storage |
-| `saved_logins` | The sites in your browser profile (the cookies stay at the browser provider) |
+| `saved_logins` | The sites in your browser profile; the profile itself is encrypted in Cloud Storage |
+| `browser_sessions` | Each browser session: its job, its container, when it started and ended |
 | `computers` | Your sandbox computer's id, state and storage used |
 | `queue` | Work waiting for a worker, with leases |
 | `support_refs` | Support references (section 13) |
@@ -448,11 +484,11 @@ export and deletion (part 2) are complete by construction.
 | D81 | Stage 6 comes in two parts: the system, then running it safely | Each is reviewed properly; neither is rushed |
 | D82 | The phone apps are React Native with Expo, one TypeScript codebase; our own components to the stage 5 specification | The owner's choice: one codebase for both phones, shared types with the server, native modules where needed |
 | D83 | The server is TypeScript on Node, one codebase with two entry points (API and worker), sharing one package of types with the app | The owner's choice: one language end to end, so a breaking change fails the build, not a phone |
-| D84 | Google Cloud, one US region at launch: Cloud Run, Cloud SQL for PostgreSQL, Cloud Storage, Cloud KMS, Pub/Sub for Gmail push | The owner's choice: the least infrastructure to run reliably, room for an EU region later |
-| D85 | The cloud browser and the sandbox computers come from providers, behind our own small interfaces | The owner's choice: strong isolation from day one; either can be swapped or self-hosted later |
+| D84 | Google Cloud, one US region at launch: Cloud Run (a service for the API, a worker pool for workers), GKE Sandbox for the browsers and computers, Cloud SQL for PostgreSQL, Cloud Storage, Cloud KMS, Pub/Sub for Gmail push | The owner's choice: the least infrastructure to run reliably, room for an EU region later |
+| D85 | The cloud browsers and the agent's computers are our own: Chromium and our own Linux image in containers on GKE Sandbox (gVisor), started by our own fleet controller; our own live view and Take control over the DevTools Protocol; saved logins as encrypted profiles in Cloud Storage; persistent disks for the computers | The owner's rule: everything custom. The owner first chose providers, then replaced that the same day. gVisor gives a second wall around every browser and computer without running our own virtual machines |
 | D86 | Speech becomes text on the phone | The owner's choice: free, fast, private, works with every provider |
 | D87 | Memory uses our own small open embedding model on our servers | The owner's choice: works with every provider and survives switching |
-| D88 | No AI agent SDKs or vendor client libraries: the agent loop and every client (AI providers, browser, sandbox, Google, Microsoft) are our own code over plain HTTPS and standard protocols | The owner's rule 6: full control and understanding of every part |
+| D88 | Everything custom: no AI agent SDKs or vendor client libraries; the agent loop and every client are our own code over plain HTTPS and standard protocols; only what no one's code can replace is used from outside (the person's AI provider, Gmail and Outlook, Apple and Google sign-in and push) | The owner's rule 6: full control and understanding of every part |
 | D89 | Postgres is the one source of truth, and also holds the work queue and every schedule | One store can't disagree with itself; no separate queue or scheduler to keep in step |
 | D90 | Every change is recorded before and after it happens; outside actions carry an idempotency key and are checked before any retry; where they can't be checked, you're asked | A crash or deploy never loses work or sends anything twice |
 | D91 | Action levels, hard limits and "ask less" rules are enforced by our code, per tool and per browser action; when unsure, the higher level | The model proposes; the server decides |
@@ -468,7 +504,8 @@ export and deletion (part 2) are complete by construction.
 
 | Question |
 |---|
-| The browser, sandbox and web search providers, the transactional email service, and every other processor, with their data handling |
+| How the agent searches the web, and how sign-in codes are emailed, under rule 6 (asked of the owner with part 1) |
+| Every outside service that remains, with its data handling |
 | Fair-use limits (browser time, computer time and storage, jobs at once, watches) and the running cost per person |
 | The defence against instructions hidden in web pages and emails (prompt injection), in full |
 | Encryption, key rotation, access to production, and the audit trail |
