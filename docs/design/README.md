@@ -9,7 +9,7 @@ and no code is written until the design is complete.
 | 2. App map: every screen and how you move between them | [02-app-map.md](02-app-map.md) | Agreed 2026-09-25 |
 | 3. Key journeys: first launch, asking, approving, following work, results | [03-journeys.md](03-journeys.md) | Agreed 2026-09-25 |
 | 4. Every screen in detail, including empty, loading, error and offline states | [04-screens.md](04-screens.md) | Agreed 2026-09-25 |
-| 5. Design system: colour, type, spacing, components, icons, motion, accessibility | — | Not started |
+| 5. Design system: colour, type, spacing, components, icons, motion, accessibility | [05-design-system.md](05-design-system.md) | Proposed, in review |
 | 6. Technical design | — | Not started |
 | 7. Build plan: small slices, each working and verified before the next | — | Not started |
 
@@ -41,11 +41,12 @@ build plan (stage 7) and all code that follows.
 ### How the design prototypes follow these rules
 
 The prototypes are for deciding the design, not for shipping. Even so, every link and button on
-the canvas pages "New direction" and "Stage 4 · States" works: it goes to its screen, or does its
-job in place (with Undo where D65 says so). Things that happen outside the app, such as the
-phone's share sheet or Settings, say in a short bar what would open. This is checked by an
-automated test that opens every screen in a browser with the canvas's own runtime, clicks every
-link and runs every in-place action.
+the canvas pages "New direction", "Stage 4 · States" and "Stage 5 · Dark appearance" works: it goes
+to its screen, or does its job in place (with Undo where D65 says so). Things that happen outside
+the app, such as the phone's share sheet or Settings, say in a short bar what would open. This is
+checked by automated tests that open every screen in a browser with the canvas's own runtime,
+click every link, run every in-place action and measure the contrast of every piece of text. The
+source and the checks are in [prototype/](prototype/README.md).
 
 ## How decisions are recorded
 

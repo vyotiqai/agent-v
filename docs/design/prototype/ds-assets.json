@@ -1,0 +1,206 @@
+{
+ "Icons/alert.svg": [
+  "2ff020e4afea790674932a25bc75ec5c",
+  257
+ ],
+ "Icons/archive.svg": [
+  "4979f51673f9c42e503b61c048d1532c",
+  305
+ ],
+ "Icons/arrow.svg": [
+  "b5a1623443c9fec254e9010ffc9193c3",
+  224
+ ],
+ "Icons/back.svg": [
+  "5f29ae073bb968b997e16c1274506408",
+  217
+ ],
+ "Icons/bell.svg": [
+  "22d449ba3db70c7a0b891f50a955b562",
+  277
+ ],
+ "Icons/calendar.svg": [
+  "082be00af9894aae5528dd963f35998e",
+  279
+ ],
+ "Icons/check.svg": [
+  "0633121ac2cc2fbebbe1cdb28f62ed90",
+  218
+ ],
+ "Icons/chevron.svg": [
+  "57f6e38f5f61b467516e74f326d971f2",
+  215
+ ],
+ "Icons/clock.svg": [
+  "4372cc67761a61ff8116b8a33376bd80",
+  253
+ ],
+ "Icons/cursor.svg": [
+  "87137c19fdf2a4417a005a286e100439",
+  236
+ ],
+ "Icons/download.svg": [
+  "5377eb029c8af2e05e3ca73a1d4b782d",
+  250
+ ],
+ "Icons/edit.svg": [
+  "ed105485df8d75a92f94bcce86a74895",
+  271
+ ],
+ "Icons/eye.svg": [
+  "8b4f381a4ab1c55efee42401dbaa0591",
+  290
+ ],
+ "Icons/face.svg": [
+  "b50bfdc092c87191500160d00535b1d5",
+  359
+ ],
+ "Icons/file.svg": [
+  "bdaa0a73523e46c5fb3c06c3a69c8c70",
+  288
+ ],
+ "Icons/flag.svg": [
+  "d7adb804e4edd1cfe3787008adbfdd25",
+  246
+ ],
+ "Icons/globe.svg": [
+  "885e76bc41d8cd301d4704b2d3030ec7",
+  294
+ ],
+ "Icons/grid.svg": [
+  "323aac1bec2a9ed7ed0900b0c6015e81",
+  401
+ ],
+ "Icons/hand.svg": [
+  "c383b965622a5357c01aae207a077a0b",
+  455
+ ],
+ "Icons/help.svg": [
+  "d971d04b59bca92d4fcb5349b65fc9c0",
+  302
+ ],
+ "Icons/key.svg": [
+  "75936f0949fc5a18c503081913263c0a",
+  277
+ ],
+ "Icons/link.svg": [
+  "332b0890d51c1c9381ac24f0b8ae73dd",
+  320
+ ],
+ "Icons/list.svg": [
+  "7df0f4e04570d4ce79ceb87dbde4e5dd",
+  258
+ ],
+ "Icons/lock.svg": [
+  "1e241efc560c258d358a2ec4e972af7b",
+  281
+ ],
+ "Icons/mail.svg": [
+  "ee46da6b54e0adc3d4d1f99b9c5987d0",
+  270
+ ],
+ "Icons/memory.svg": [
+  "9f392dfdca49c778de41113769aba595",
+  348
+ ],
+ "Icons/mic.svg": [
+  "3dc3633861ce2dd9761fd8761f5c6f1c",
+  285
+ ],
+ "Icons/mic_off.svg": [
+  "4ebcd479c39a19d51f1092c3a4d67602",
+  337
+ ],
+ "Icons/more.svg": [
+  "9b3fba7f9cb74ccedc26bf3ac6b31629",
+  346
+ ],
+ "Icons/next.svg": [
+  "80b8d8e2dbb10dee8fb5d4eaf8e6d455",
+  224
+ ],
+ "Icons/offline.svg": [
+  "83e02e6c6491dc404e5166b8acf8131e",
+  463
+ ],
+ "Icons/pen.svg": [
+  "1e6a909e60f0db3926162cb8f3c1143a",
+  253
+ ],
+ "Icons/play.svg": [
+  "d615aac341e27fb70e06003d289ed6f9",
+  231
+ ],
+ "Icons/plus.svg": [
+  "b1c74a902caca0e7282a051bf772ab45",
+  219
+ ],
+ "Icons/prev.svg": [
+  "d4441492e74c436c7fac89b87c1e0dd6",
+  225
+ ],
+ "Icons/question.svg": [
+  "32d51746804cfd58c6eb9e2a2a4e53e5",
+  302
+ ],
+ "Icons/repeat.svg": [
+  "f9f66098413208d2b3eb63fb4697df50",
+  314
+ ],
+ "Icons/search.svg": [
+  "95c5b98a89a34aebe7b143ea8740bc9a",
+  256
+ ],
+ "Icons/share.svg": [
+  "3703c241ebcffda9aa6dadc47774c9c6",
+  282
+ ],
+ "Icons/sheet.svg": [
+  "ff22a9655161d40eb8df14390f3e565d",
+  281
+ ],
+ "Icons/shield.svg": [
+  "11d4273fd82bc986c6358d54a7cae45b",
+  276
+ ],
+ "Icons/sparkle.svg": [
+  "370a6af9b3e443cdda2052f458474d3d",
+  301
+ ],
+ "Icons/sun.svg": [
+  "54f96e6b0a06864ef793e9c7f36c2b2f",
+  340
+ ],
+ "Icons/terminal.svg": [
+  "267dadd735e909cfb510a05f1995dc82",
+  278
+ ],
+ "Icons/trash.svg": [
+  "683d731524646877c87cf4d0352591fe",
+  253
+ ],
+ "Icons/up_right.svg": [
+  "9a54ce944d31547c0a832c42fbc817d2",
+  221
+ ],
+ "Icons/user.svg": [
+  "36bbbbc97893a72662c91f9fbc1ec56e",
+  261
+ ],
+ "Icons/vmark.svg": [
+  "65a29dc091c43b41b70dbd244f1dde92",
+  215
+ ],
+ "Icons/x.svg": [
+  "141a300bce353bc57cbc8034ad93d106",
+  223
+ ],
+ "Logos/agent-v-mark-dark.svg": [
+  "dbbdf027bc505712f89dd9dfe1d1e403",
+  298
+ ],
+ "Logos/agent-v-mark.svg": [
+  "9edc551e7e70fe35a12b1bd8d559382d",
+  298
+ ]
+}

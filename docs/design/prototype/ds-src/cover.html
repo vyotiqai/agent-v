@@ -1,0 +1,51 @@
+<!-- @dsCard height=300 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Agent V — cover</title>
+<style>
+  html, body { margin: 0; }
+  body { width: 960px; height: 300px; position: relative; overflow: hidden; background: var(--ground); font-family: var(--font-sans); }
+  .slab { fill: var(--bar); }
+  .glow { fill: var(--glow); }
+  .chip { fill: var(--glass); }
+  .blue { fill: var(--blue); }
+  .deep { fill: var(--blue-deep); }
+  .surface { fill: var(--surface); }
+  .line { fill: var(--line); }
+  .ink { fill: var(--ink); }
+  .red { fill: var(--red-on-night); }
+  .green { fill: var(--green); }
+  .name { position: absolute; left: 56px; bottom: 104px; margin: 0; font-size: 96px; line-height: .95; font-weight: 500; letter-spacing: -0.045em; color: var(--ink); }
+  .tag { position: absolute; left: 60px; bottom: 44px; width: 420px; margin: 0; font-size: 14px; line-height: 1.4; color: var(--ink-muted); }
+</style></head>
+<body>
+<svg width="960" height="300" viewBox="0 0 960 300" aria-hidden="true" style="position: absolute; inset: 0">
+  <!-- blocks: bar (the dark top, 440 x 206, bleeding off the top and right, radius-sheet 32), blue (Needs you, 212 x 112, radius-block 28), surface (152 x 112, radius-block 28) -->
+  <!-- arrangement: one tall slab with satellites, the way every main screen composes: a dark top, then large rounded blocks overlapping its lower edge -->
+  <!-- pattern: soft, friendly, large radii -> pills and discs from radius-pill, as the status chips and dots the app uses on its dark top -->
+  <!-- scales: space-8 between blocks, space-12 insets, space-24 text inset; radius-sheet, radius-block, radius-pill -->
+  <rect class="slab" x="520" y="-40" width="480" height="246" rx="32"/>
+  <circle class="glow" cx="960" cy="0" r="150"/>
+  <rect class="chip" x="552" y="36" width="104" height="32" rx="16"/>
+  <circle class="red" cx="572" cy="52" r="4"/>
+  <rect class="line" x="584" y="49" width="56" height="6" rx="3" opacity=".35"/>
+  <rect class="chip" x="664" y="36" width="132" height="32" rx="16"/>
+  <circle class="green" cx="684" cy="52" r="4"/>
+  <rect class="line" x="696" y="49" width="84" height="6" rx="3" opacity=".35"/>
+  <rect class="chip" x="552" y="92" width="208" height="14" rx="7"/>
+  <rect class="chip" x="552" y="116" width="150" height="14" rx="7"/>
+  <rect class="blue" x="544" y="166" width="212" height="112" rx="28"/>
+  <circle class="deep" cx="580" cy="202" r="18"/>
+  <rect class="deep" x="572" y="236" width="96" height="24" rx="12"/>
+  <rect class="deep" x="676" y="236" width="56" height="24" rx="12"/>
+  <rect class="surface" x="764" y="166" width="152" height="112" rx="28"/>
+  <circle class="line" cx="798" cy="200" r="18"/>
+  <rect class="ink" x="788" y="238" width="22" height="4" rx="2"/>
+  <rect class="ink" x="814" y="238" width="22" height="4" rx="2"/>
+  <rect class="line" x="840" y="238" width="22" height="4" rx="2"/>
+  <rect class="line" x="866" y="238" width="22" height="4" rx="2"/>
+</svg>
+<p class="name">Agent V</p>
+<p class="tag">Hand it off. It plans, works around the clock, and brings you only what needs you.</p>
+</body>
+</html>

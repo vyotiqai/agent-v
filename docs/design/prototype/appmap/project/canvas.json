@@ -1,0 +1,2047 @@
+{
+ "v": 3,
+ "attachments": {},
+ "boards": {
+  "AIKeys.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Your AI (keys and models)",
+   "w": 390,
+   "x": 1570,
+   "y": 1244
+  },
+  "Approval.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Approval: acts as you",
+   "w": 390,
+   "x": 1880,
+   "y": 0
+  },
+  "Ask.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Ask",
+   "w": 390,
+   "x": 470,
+   "y": 0
+  },
+  "BAsk.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "balanced",
+   "title": "Hand something off",
+   "w": 390,
+   "x": 940,
+   "y": 0
+  },
+  "BHome.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "balanced",
+   "title": "Today",
+   "w": 390,
+   "x": 0,
+   "y": 0
+  },
+  "BHomeNight.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "balanced",
+   "title": "Today, night appearance",
+   "w": 390,
+   "x": 470,
+   "y": 0
+  },
+  "BJob.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "balanced",
+   "title": "Job page",
+   "w": 390,
+   "x": 1880,
+   "y": 0
+  },
+  "BListen.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "balanced",
+   "title": "Speaking to Agent V",
+   "w": 390,
+   "x": 1410,
+   "y": 0
+  },
+  "BSign.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "balanced",
+   "title": "For your signature (hold works)",
+   "w": 390,
+   "x": 2350,
+   "y": 0
+  },
+  "Browser.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Live browser",
+   "w": 390,
+   "x": 2820,
+   "y": 0
+  },
+  "ConnectAI.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Connect your AI",
+   "w": 390,
+   "x": 470,
+   "y": 2488
+  },
+  "DeskApproval.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "directions",
+   "title": "C · Desk — Approval",
+   "w": 390,
+   "x": 2670,
+   "y": 0
+  },
+  "DeskHome.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "directions",
+   "title": "C · Desk — Home",
+   "w": 390,
+   "x": 2200,
+   "y": 0
+  },
+  "Job.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Job page",
+   "w": 390,
+   "x": 1410,
+   "y": 0
+  },
+  "Jobs.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Jobs",
+   "w": 390,
+   "x": 0,
+   "y": 1244
+  },
+  "LAI.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "ledger",
+   "title": "Your AI",
+   "w": 390,
+   "x": 1570,
+   "y": 1244
+  },
+  "LAsk.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "ledger",
+   "title": "Hand something off",
+   "w": 390,
+   "x": 470,
+   "y": 0
+  },
+  "LBrowser.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "ledger",
+   "title": "Live browser",
+   "w": 390,
+   "x": 3290,
+   "y": 0
+  },
+  "LConnect.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "ledger",
+   "title": "Connect your AI",
+   "w": 390,
+   "x": 470,
+   "y": 2488
+  },
+  "LHome.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "ledger",
+   "title": "Today (home)",
+   "w": 390,
+   "x": 0,
+   "y": 0
+  },
+  "LJob.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "ledger",
+   "title": "Job page",
+   "w": 390,
+   "x": 1410,
+   "y": 0
+  },
+  "LJobs.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "ledger",
+   "title": "Jobs",
+   "w": 390,
+   "x": 0,
+   "y": 1244
+  },
+  "LNotifications.dc.html": {
+   "h": 844,
+   "page": "ledger",
+   "title": "Notifications (system style)",
+   "w": 390,
+   "x": 4230,
+   "y": 0
+  },
+  "LPlan.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "ledger",
+   "title": "Before I start (plan first)",
+   "w": 390,
+   "x": 940,
+   "y": 0
+  },
+  "LQuestion.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "ledger",
+   "title": "A question",
+   "w": 390,
+   "x": 1880,
+   "y": 0
+  },
+  "LResult.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "ledger",
+   "title": "A filed result",
+   "w": 390,
+   "x": 3760,
+   "y": 0
+  },
+  "LRules.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "ledger",
+   "title": "What needs your signature",
+   "w": 390,
+   "x": 2040,
+   "y": 1244
+  },
+  "LSearch.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "ledger",
+   "title": "Search",
+   "w": 390,
+   "x": 470,
+   "y": 1244
+  },
+  "LSign.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "ledger",
+   "title": "For your signature (hold works)",
+   "w": 390,
+   "x": 2350,
+   "y": 0
+  },
+  "LUndo.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "ledger",
+   "title": "Can't be undone (hold works)",
+   "w": 390,
+   "x": 2820,
+   "y": 0
+  },
+  "LWelcome.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "ledger",
+   "title": "Welcome",
+   "w": 390,
+   "x": 0,
+   "y": 2488
+  },
+  "LYou.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "ledger",
+   "title": "You",
+   "w": 390,
+   "x": 1100,
+   "y": 1244
+  },
+  "LedgerApproval.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "directions",
+   "title": "A · Ledger — Approval",
+   "w": 390,
+   "x": 470,
+   "y": 0
+  },
+  "LedgerHome.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "directions",
+   "title": "A · Ledger — Home",
+   "w": 390,
+   "x": 0,
+   "y": 0
+  },
+  "Main.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Home",
+   "w": 390,
+   "x": 0,
+   "y": 0
+  },
+  "NAI.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Your AI",
+   "w": 390,
+   "x": 940,
+   "y": 2488
+  },
+  "NAccounts.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Connected accounts",
+   "w": 390,
+   "x": 1410,
+   "y": 2488
+  },
+  "NAsk.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Hand something off",
+   "w": 390,
+   "x": 470,
+   "y": 0
+  },
+  "NBriefing.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Morning briefing",
+   "w": 390,
+   "x": 3760,
+   "y": 2488
+  },
+  "NBrowser.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Live browser",
+   "w": 390,
+   "x": 2350,
+   "y": 0
+  },
+  "NComputer.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Jobs: the agent's computer",
+   "w": 390,
+   "x": 2820,
+   "y": 1244
+  },
+  "NConnect.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Connect your AI (step 1)",
+   "w": 390,
+   "x": 940,
+   "y": 3732
+  },
+  "NControl.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "states",
+   "title": "You’re in control",
+   "w": 390,
+   "x": 470,
+   "y": 1244
+  },
+  "NControlAsk.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "states",
+   "title": "Needs you: take control",
+   "w": 390,
+   "x": 0,
+   "y": 1244
+  },
+  "NCouldnt.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "states",
+   "title": "Couldn’t finish",
+   "w": 390,
+   "x": 940,
+   "y": 1244
+  },
+  "NGetKey.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Get a key",
+   "w": 390,
+   "x": 1410,
+   "y": 3732
+  },
+  "NGoal.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "A goal",
+   "w": 390,
+   "x": 940,
+   "y": 1244
+  },
+  "NGoals.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Jobs: goals",
+   "w": 390,
+   "x": 470,
+   "y": 1244
+  },
+  "NIdea.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "An idea",
+   "w": 390,
+   "x": 2350,
+   "y": 1244
+  },
+  "NIdeas.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Ideas",
+   "w": 390,
+   "x": 1880,
+   "y": 1244
+  },
+  "NJob.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Job page",
+   "w": 390,
+   "x": 1880,
+   "y": 0
+  },
+  "NJobMenu.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Job options",
+   "w": 390,
+   "x": 0,
+   "y": 4976
+  },
+  "NJobs.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Jobs: active",
+   "w": 390,
+   "x": 0,
+   "y": 1244
+  },
+  "NJobsEmpty.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "states",
+   "title": "Jobs, first time",
+   "w": 390,
+   "x": 940,
+   "y": 0
+  },
+  "NKey.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Paste and test key",
+   "w": 390,
+   "x": 1880,
+   "y": 3732
+  },
+  "NKeyDeclined.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "states",
+   "title": "Key declined",
+   "w": 390,
+   "x": 1410,
+   "y": 1244
+  },
+  "NLimit.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "states",
+   "title": "Monthly limit reached",
+   "w": 390,
+   "x": 1880,
+   "y": 1244
+  },
+  "NLinkAccounts.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Connect accounts (step 3)",
+   "w": 390,
+   "x": 2820,
+   "y": 3732
+  },
+  "NLock.dc.html": {
+   "h": 844,
+   "page": "clean",
+   "title": "Lock-screen notifications",
+   "w": 390,
+   "x": 940,
+   "y": 4976
+  },
+  "NLogins.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Saved logins",
+   "w": 390,
+   "x": 1880,
+   "y": 2488
+  },
+  "NMemory.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "What I remember",
+   "w": 390,
+   "x": 2820,
+   "y": 2488
+  },
+  "NModels.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Choose models (step 2)",
+   "w": 390,
+   "x": 2350,
+   "y": 3732
+  },
+  "NNotifs.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Notifications",
+   "w": 390,
+   "x": 3290,
+   "y": 2488
+  },
+  "NNotifyAsk.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Notifications (step 4)",
+   "w": 390,
+   "x": 3290,
+   "y": 3732
+  },
+  "NPlan.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Before I start",
+   "w": 390,
+   "x": 1410,
+   "y": 0
+  },
+  "NPrivacy.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Privacy and your data",
+   "w": 390,
+   "x": 4230,
+   "y": 2488
+  },
+  "NProfile.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Profile and tone",
+   "w": 390,
+   "x": 470,
+   "y": 2488
+  },
+  "NQuestion.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Needs you: a question",
+   "w": 390,
+   "x": 3290,
+   "y": 0
+  },
+  "NReady.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Ready",
+   "w": 390,
+   "x": 3760,
+   "y": 3732
+  },
+  "NReplay.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Replay a finished job",
+   "w": 390,
+   "x": 3760,
+   "y": 1244
+  },
+  "NResult.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "A filed result",
+   "w": 390,
+   "x": 4230,
+   "y": 0
+  },
+  "NRules.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "What needs your signature",
+   "w": 390,
+   "x": 2350,
+   "y": 2488
+  },
+  "NSearch.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Search",
+   "w": 390,
+   "x": 3290,
+   "y": 1244
+  },
+  "NSearchError.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "states",
+   "title": "Search, part of it failed",
+   "w": 390,
+   "x": 1880,
+   "y": 0
+  },
+  "NShare.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Share into Agent V",
+   "w": 390,
+   "x": 1410,
+   "y": 4976
+  },
+  "NSign.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Needs you: signature (hold works)",
+   "w": 390,
+   "x": 2820,
+   "y": 0
+  },
+  "NSignIn.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Email sign-in",
+   "w": 390,
+   "x": 470,
+   "y": 3732
+  },
+  "NSignOffline.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "states",
+   "title": "Signature, offline",
+   "w": 390,
+   "x": 2820,
+   "y": 0
+  },
+  "NSpend.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Needs you: spend (hold works)",
+   "w": 390,
+   "x": 470,
+   "y": 4976
+  },
+  "NSpending.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Spending summary",
+   "w": 390,
+   "x": 1410,
+   "y": 1244
+  },
+  "NToday.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Today",
+   "w": 390,
+   "x": 0,
+   "y": 0
+  },
+  "NTodayClear.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "states",
+   "title": "Today, all clear",
+   "w": 390,
+   "x": 1410,
+   "y": 0
+  },
+  "NTodayLoading.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "states",
+   "title": "Today, loading (nothing stored yet)",
+   "w": 390,
+   "x": 0,
+   "y": 0
+  },
+  "NTodayNoKey.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "states",
+   "title": "Today, before your AI is connected",
+   "w": 390,
+   "x": 470,
+   "y": 0
+  },
+  "NTodayOffline.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "states",
+   "title": "Today, offline",
+   "w": 390,
+   "x": 2350,
+   "y": 0
+  },
+  "NUndo.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Needs you: can't be undone (hold works)",
+   "w": 390,
+   "x": 3760,
+   "y": 0
+  },
+  "NVoice.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Speaking",
+   "w": 390,
+   "x": 940,
+   "y": 0
+  },
+  "NWelcome.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Welcome",
+   "w": 390,
+   "x": 0,
+   "y": 3732
+  },
+  "NYou.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "You",
+   "w": 390,
+   "x": 0,
+   "y": 2488
+  },
+  "Notifications.dc.html": {
+   "h": 844,
+   "title": "Notifications",
+   "w": 390,
+   "x": 3290,
+   "y": 0
+  },
+  "Plan.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Plan first (when it matters)",
+   "w": 390,
+   "x": 940,
+   "y": 0
+  },
+  "Rules.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Approval rules",
+   "w": 390,
+   "x": 2040,
+   "y": 1244
+  },
+  "Search.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Search",
+   "w": 390,
+   "x": 470,
+   "y": 1244
+  },
+  "ShiftApproval.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "directions",
+   "title": "B · Shift — Approval",
+   "w": 390,
+   "x": 1570,
+   "y": 0
+  },
+  "ShiftHome.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "directions",
+   "title": "B · Shift — Home",
+   "w": 390,
+   "x": 1100,
+   "y": 0
+  },
+  "Undo.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Approval: can't undo",
+   "w": 390,
+   "x": 2350,
+   "y": 0
+  },
+  "Welcome.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Welcome",
+   "w": 390,
+   "x": 0,
+   "y": 2488
+  },
+  "You.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "You",
+   "w": 390,
+   "x": 1100,
+   "y": 1244
+  },
+  "NWatch.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "states",
+   "title": "A watch",
+   "w": 390,
+   "x": 0,
+   "y": 2488
+  },
+  "NJobsDone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "states",
+   "title": "Jobs, done",
+   "w": 390,
+   "x": 470,
+   "y": 2488
+  },
+  "NAppearance.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "states",
+   "title": "Appearance",
+   "w": 390,
+   "x": 940,
+   "y": 2488
+  },
+  "NHelp.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "states",
+   "title": "Help and feedback",
+   "w": 390,
+   "x": 1410,
+   "y": 2488
+  },
+  "NVoiceOff.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "states",
+   "title": "Speaking, microphone off",
+   "w": 390,
+   "x": 1880,
+   "y": 2488
+  },
+  "NGoalMenu.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "states",
+   "title": "Goal options",
+   "w": 390,
+   "x": 0,
+   "y": 3732
+  },
+  "NDeleteAccount.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "states",
+   "title": "Delete your account",
+   "w": 390,
+   "x": 470,
+   "y": 3732
+  },
+  "NReport.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "states",
+   "title": "Tell us",
+   "w": 390,
+   "x": 940,
+   "y": 3732
+  },
+  "NAIDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Your AI (dark)",
+   "w": 390,
+   "x": 940,
+   "y": 2488
+  },
+  "NAccountsDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Connected accounts (dark)",
+   "w": 390,
+   "x": 1410,
+   "y": 2488
+  },
+  "NAskDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Hand something off (dark)",
+   "w": 390,
+   "x": 470,
+   "y": 0
+  },
+  "NBriefingDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Morning briefing (dark)",
+   "w": 390,
+   "x": 3760,
+   "y": 2488
+  },
+  "NBrowserDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Live browser (dark)",
+   "w": 390,
+   "x": 2350,
+   "y": 0
+  },
+  "NComputerDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Jobs: the agent's computer (dark)",
+   "w": 390,
+   "x": 2820,
+   "y": 1244
+  },
+  "NConnectDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Connect your AI (step 1) (dark)",
+   "w": 390,
+   "x": 940,
+   "y": 3732
+  },
+  "NControlDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "You’re in control (dark)",
+   "w": 390,
+   "x": 470,
+   "y": 7664
+  },
+  "NControlAskDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Needs you: take control (dark)",
+   "w": 390,
+   "x": 0,
+   "y": 7664
+  },
+  "NCouldntDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Couldn’t finish (dark)",
+   "w": 390,
+   "x": 940,
+   "y": 7664
+  },
+  "NGetKeyDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Get a key (dark)",
+   "w": 390,
+   "x": 1410,
+   "y": 3732
+  },
+  "NGoalDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "A goal (dark)",
+   "w": 390,
+   "x": 940,
+   "y": 1244
+  },
+  "NGoalsDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Jobs: goals (dark)",
+   "w": 390,
+   "x": 470,
+   "y": 1244
+  },
+  "NIdeaDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "An idea (dark)",
+   "w": 390,
+   "x": 2350,
+   "y": 1244
+  },
+  "NIdeasDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Ideas (dark)",
+   "w": 390,
+   "x": 1880,
+   "y": 1244
+  },
+  "NJobDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Job page (dark)",
+   "w": 390,
+   "x": 1880,
+   "y": 0
+  },
+  "NJobMenuDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Job options (dark)",
+   "w": 390,
+   "x": 0,
+   "y": 4976
+  },
+  "NJobsDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Jobs: active (dark)",
+   "w": 390,
+   "x": 0,
+   "y": 1244
+  },
+  "NJobsEmptyDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Jobs, first time (dark)",
+   "w": 390,
+   "x": 940,
+   "y": 6420
+  },
+  "NKeyDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Paste and test key (dark)",
+   "w": 390,
+   "x": 1880,
+   "y": 3732
+  },
+  "NKeyDeclinedDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Key declined (dark)",
+   "w": 390,
+   "x": 1410,
+   "y": 7664
+  },
+  "NLimitDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Monthly limit reached (dark)",
+   "w": 390,
+   "x": 1880,
+   "y": 7664
+  },
+  "NLinkAccountsDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Connect accounts (step 3) (dark)",
+   "w": 390,
+   "x": 2820,
+   "y": 3732
+  },
+  "NLockDark.dc.html": {
+   "h": 844,
+   "page": "dark",
+   "title": "Lock-screen notifications (dark)",
+   "w": 390,
+   "x": 940,
+   "y": 4976
+  },
+  "NLoginsDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Saved logins (dark)",
+   "w": 390,
+   "x": 1880,
+   "y": 2488
+  },
+  "NMemoryDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "What I remember (dark)",
+   "w": 390,
+   "x": 2820,
+   "y": 2488
+  },
+  "NModelsDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Choose models (step 2) (dark)",
+   "w": 390,
+   "x": 2350,
+   "y": 3732
+  },
+  "NNotifsDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Notifications (dark)",
+   "w": 390,
+   "x": 3290,
+   "y": 2488
+  },
+  "NNotifyAskDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Notifications (step 4) (dark)",
+   "w": 390,
+   "x": 3290,
+   "y": 3732
+  },
+  "NPlanDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Before I start (dark)",
+   "w": 390,
+   "x": 1410,
+   "y": 0
+  },
+  "NPrivacyDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Privacy and your data (dark)",
+   "w": 390,
+   "x": 4230,
+   "y": 2488
+  },
+  "NProfileDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Profile and tone (dark)",
+   "w": 390,
+   "x": 470,
+   "y": 2488
+  },
+  "NQuestionDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Needs you: a question (dark)",
+   "w": 390,
+   "x": 3290,
+   "y": 0
+  },
+  "NReadyDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Ready (dark)",
+   "w": 390,
+   "x": 3760,
+   "y": 3732
+  },
+  "NReplayDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Replay a finished job (dark)",
+   "w": 390,
+   "x": 3760,
+   "y": 1244
+  },
+  "NResultDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "A filed result (dark)",
+   "w": 390,
+   "x": 4230,
+   "y": 0
+  },
+  "NRulesDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "What needs your signature (dark)",
+   "w": 390,
+   "x": 2350,
+   "y": 2488
+  },
+  "NSearchDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Search (dark)",
+   "w": 390,
+   "x": 3290,
+   "y": 1244
+  },
+  "NSearchErrorDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Search, part of it failed (dark)",
+   "w": 390,
+   "x": 1880,
+   "y": 6420
+  },
+  "NShareDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Share into Agent V (dark)",
+   "w": 390,
+   "x": 1410,
+   "y": 4976
+  },
+  "NSignDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Needs you: signature (hold works) (dark)",
+   "w": 390,
+   "x": 2820,
+   "y": 0
+  },
+  "NSignInDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Email sign-in (dark)",
+   "w": 390,
+   "x": 470,
+   "y": 3732
+  },
+  "NSignOfflineDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Signature, offline (dark)",
+   "w": 390,
+   "x": 2820,
+   "y": 6420
+  },
+  "NSpendDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Needs you: spend (hold works) (dark)",
+   "w": 390,
+   "x": 470,
+   "y": 4976
+  },
+  "NSpendingDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Spending summary (dark)",
+   "w": 390,
+   "x": 1410,
+   "y": 1244
+  },
+  "NTodayDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Today (dark)",
+   "w": 390,
+   "x": 0,
+   "y": 0
+  },
+  "NTodayClearDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Today, all clear (dark)",
+   "w": 390,
+   "x": 1410,
+   "y": 6420
+  },
+  "NTodayLoadingDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Today, loading (nothing stored yet) (dark)",
+   "w": 390,
+   "x": 0,
+   "y": 6420
+  },
+  "NTodayNoKeyDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Today, before your AI is connected (dark)",
+   "w": 390,
+   "x": 470,
+   "y": 6420
+  },
+  "NTodayOfflineDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Today, offline (dark)",
+   "w": 390,
+   "x": 2350,
+   "y": 6420
+  },
+  "NUndoDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Needs you: can't be undone (hold works) (dark)",
+   "w": 390,
+   "x": 3760,
+   "y": 0
+  },
+  "NVoiceDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Speaking (dark)",
+   "w": 390,
+   "x": 940,
+   "y": 0
+  },
+  "NWelcomeDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Welcome (dark)",
+   "w": 390,
+   "x": 0,
+   "y": 3732
+  },
+  "NYouDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "You (dark)",
+   "w": 390,
+   "x": 0,
+   "y": 2488
+  },
+  "NWatchDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "A watch (dark)",
+   "w": 390,
+   "x": 0,
+   "y": 8908
+  },
+  "NJobsDoneDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Jobs, done (dark)",
+   "w": 390,
+   "x": 470,
+   "y": 8908
+  },
+  "NAppearanceDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Appearance (dark)",
+   "w": 390,
+   "x": 940,
+   "y": 8908
+  },
+  "NHelpDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Help and feedback (dark)",
+   "w": 390,
+   "x": 1410,
+   "y": 8908
+  },
+  "NVoiceOffDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Speaking, microphone off (dark)",
+   "w": 390,
+   "x": 1880,
+   "y": 8908
+  },
+  "NGoalMenuDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Goal options (dark)",
+   "w": 390,
+   "x": 0,
+   "y": 10152
+  },
+  "NDeleteAccountDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Delete your account (dark)",
+   "w": 390,
+   "x": 470,
+   "y": 10152
+  },
+  "NReportDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Tell us (dark)",
+   "w": 390,
+   "x": 940,
+   "y": 10152
+  }
+ },
+ "createdOnFiles": {
+  "at": "2026-09-25T12:00:00Z",
+  "v": 1
+ },
+ "designSystems": [
+  {
+   "title": "Agent V",
+   "namespace": "agentv",
+   "artifact": "https://claude.ai/artifact/FChntSLLLZ22gc6gDJuqED",
+   "version": "1790318962-5936",
+   "copiedAt": "2026-09-25T06:49:40Z"
+  }
+ ],
+ "launch": {
+  "page": "dark",
+  "view": "canvas"
+ },
+ "notes": {
+  "bHow": {
+   "fill": "blue",
+   "page": "balanced",
+   "size": 24,
+   "text": "What changed, and why\n\n• Today opens with three big numbers (waiting on you, on my desk, filed) instead of a paragraph.\n• One coloured block per screen, for the thing that matters most. On Today it is the blue \"waiting on you\" block: blue still only means waiting on you.\n• Every item has a mark (email, question, web, watch) so you can tell things apart without reading.\n• Progress is drawn (3/5 and a bar), prices get a small chart, and work shows a small picture of what the agent saw.\n• One line per item. A second line appears only for risk, like \"Can't be undone\".\n• Secondary actions became round icon buttons with a short label.\n• Speaking is a full page: your words in large type, a live voice level, one button to hand it off.\n• Night appearance: warm ink with a soft desk-lamp light at the top.\n\nPress Play on Today and click through. Hold the blue button on \"For your signature\".",
+   "w": 520,
+   "x": -640,
+   "y": 0
+  },
+  "bRefs": {
+   "fill": "orange",
+   "page": "balanced",
+   "size": 24,
+   "text": "From the references: ideas, not looks\n\nTaken: big numbers as anchors, blocks of different sizes for rhythm, icons that replace words, round action buttons, speaking as a first-class screen, a soft light in the dark.\n\nLeft behind: pastel tiles, blue glow backgrounds, glass bars, emoji and photos in greetings, a dark top with a white sheet, floating toolbars.\n\nEverything stays in Ledger's paper and ink, serif and signatures. Full notes in docs/design/references/README.md.",
+   "w": 520,
+   "x": -640,
+   "y": 900
+  },
+  "bTitle": {
+   "kind": "title1",
+   "maxW": 2740,
+   "page": "balanced",
+   "text": "Rebalanced: glance first, read second",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  },
+  "c3732": {
+   "kind": "title1",
+   "maxW": 4150,
+   "page": "clean",
+   "text": "Getting started",
+   "w": 240,
+   "x": 0,
+   "y": 3432
+  },
+  "c4976": {
+   "kind": "title1",
+   "maxW": 1800,
+   "page": "clean",
+   "text": "Menus and outside the app",
+   "w": 240,
+   "x": 0,
+   "y": 4676
+  },
+  "cFind": {
+   "kind": "title1",
+   "maxW": 4150,
+   "page": "clean",
+   "text": "Find your work, goals and ideas",
+   "w": 240,
+   "x": 0,
+   "y": 944
+  },
+  "cHow": {
+   "fill": "blue",
+   "page": "clean",
+   "size": 24,
+   "text": "Agent V, new direction: every screen\n\n• One modern typeface (Geist), near-black and warm white, one blue.\n• Main screens: a dark top that says what matters, a light area of a few large rounded blocks.\n• Blue means \"needs you\", and marks the agent itself (microphone, voice, where it points).\n• Red only for what can't be undone.\n\nRows: Every day · Find your work, goals and ideas · You and settings · Getting started · Menus and outside the app.\n\nPress Play on Today, or on Welcome to go through getting started.",
+   "w": 520,
+   "x": -640,
+   "y": 0
+  },
+  "cTitle": {
+   "kind": "title1",
+   "maxW": 4620,
+   "page": "clean",
+   "text": "Every day",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  },
+  "cYou": {
+   "kind": "title1",
+   "maxW": 4620,
+   "page": "clean",
+   "text": "You and settings",
+   "w": 240,
+   "x": 0,
+   "y": 2188
+  },
+  "dirA": {
+   "kind": "title1",
+   "maxW": 860,
+   "page": "directions",
+   "text": "A · Ledger",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  },
+  "dirB": {
+   "kind": "title1",
+   "maxW": 860,
+   "page": "directions",
+   "text": "B · Shift",
+   "w": 240,
+   "x": 1100,
+   "y": -300
+  },
+  "dirC": {
+   "kind": "title1",
+   "maxW": 860,
+   "page": "directions",
+   "text": "C · Desk",
+   "w": 240,
+   "x": 2200,
+   "y": -300
+  },
+  "everyday": {
+   "kind": "title1",
+   "maxW": 3680,
+   "text": "Every day",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  },
+  "find": {
+   "kind": "title1",
+   "maxW": 860,
+   "text": "Find your work",
+   "w": 240,
+   "x": 0,
+   "y": 944
+  },
+  "howto": {
+   "fill": "orange",
+   "size": 24,
+   "text": "How you move around\n\n• A floating toolbar on the main screens: Home, Jobs, Search, and + to ask.\n• You (settings) opens from your initial at the top of Home.\n• Approvals and questions open as sheets over whatever you are looking at, so you never lose your place.\n• Every notification opens exactly the thing it is about.\n• Anything can be shared into Agent V from another app (a link, file or photo) and becomes a new job.\n\nPress Play on a screen to click through. Sample names and content are illustrative. Colours and type are a first direction; the design system is settled in stage 5.",
+   "w": 520,
+   "x": -640,
+   "y": 0
+  },
+  "lEveryday": {
+   "kind": "title1",
+   "maxW": 4620,
+   "page": "ledger",
+   "text": "Every day",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  },
+  "lFind": {
+   "kind": "title1",
+   "maxW": 860,
+   "page": "ledger",
+   "text": "Find your work",
+   "w": 240,
+   "x": 0,
+   "y": 944
+  },
+  "lHow": {
+   "fill": "blue",
+   "page": "ledger",
+   "size": 24,
+   "text": "Ledger: how it works\n\n• No tab bar. \"Hand something off…\" is always at the bottom of Today and Jobs: handing off work is the main action.\n• The masthead: AGENT V goes back to Today; search, jobs and your initial sit on the right.\n• Everything waiting on you is numbered and shown one at a time (1 of 3, 2 of 3…).\n• Approvals are signatures. Press and hold to sign: deliberate, but one gesture. Things that can't be undone use deep red and add Face ID.\n• Blue only ever means \"waiting on you\".\n\nPress Play and try holding the Sign button on \"For your signature\".",
+   "w": 520,
+   "x": -640,
+   "y": 0
+  },
+  "lStart": {
+   "kind": "title1",
+   "maxW": 860,
+   "page": "ledger",
+   "text": "Getting started",
+   "w": 240,
+   "x": 0,
+   "y": 2188
+  },
+  "lYou": {
+   "kind": "title1",
+   "maxW": 1330,
+   "page": "ledger",
+   "text": "You and settings",
+   "w": 240,
+   "x": 1100,
+   "y": 944
+  },
+  "sFix": {
+   "kind": "title1",
+   "maxW": 2270,
+   "page": "states",
+   "text": "When a job needs you to step in or fix something",
+   "w": 240,
+   "x": 0,
+   "y": 944
+  },
+  "sHow": {
+   "fill": "blue",
+   "page": "states",
+   "size": 24,
+   "text": "Stage 4: every screen in detail\n\n• Loading: what the phone last knew, at once; grey shapes only when nothing is stored yet.\n• Empty: first time shows what will be here and a way to start; all clear shows what's coming up.\n• Errors stay in the block that failed, in plain words, with Try again. Never red.\n• Offline: an Offline chip and \"as of\" times; new hand-offs wait on the phone; signing needs a connection.\n\nSecond row: the stage 3 moments that had no screen yet.\nThird row: layouts that part 2 (screen by screen) needed.\n\nEvery other state follows these patterns and is described in docs/design/04-screens.md.",
+   "w": 520,
+   "x": -640,
+   "y": 0
+  },
+  "sShared": {
+   "kind": "title1",
+   "maxW": 3210,
+   "page": "states",
+   "text": "Shared states: loading, first time, all clear, a partial error, offline",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  },
+  "start": {
+   "kind": "title1",
+   "maxW": 860,
+   "text": "Getting started",
+   "w": 240,
+   "x": 0,
+   "y": 2188
+  },
+  "you": {
+   "kind": "title1",
+   "maxW": 1330,
+   "text": "You and settings",
+   "w": 240,
+   "x": 1100,
+   "y": 944
+  },
+  "sPart2": {
+   "kind": "title1",
+   "maxW": 2270,
+   "page": "states",
+   "text": "Part 2: layouts the screen-by-screen detail needed",
+   "x": 0,
+   "y": 2188,
+   "w": 240
+  },
+  "sWired": {
+   "kind": "title1",
+   "maxW": 1330,
+   "page": "states",
+   "text": "Added while wiring every button",
+   "x": 0,
+   "y": 3432,
+   "w": 240
+  },
+  "d_c3732": {
+   "kind": "title1",
+   "maxW": 4150,
+   "page": "dark",
+   "text": "Getting started",
+   "w": 240,
+   "x": 0,
+   "y": 3432
+  },
+  "d_c4976": {
+   "kind": "title1",
+   "maxW": 1800,
+   "page": "dark",
+   "text": "Menus and outside the app",
+   "w": 240,
+   "x": 0,
+   "y": 4676
+  },
+  "d_cFind": {
+   "kind": "title1",
+   "maxW": 4150,
+   "page": "dark",
+   "text": "Find your work, goals and ideas",
+   "w": 240,
+   "x": 0,
+   "y": 944
+  },
+  "d_cTitle": {
+   "kind": "title1",
+   "maxW": 4620,
+   "page": "dark",
+   "text": "Every day",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  },
+  "d_cYou": {
+   "kind": "title1",
+   "maxW": 4620,
+   "page": "dark",
+   "text": "You and settings",
+   "w": 240,
+   "x": 0,
+   "y": 2188
+  },
+  "d_sFix": {
+   "kind": "title1",
+   "maxW": 2270,
+   "page": "dark",
+   "text": "When a job needs you to step in or fix something",
+   "w": 240,
+   "x": 0,
+   "y": 7364
+  },
+  "d_sShared": {
+   "kind": "title1",
+   "maxW": 3210,
+   "page": "dark",
+   "text": "Shared states: loading, first time, all clear, a partial error, offline",
+   "w": 240,
+   "x": 0,
+   "y": 6120
+  },
+  "d_sPart2": {
+   "kind": "title1",
+   "maxW": 2270,
+   "page": "dark",
+   "text": "Part 2: layouts the screen-by-screen detail needed",
+   "x": 0,
+   "y": 8608,
+   "w": 240
+  },
+  "d_sWired": {
+   "kind": "title1",
+   "maxW": 1330,
+   "page": "dark",
+   "text": "Added while wiring every button",
+   "x": 0,
+   "y": 9852,
+   "w": 240
+  },
+  "dHow": {
+   "fill": "blue",
+   "page": "dark",
+   "size": 24,
+   "w": 520,
+   "x": -640,
+   "y": 0,
+   "text": "Stage 5: the dark appearance\n\nEvery screen, generated from the same source as the light one: each colour is a design token with a light and a dark value.\n\n• The dark top stays the darkest-feeling part, lifted a little above an almost black ground.\n• Blue, red and green keep their meanings; as text they turn lighter so they stay readable.\n• The main button turns light on dark.\n\nLinks stay within the dark screens. Every screen also has a Theme switch in its Tweaks."
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "Ask.dc.html",
+  "Plan.dc.html",
+  "Job.dc.html",
+  "Approval.dc.html",
+  "Undo.dc.html",
+  "Browser.dc.html",
+  "Notifications.dc.html",
+  "Jobs.dc.html",
+  "Search.dc.html",
+  "You.dc.html",
+  "AIKeys.dc.html",
+  "Rules.dc.html",
+  "Welcome.dc.html",
+  "ConnectAI.dc.html",
+  "LedgerHome.dc.html",
+  "LedgerApproval.dc.html",
+  "ShiftHome.dc.html",
+  "ShiftApproval.dc.html",
+  "DeskHome.dc.html",
+  "DeskApproval.dc.html",
+  "LHome.dc.html",
+  "LAsk.dc.html",
+  "LPlan.dc.html",
+  "LJob.dc.html",
+  "LQuestion.dc.html",
+  "LSign.dc.html",
+  "LUndo.dc.html",
+  "LBrowser.dc.html",
+  "LResult.dc.html",
+  "LNotifications.dc.html",
+  "LJobs.dc.html",
+  "LSearch.dc.html",
+  "LYou.dc.html",
+  "LAI.dc.html",
+  "LRules.dc.html",
+  "LWelcome.dc.html",
+  "LConnect.dc.html",
+  "BHome.dc.html",
+  "BHomeNight.dc.html",
+  "BAsk.dc.html",
+  "BListen.dc.html",
+  "BJob.dc.html",
+  "BSign.dc.html",
+  "NToday.dc.html",
+  "NAsk.dc.html",
+  "NVoice.dc.html",
+  "NPlan.dc.html",
+  "NJob.dc.html",
+  "NBrowser.dc.html",
+  "NSign.dc.html",
+  "NQuestion.dc.html",
+  "NUndo.dc.html",
+  "NResult.dc.html",
+  "NJobs.dc.html",
+  "NGoals.dc.html",
+  "NGoal.dc.html",
+  "NSpending.dc.html",
+  "NIdeas.dc.html",
+  "NIdea.dc.html",
+  "NComputer.dc.html",
+  "NSearch.dc.html",
+  "NReplay.dc.html",
+  "NYou.dc.html",
+  "NProfile.dc.html",
+  "NAI.dc.html",
+  "NAccounts.dc.html",
+  "NLogins.dc.html",
+  "NRules.dc.html",
+  "NMemory.dc.html",
+  "NNotifs.dc.html",
+  "NBriefing.dc.html",
+  "NPrivacy.dc.html",
+  "NWelcome.dc.html",
+  "NSignIn.dc.html",
+  "NConnect.dc.html",
+  "NGetKey.dc.html",
+  "NKey.dc.html",
+  "NModels.dc.html",
+  "NLinkAccounts.dc.html",
+  "NNotifyAsk.dc.html",
+  "NReady.dc.html",
+  "NJobMenu.dc.html",
+  "NSpend.dc.html",
+  "NLock.dc.html",
+  "NShare.dc.html",
+  "NTodayLoading.dc.html",
+  "NTodayNoKey.dc.html",
+  "NJobsEmpty.dc.html",
+  "NTodayClear.dc.html",
+  "NSearchError.dc.html",
+  "NTodayOffline.dc.html",
+  "NSignOffline.dc.html",
+  "NControlAsk.dc.html",
+  "NControl.dc.html",
+  "NCouldnt.dc.html",
+  "NKeyDeclined.dc.html",
+  "NLimit.dc.html",
+  "NWatch.dc.html",
+  "NJobsDone.dc.html",
+  "NAppearance.dc.html",
+  "NHelp.dc.html",
+  "NVoiceOff.dc.html",
+  "NGoalMenu.dc.html",
+  "NDeleteAccount.dc.html",
+  "NReport.dc.html",
+  "NAIDark.dc.html",
+  "NAccountsDark.dc.html",
+  "NAskDark.dc.html",
+  "NBriefingDark.dc.html",
+  "NBrowserDark.dc.html",
+  "NComputerDark.dc.html",
+  "NConnectDark.dc.html",
+  "NControlDark.dc.html",
+  "NControlAskDark.dc.html",
+  "NCouldntDark.dc.html",
+  "NGetKeyDark.dc.html",
+  "NGoalDark.dc.html",
+  "NGoalsDark.dc.html",
+  "NIdeaDark.dc.html",
+  "NIdeasDark.dc.html",
+  "NJobDark.dc.html",
+  "NJobMenuDark.dc.html",
+  "NJobsDark.dc.html",
+  "NJobsEmptyDark.dc.html",
+  "NKeyDark.dc.html",
+  "NKeyDeclinedDark.dc.html",
+  "NLimitDark.dc.html",
+  "NLinkAccountsDark.dc.html",
+  "NLockDark.dc.html",
+  "NLoginsDark.dc.html",
+  "NMemoryDark.dc.html",
+  "NModelsDark.dc.html",
+  "NNotifsDark.dc.html",
+  "NNotifyAskDark.dc.html",
+  "NPlanDark.dc.html",
+  "NPrivacyDark.dc.html",
+  "NProfileDark.dc.html",
+  "NQuestionDark.dc.html",
+  "NReadyDark.dc.html",
+  "NReplayDark.dc.html",
+  "NResultDark.dc.html",
+  "NRulesDark.dc.html",
+  "NSearchDark.dc.html",
+  "NSearchErrorDark.dc.html",
+  "NShareDark.dc.html",
+  "NSignDark.dc.html",
+  "NSignInDark.dc.html",
+  "NSignOfflineDark.dc.html",
+  "NSpendDark.dc.html",
+  "NSpendingDark.dc.html",
+  "NTodayDark.dc.html",
+  "NTodayClearDark.dc.html",
+  "NTodayLoadingDark.dc.html",
+  "NTodayNoKeyDark.dc.html",
+  "NTodayOfflineDark.dc.html",
+  "NUndoDark.dc.html",
+  "NVoiceDark.dc.html",
+  "NWelcomeDark.dc.html",
+  "NYouDark.dc.html",
+  "NWatchDark.dc.html",
+  "NJobsDoneDark.dc.html",
+  "NAppearanceDark.dc.html",
+  "NHelpDark.dc.html",
+  "NVoiceOffDark.dc.html",
+  "NGoalMenuDark.dc.html",
+  "NDeleteAccountDark.dc.html",
+  "NReportDark.dc.html"
+ ],
+ "pages": [
+  {
+   "id": "map",
+   "name": "First draft (rejected look)"
+  },
+  {
+   "id": "directions",
+   "name": "Visual directions"
+  },
+  {
+   "id": "ledger",
+   "name": "Ledger (replaced)"
+  },
+  {
+   "id": "balanced",
+   "name": "Rebalanced Ledger (rejected)"
+  },
+  {
+   "id": "clean",
+   "name": "New direction"
+  },
+  {
+   "id": "states",
+   "name": "Stage 4 · States"
+  },
+  {
+   "id": "dark",
+   "name": "Stage 5 · Dark appearance"
+  }
+ ],
+ "title": "Agent V — App map"
+}
