@@ -2,8 +2,28 @@
 
 **Status:** proposed on 2026-09-25, waiting for review.
 **Mockups:** [Agent V — App map](https://claude.ai/artifact/7Y2irrycwGs5zc2bZ1oEf9), a canvas
-with the key screens drawn at phone size. Press Play on a screen to click through. The colours
-and type there are a first direction only; the design system is settled in stage 5.
+at phone size. Press Play on a screen to click through.
+
+## Review feedback, 2026-09-25
+
+The look of the first mockups was rejected: it followed the reference images too closely (dark
+top with a grey-and-white sentence, a floating pill toolbar, document-style cards). **Agent V must
+have its own, original look.** The references only describe qualities to aim for: calm,
+typographic, premium, uncluttered.
+
+The first mockups are kept on the canvas page "First draft (rejected look)" as a record of the
+screen structure only. Three original visual directions are on the page "Visual directions",
+each drawn as Home and an approval:
+
+| Direction | Idea | Type and colour | How you approve | Navigation |
+|---|---|---|---|---|
+| **A · Ledger** | A trusted chief of staff's daily memo: an editorial page with numbered items | Serif headlines (Newsreader) over a clean sans (Instrument Sans); warm paper, ink, one fountain-pen blue for what needs you | "Sign": press and hold to sign and send | No tab bar: a "Hand something off…" line always at the bottom; jobs and search at the top |
+| **B · Shift** | The agent works around the clock, so time is the backbone: a live timeline with a NOW line | IBM Plex Sans and Plex Mono; graphite dark with one bright signal colour | Slide to send | Tabs at the top (Timeline, Jobs, Search) and a "New job" button |
+| **C · Desk** | Clear your desk: decisions come as a stack you work through one by one; running jobs as tiles with progress rings | Bricolage Grotesque headlines over Instrument Sans; cool light grey, white cards, cobalt | Review, then "Send and go to the next" | A classic bottom bar (Desk, Jobs, Search, You) with a raised New job button |
+
+The chosen direction (or a mix) is recorded as a decision here, and the rest of the app map is
+redrawn in it before stage 3. The screen list and navigation rules below stay under review; the
+toolbar decision (D17) depends on the direction chosen.
 
 This stage lists every screen in the app and how you move between them. What each screen
 contains in every state (empty, loading, error, offline) is stage 4.
