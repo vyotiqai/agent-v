@@ -1,0 +1,17 @@
+{
+  "name": "@agentv/server",
+  "private": true,
+  "description": "Agent V's server: the API, the workers and the egress gateway, one codebase.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "test": "node --test \"src/**/*.test.ts\"",
+    "test:integration": "node --test --test-concurrency=1 \"test/**/*.test.ts\"",
+    "api": "node src/api/main.ts",
+    "egress": "node src/egress/main.ts",
+    "migrate": "node src/migrate/main.ts"
+  },
+  "dependencies": {
+    "postgres": "3.4.9"
+  }
+}

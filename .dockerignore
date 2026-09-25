@@ -1,0 +1,8 @@
+# Only what the server image needs goes into its build context.
+**
+!package.json
+!package-lock.json
+!server/package.json
+!server/src
+!server/migrations
+server/src/**/*.test.ts
