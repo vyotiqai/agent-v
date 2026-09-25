@@ -130,7 +130,7 @@ def NToday():
 def NTodayNoKey():
     sentence = f'<p style="{SENTENCE}; color: {DIM_DARK}">Connect your AI and I’ll start on the {white("NJobs.dc.html", "1 job")} you handed off.</p>'
     waiting = [row(None, mark('clock'), 'Watch the MacBook Air price', 'Starts by itself once your AI works', first=True)]
-    meanwhile = [row('NLinkAccounts.dc.html', mark('mail'), 'Connect Gmail and Calendar', 'Optional · for your morning briefing',
+    meanwhile = [row('NLinkAccounts.dc.html', mark('mail'), 'Connect your email and calendar', 'Optional · for your morning briefing',
                      trail=chevron(), first=True)]
     body = today_header('Not connected', MUTED_DARK, 'Thursday, 25 September', 'Welcome, Ajay.', sentence) + f'''
 

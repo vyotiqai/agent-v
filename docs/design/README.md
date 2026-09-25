@@ -11,7 +11,7 @@ and no code is written until the design is complete.
 | 4. Every screen in detail, including empty, loading, error and offline states | [04-screens.md](04-screens.md) | Agreed 2026-09-25 |
 | 5. Design system: colour, type, spacing, components, icons, motion, accessibility | [05-design-system.md](05-design-system.md) | Agreed 2026-09-25 |
 | 6. Technical design: part 1 the system; part 2 running it safely | [06-technical-design.md](06-technical-design.md) | Agreed 2026-09-25 |
-| 7. Build plan: small slices, each working and verified before the next | — | Not started |
+| 7. Build plan: small slices, each working and verified before the next | [07-build-plan.md](07-build-plan.md) | Proposed, in review |
 
 Stages 2 to 5 come with clickable phone mockups.
 

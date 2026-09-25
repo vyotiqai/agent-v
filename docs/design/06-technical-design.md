@@ -360,6 +360,9 @@ network (stage 1, section 8).
 | Gmail and Google Calendar | Google sign-in with the smallest scopes each ability needs. Reading Gmail is a restricted scope and needs Google's yearly security assessment (CASA); sending is a sensitive scope and needs Google's app verification (D11) | Gmail push notifications through Cloud Pub/Sub, then a read of what changed; calendar change notifications |
 | Outlook mail and calendar | Microsoft sign-in, Microsoft Graph | Graph change notifications, renewed before they expire |
 
+- **At launch** (D121, stage 7): Outlook mail, Outlook Calendar and Google Calendar. Gmail is built
+  and verified with everything else, and used by the owner in Google's test mode; it becomes
+  public once its yearly security assessment can be paid for.
 - Tokens are encrypted like AI keys (section 5), refreshed by workers, and erased at once on
   disconnect or account deletion.
 - When a token stops working, the jobs that need that account pause, and one Needs you item says
@@ -591,7 +594,7 @@ cents; the live view's network traffic a cent or two. So 1,000 active people add
 | D97 | Workers let a waiting job go; any worker resumes it when the wait is over | Long waits cost nothing, and restarts are safe |
 | D98 | Support references are random short codes tied to trace ids; logs never hold personal content | Support can find a problem without seeing your data |
 | D99 | No web search service: the agent uses the person's provider's own web search and page reading when it has them; otherwise our server fetches pages directly, and searches with the person's own search key (*changed by D105 in part 2: no fetching of search engines' result pages*); the browser only when a page needs one; every source is recorded | The owner's choice, following rule 6: nobody can build their own index of the web, and Google's and Bing's search APIs are gone; this stays our own code and costs Agent V almost nothing |
-| D100 | Sign in with Apple or Google only; no email codes. **Changes D44** (stage 3) and removes the Check your email screen (stage 4) | The owner's choice, following rule 6: email codes would need our own mail server (often filtered as spam, which blocks sign-in) or an email service |
+| D100 | Sign in with Apple or Google only; no email codes. **Changes D44** (stage 3) and removes the Check your email screen (stage 4) | The owner's choice, following rule 6: email codes would need our own mail server (often filtered as spam, which blocks sign-in) or an email service *Refined by [D125](07-build-plan.md#decisions-in-this-stage): Android launches with Google; Apple arrives with the iPhone slice* |
 | D101 | The heavy work runs on the person's own AI key: the model, web search, page reading and the agent's computer use their provider's own tools; Agent V hosts only the capped browser | The owner's requirement: Agent V free for people and near zero cost for the owner, while everything still works |
 | D102 | The agent's computer is the person's provider's code sandbox (full with Anthropic and OpenAI, short Python work with Google, not available with other endpoints until the desktop app); its files are kept by Agent V in Cloud Storage; every command is recorded. **Changes D39** (stage 2): the computer is no longer Agent V's own, and its compute is no longer Agent V's cost | The owner's choice (D101); nothing is lost when a provider's container ends |
 | D103 | A free desktop app for Mac and Windows, after launch, lets the agent use the person's own computer and browser, with their real logins and files | The owner's choice: the most private and cheapest way to give every person a full computer and browser; after launch keeps the first release smaller |
@@ -821,8 +824,8 @@ Everything is verified end to end with real services (rule 3), and nothing in th
   ("Agent V Staging") that is never sent to the stores. The production app has no test switches,
   no demo mode, no sample data and no imitation of any service.
 - **App store review** needs a working account: Apple's and Google's reviewers get a real Agent V
-  account with a real AI key of the owner's, limited to a few dollars, and a real test Gmail
-  connected (stage 1, section 12).
+  account with a real AI key of the owner's, limited to a few dollars, and a real test Outlook
+  account connected (stage 1, section 12).
 
 ## 23. Releases (D115, D116)
 

@@ -161,7 +161,7 @@ Whatever the settings, it never:
 
 | Ability | What it covers |
 |---|---|
-| **Email** (Gmail, Outlook) | Sorts and summarizes, drafts replies, sends after approval, tracks what is waiting on others |
+| **Email** (Outlook at launch; Gmail once its security review is paid for, D121) | Sorts and summarizes, drafts replies, sends after approval, tracks what is waiting on others |
 | **Calendar** (Google, Outlook) | Finds times, schedules and reschedules, sends a briefing before each meeting |
 | **Research and the web** | Real browsing in a cloud browser you can watch and take over (for logins); compares, finds, fills forms |
 | **Documents** | Reads PDFs and photos of paper, fills forms, writes reports and summaries, returns files you can share |
@@ -305,11 +305,11 @@ someone else's trademark.
 | D8 | It offers to ask less after repeated approvals, only with your yes; never for Spend or Can't undo | Earns autonomy instead of assuming it |
 | D9 | First audience: busy professionals | Immediate value through a few reliable integrations |
 | D10 | Launch abilities: email, calendar, research and the web, documents, watching and routines, follow-ups, memory. Extended on 2026-09-25 by D36–D40 (stage 2) | Covers most professional work; each can be made reliable |
-| D11 | Gmail from the start; the security review begins during the build | Most people use Gmail; the review takes weeks |
+| D11 | ~~Gmail from the start; the security review begins during the build~~ *Changed by [D121](07-build-plan.md#decisions-in-this-stage) (stage 7, 2026-09-25): Outlook mail and both calendars at launch; Gmail reading is built and works for the owner in Google's test mode, and goes public once its yearly security review (about $540–$1,800) can be paid for* | Most people use Gmail; the review takes weeks |
 | D12 | Free at launch; people bring their own API key for any provider or OpenAI-compatible endpoint; pricing decided later | The user's decision: free to start, AI costs paid by each person's own provider account |
 | D13 | Launch in English in the US, UK, Canada, Australia and India; built for translation and GDPR-level privacy | A focused start without blocking later expansion |
 | D14 | The name is Agent V; it speaks in the first person, calm and brief | The user's decision on the name; the voice follows the principles |
-| D15 | iPhone and Android phones first; tablets later | Focus |
+| D15 | iPhone and Android phones first; tablets later. *Changed by [D120](07-build-plan.md#decisions-in-this-stage) (stage 7, 2026-09-25): Android first, iPhone next* | Focus |
 | D16 | The agent runs on servers; the phone is for asking, approving and watching | Phones can't run 24/7 work or control other apps |
 
 ## 15. Open questions for later stages

@@ -148,14 +148,12 @@ def NModels():
 
 @screen
 def NLinkAccounts():
-    accts = {'gmail': [True, 'ajay@gmail.com', 'Mail and drafts', 'Gmail'],
-             'gcal': [True, 'ajay@gmail.com', 'Free time and events', 'Google Calendar'],
-             'outlook': [False, 'ajay@outlook.com', 'Mail and drafts', 'Outlook mail'],
-             'ocal': [False, 'ajay@outlook.com', 'Free time and events', 'Outlook Calendar']}
-    rows = [account_row('gmail', 'G', 'Gmail', *accts['gmail'][1:3], first=True),
-            account_row('gcal', 'G', 'Google Calendar', *accts['gcal'][1:3]),
-            account_row('outlook', 'O', 'Outlook mail', *accts['outlook'][1:3]),
-            account_row('ocal', 'O', 'Outlook Calendar', *accts['ocal'][1:3])]
+    accts = {'outlook': [True, 'ajay@outlook.com', 'Mail and drafts', 'Outlook mail'],
+             'ocal': [False, 'ajay@outlook.com', 'Free time and events', 'Outlook Calendar'],
+             'gcal': [True, 'ajay@gmail.com', 'Free time and events', 'Google Calendar']}
+    rows = [account_row('outlook', 'O', 'Outlook mail', *accts['outlook'][1:3], first=True),
+            account_row('ocal', 'O', 'Outlook Calendar', *accts['ocal'][1:3]),
+            account_row('gcal', 'G', 'Google Calendar', *accts['gcal'][1:3])]
     head = setup_header('NModels.dc.html', 3, 'Connect your accounts', 'Optional. I read and prepare; anything sent as you needs your signature.')
     body = body_wrap(group(rows)) + bottom(secondary('NNotifyAsk.dc.html', 'Skip'), primary('NNotifyAsk.dc.html', 'Continue')) + undo_bar(100)
     return page('Connect accounts', head + body, script=logic(accounts_vals(accts)))
@@ -461,7 +459,7 @@ def NDeleteAccount():
     <div role="status" style="position: absolute; left: 16px; right: 16px; bottom: 28px; display: flex; flex-direction: column; gap: 14px">
       <div style="padding: 16px 18px; border-radius: 24px; background: {SURFACE}; display: flex; align-items: center; gap: 14px">
         {mark('check', bg=INK, fg=ON_INK, size=40)}
-        <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 16px; font-weight: 500">Your account is being deleted</span><span style="font-size: 13px; color: {MUTED}">A confirmation is on its way to ajay@gmail.com</span></span>
+        <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 16px; font-weight: 500">Your account is being deleted</span><span style="font-size: 13px; color: {MUTED}">Signed out everywhere. The rest is erased within 30 days</span></span>
       </div>
       <div style="display: flex">{primary('NWelcome.dc.html', 'Done', trailing=None)}</div>
     </div>

@@ -116,7 +116,7 @@ drawn in stage 4. A full dark appearance is designed in stage 5. Screens marked 
 | ◆ Get a key | A short guide per provider, with a button to the provider's key page |
 | ◆ Paste and test key | The key is tested with a real call before continuing |
 | ◆ Choose models | Suggested models for jobs and for quick steps, changeable later |
-| ◆ Connect accounts | Optional: Gmail, Outlook, Google Calendar, Outlook Calendar |
+| ◆ Connect accounts | Optional: Gmail, Outlook, Google Calendar, Outlook Calendar. *At launch: Outlook mail, Outlook Calendar and Google Calendar ([D121](07-build-plan.md#decisions-in-this-stage))* |
 | ◆ Notifications | Why they matter (signatures), then the system permission prompt |
 | ◆ Ready | A first suggested job, based on what was connected |
 

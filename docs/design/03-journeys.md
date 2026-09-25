@@ -10,7 +10,8 @@ and how we know it works. What every screen shows in each state (empty, loading,
 is stage 4.
 
 The example person is the same as on the canvas: Ajay, a busy professional in India, using Gmail
-and Google Calendar, with an Anthropic key.
+and Google Calendar, with an Anthropic key. *Since [D121](07-build-plan.md#decisions-in-this-stage) (stage 7), the canvas shows him with Outlook mail
+and Google Calendar, which is what launch offers.*
 
 ## The journeys
 
@@ -51,8 +52,8 @@ confusing on the way.
 
 - No passwords. Sign-in is Apple or Google (D44, changed by D100 in stage 6: no email code).
 - The key can be skipped with "Later" in step 3. Nothing is lost: see "Before there's a key" below.
-- The first job must be one that can't do harm: it only reads (Look level). With Gmail
-  connected it's the inbox and calendar briefing; with nothing connected it's a research or
+- The first job must be one that can't do harm: it only reads (Look level). With email
+  connected (Outlook at launch, D121) it's the inbox and calendar briefing; with nothing connected it's a research or
   watch job (for example "Tell me when the MacBook Air drops below ₹90,000") (D47).
 - Every step can be left and resumed; the app remembers where you stopped.
 
@@ -265,7 +266,7 @@ and nothing is retried forever.
 |---|---|---|
 | **Key stops working** (revoked, no credit, rate-limited) | Jobs pause. One Needs you item: "Your Anthropic key was declined: no credit left." | Add credit, replace the key, or switch provider |
 | **Monthly limit reached** | Jobs pause. One Needs you item with this month's spend (D52) | Raise the limit, or wait for the new month |
-| **An account disconnects** | Jobs using it pause. One item: "Gmail needs you to sign in again." | Reconnect |
+| **An account disconnects** | Jobs using it pause. One item: "Outlook needs you to sign in again." | Reconnect |
 | **A site blocks it or needs a human** | J5: take control | Take control, or tell it to skip that site |
 | **A job can't finish** | The job moves to "Couldn't finish" with one sentence on why and what it did get (D50) | Try another way, tell it more, or drop it |
 | **A short failure** (network, a slow site) | Nothing, unless it keeps happening | It retries up to 3 times, waiting longer each time, then treats it as a job that can't finish |
@@ -293,7 +294,7 @@ Both app stores require deleting the account from inside the app; this meets tha
 | D44 | Sign in with Apple, Google~~, or an email code~~. No passwords; passkeys can come later. *Changed by [D100](06-technical-design.md#decisions-in-this-stage-part-1) on 2026-09-25: no email code, since sending codes would need our own mail server or an email service (rule 6)* | Fast and safe. Apple's App Store rules require a privacy-focused option such as Sign in with Apple when Google sign-in is offered |
 | D45 | Getting started order: account, AI key, models, accounts (optional), notifications, a first job | The key is the one thing it can't work without; everything else can wait |
 | D46 | The key step can be skipped. Before a key works, Today shows "Connect your AI to start", and handed-off jobs wait and start by themselves once it works | Nobody is stuck at a form, and nothing handed off is lost |
-| D47 | The first suggested job only reads, and fits what was connected (the inbox briefing with Gmail; a watch or research job without) | A first job must be useful and can't do harm |
+| D47 | The first suggested job only reads, and fits what was connected (the inbox briefing with email connected; a watch or research job without) | A first job must be useful and can't do harm |
 | D48 | Notifications are asked for at the end of getting started, and once more at the first signature that waits; never again after that | Explain first, ask at the moment it matters, don't nag |
 | D49 | Take control: logins, codes and CAPTCHAs pause the job and ask you to take control; you type, then hand back with "Done, carry on". Passwords are never recorded; control times out after 10 idle minutes | Real sites need a human at these moments; your secrets stay yours |
 | D50 | A job that can't finish says why in one sentence and what it did get, and offers: try another way, tell me more, or drop it. Short failures are retried up to 3 times first | Honest endings; no silent failures, no endless retries |

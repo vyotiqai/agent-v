@@ -184,7 +184,7 @@ goal's menu), **Delete your account** (the can't-be-undone page from J10) and **
 | Screen | Shows, and limits | States | Actions |
 |---|---|---|---|
 | **You** | Your photo, name and email; one row per setting with its current value | Your AI not working: its row reads "Declined" and opens Key declined | Each row opens its page |
-| **Profile and tone** | Photo and name; how it writes for you, with a sample of each tone | "In my own words": a text box, or "Learn from emails I've sent" (with Gmail) | Change photo. Name. Pick a tone: saved at once |
+| **Profile and tone** | Photo and name; how it writes for you, with a sample of each tone | "In my own words": a text box, or "Learn from emails I've sent" (with email connected) | Change photo. Name. Pick a tone: saved at once |
 | **Saved logins** | Each site, when it was last used; how passwords are handled | None: "Sign in to a site once and I stay signed in." A saved login that stopped working: "Signed out · Sign in again" | Remove: at once, with Undo. Sign in to a site: You're in control, on a site you name |
 | **Your AI** | This month's spend of the limit; the provider, key's last 4 characters, status; models for jobs and quick steps; other providers | Key declined: status reads "Declined" and opens Key declined. Limit reached: the numbers read "Limit reached". Testing a replaced key: progress on the button | Replace key: Paste and test key. Change limit: amounts. A model: Choose models. Add another provider |
 | **Add provider** | The getting started steps 1–2 (Connect your AI, Get a key, Paste and test key, Choose models), without the step bar | As in getting started | As in getting started; it ends back on Your AI |
@@ -208,7 +208,7 @@ goal's menu), **Delete your account** (the can't-be-undone page from J10) and **
 | **Get a key** | Three steps for that provider, each with where to click | — | Open the Console: the provider's site in the phone's browser. I have it: Paste and test key |
 | **Paste and test key** | The key field, hidden once pasted; the test result; how the key is kept | Testing: progress on Continue. Works (drawn). Declined: "Anthropic says this key isn't valid" or "has no credit" with what to do. Can't reach the provider: "Couldn't reach Anthropic · Try again". Another provider: an address field and a model field too | Paste. Continue: Choose models |
 | **Choose models** | Recommended models for jobs and quick steps, with cost hints; the monthly limit | Only one suitable model: it's picked and the choice is hidden. The provider's list couldn't load: the recommended ones only | Pick. The limit: amounts. Continue |
-| **Connect your accounts** | Gmail, Google Calendar, Outlook mail, Outlook Calendar; what access means | Connecting: progress on the button. Refused on the provider's page: back here, "Not connected" | Connect. Skip. Continue |
+| **Connect your accounts** | Outlook mail, Outlook Calendar, Google Calendar at launch; Gmail once public ([D121](07-build-plan.md#decisions-in-this-stage)); what access means | Connecting: progress on the button. Refused on the provider's page: back here, "Not connected" | Connect. Skip. Continue |
 | **Let me reach you** | Why notifications matter; an example notification | Answered before (on this phone): the step is skipped | Allow notifications: the phone's prompt (D48). Not now |
 | **You're set** | A first job that fits what was connected (D47) | Nothing connected: a watch or research job | Start this job: Today, with it running. Hand me something else: Hand something off |
 

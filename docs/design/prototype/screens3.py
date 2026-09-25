@@ -82,7 +82,7 @@ def NYou():
     agent = [
         srow('NAI.dc.html', mark('sparkle'), 'Your AI', 'Anthropic · Claude Sonnet 5',
              trail=dot_status(GREEN, 'Working'), first=True, h=52),
-        srow('NAccounts.dc.html', mark('link'), 'Connected accounts', 'Gmail and Google Calendar', h=52),
+        srow('NAccounts.dc.html', mark('link'), 'Connected accounts', 'Outlook and Google Calendar', h=52),
         srow('NLogins.dc.html', mark('key'), 'Saved logins', '4 sites', h=52),
         srow('NRules.dc.html', mark('pen'), 'What needs your signature', 'Acting as you asks first', h=52),
         srow('NMemory.dc.html', mark('memory'), 'What I remember', '46 things', h=52),
@@ -238,30 +238,29 @@ def accounts_vals(accts):
 
 @screen
 def NAccounts():
-    accts = {'gmail': [True, 'ajay@gmail.com', 'Mail and drafts', 'Gmail'],
-             'gcal': [True, 'ajay@gmail.com', 'Free time and events', 'Google Calendar'],
-             'outlook': [False, 'ajay@outlook.com', 'Mail and drafts', 'Outlook mail'],
-             'ocal': [False, 'ajay@outlook.com', 'Free time and events', 'Outlook Calendar']}
-    google = [account_row('gmail', 'G', 'Gmail', *accts['gmail'][1:3], first=True), account_row('gcal', 'G', 'Google Calendar', *accts['gcal'][1:3])]
+    accts = {'outlook': [True, 'ajay@outlook.com', 'Mail and drafts', 'Outlook mail'],
+             'ocal': [False, 'ajay@outlook.com', 'Free time and events', 'Outlook Calendar'],
+             'gcal': [True, 'ajay@gmail.com', 'Free time and events', 'Google Calendar']}
     microsoft = [account_row('outlook', 'O', 'Outlook mail', *accts['outlook'][1:3], first=True), account_row('ocal', 'O', 'Outlook Calendar', *accts['ocal'][1:3])]
-    access = f'''    <sc-if value="{{{{c_gmail}}}}" hint-placeholder-val="{{{{ true }}}}">
+    google = [account_row('gcal', 'G', 'Google Calendar', *accts['gcal'][1:3], first=True)]
+    access = f'''    <sc-if value="{{{{c_outlook}}}}" hint-placeholder-val="{{{{ true }}}}">
     <section style="padding: 16px 18px; {BLOCK}; display: flex; flex-direction: column; gap: 10px">
-      <h2 style="{LABEL}">What Gmail access allows</h2>
+      <h2 style="{LABEL}">What Outlook mail access allows</h2>
       <p style="margin: 0; display: flex; gap: 10px; font-size: 14px; line-height: 1.45">{icon('check', 16, 2)}<span>Read and sort your mail, and write drafts</span></p>
       <p style="margin: 0; display: flex; gap: 10px; font-size: 14px; line-height: 1.45">{icon('pen', 16)}<span>Send only what you sign</span></p>
       <sc-if value="{{{{menu}}}}" hint-placeholder-val="{{{{ true }}}}">
-        <button type="button" onClick="{{{{open_disc}}}}" style="align-self: flex-start; height: 36px; margin-top: 4px; padding: 0 14px; border: 0; border-radius: 999px; background: {SURFACE_2}; font-family: inherit; font-size: 13px; font-weight: 500; color: {INK}">Disconnect Gmail</button>
+        <button type="button" onClick="{{{{open_disc}}}}" style="align-self: flex-start; height: 36px; margin-top: 4px; padding: 0 14px; border: 0; border-radius: 999px; background: {SURFACE_2}; font-family: inherit; font-size: 13px; font-weight: 500; color: {INK}">Disconnect Outlook mail</button>
       </sc-if>
       <sc-if value="{{{{p_disc}}}}" hint-placeholder-val="{{{{ false }}}}">
-        <div role="alertdialog" aria-label="Disconnect Gmail?" style="margin-top: 4px; padding: 14px; border-radius: 18px; background: {SURFACE_2}; display: flex; flex-direction: column; gap: 10px">
-          <span style="font-size: 14px; line-height: 1.4"><b style="font-weight: 600">Disconnect Gmail?</b> The morning briefing and 1 other job use it and will pause.</span>
-          <span style="display: flex; gap: 8px">{act('Cancel', 'closePanel', bg=SURFACE)}{act('Disconnect', 'disconnect_gmail', bg=INK, fg=ON_INK)}</span>
+        <div role="alertdialog" aria-label="Disconnect Outlook mail?" style="margin-top: 4px; padding: 14px; border-radius: 18px; background: {SURFACE_2}; display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 14px; line-height: 1.4"><b style="font-weight: 600">Disconnect Outlook mail?</b> The morning briefing and 1 other job use it and will pause.</span>
+          <span style="display: flex; gap: 8px">{act('Cancel', 'closePanel', bg=SURFACE)}{act('Disconnect', 'disconnect_outlook', bg=INK, fg=ON_INK)}</span>
         </div>
       </sc-if>
     </section>
     </sc-if>'''
     head = settings_header('NYou.dc.html', 'Connected accounts', 'I work through these. You can disconnect any of them at any time.')
-    return page('Connected accounts', head + body_wrap(group(google, 'Google'), access, group(microsoft, 'Microsoft')) + undo_bar(28),
+    return page('Connected accounts', head + body_wrap(group(microsoft, 'Microsoft'), access, group(google, 'Google')) + undo_bar(28),
                 script=logic("    panels(['disc']);" + accounts_vals(accts)))
 
 

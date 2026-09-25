@@ -114,20 +114,22 @@ const tests = {
     ok(await shown(p.getByText('this month, of your $50 limit')) && await shown(p.getByText('6%')), 'a new limit updates the numbers');
   },
   async NAccounts(p, ok) {
+    const before = await p.getByText('ajay@outlook.com', { exact: true }).count();
     await p.getByRole('button', { name: 'Connect', exact: true }).first().click();
     await p.waitForTimeout(1200);
-    ok(await shown(p.getByText('ajay@outlook.com')), 'Connect connects the account');
-    await p.getByRole('button', { name: 'Disconnect Gmail' }).click();
-    ok(await shown(p.getByText('Disconnect Gmail?')), 'Disconnect asks first');
+    ok((await p.getByText('ajay@outlook.com', { exact: true }).count()) === before + 1, 'Connect connects the account');
+    await p.getByRole('button', { name: 'Disconnect Outlook mail' }).click();
+    ok(await shown(p.getByText('Disconnect Outlook mail?')), 'Disconnect asks first');
     await p.getByRole('button', { name: 'Disconnect', exact: true }).click();
-    ok(!(await shown(p.getByText('What Gmail access allows'))), 'Gmail is disconnected');
+    ok(!(await shown(p.getByText('What Outlook mail access allows'))), 'Outlook mail is disconnected');
     await p.getByRole('button', { name: 'Undo' }).click();
-    ok(await shown(p.getByText('What Gmail access allows')), 'Undo reconnects Gmail');
+    ok(await shown(p.getByText('What Outlook mail access allows')), 'Undo reconnects Outlook mail');
   },
   async NLinkAccounts(p, ok) {
+    const before = await p.getByText('ajay@outlook.com', { exact: true }).count();
     await p.getByRole('button', { name: 'Connect', exact: true }).first().click();
     await p.waitForTimeout(1200);
-    ok(await shown(p.getByText('ajay@outlook.com')), 'Connect connects the account');
+    ok((await p.getByText('ajay@outlook.com', { exact: true }).count()) === before + 1, 'Connect connects the account');
   },
   async NLogins(p, ok) {
     await p.getByRole('button', { name: 'Remove' }).first().click();

@@ -402,7 +402,7 @@ def NSearch():
 REPLAY = [
     ('09:10', 'Checked your calendar for next week', 'Mornings are mostly free; afternoons are busy.', 'cal'),
     ('09:12', 'Picked three free mornings: Monday, Wednesday and Friday', 'Maya prefers mornings, so I skipped the afternoons.', 'cal'),
-    ('09:26', 'You signed the invite, and I sent it to Maya', 'Sent from ajay@gmail.com right after your signature.', 'mail'),
+    ('09:26', 'You signed the invite, and I sent it to Maya', 'Sent from ajay@outlook.com right after your signature.', 'mail'),
     ('09:26', 'Waiting for Maya to accept', 'I’ll tell you when she does, or find new times if she can’t.', 'wait'),
 ]
 
@@ -429,7 +429,7 @@ def NReplay():
     </sc-if>
     <sc-if value="{{{{picMail}}}}" hint-placeholder-val="{{{{ false }}}}">
       <span role="img" aria-label="The invite that was sent" style="display: flex; flex-direction: column; gap: 10px">
-        <span style="display: flex; align-items: center; gap: 10px">{initial('M', bg='#F0F0ED', fg=PIC_INK, size=36)}<span style="display: flex; flex-direction: column"><span style="font-size: 14px; font-weight: 500">To Maya Chen</span><span style="font-size: 12px; color: {PIC_MUTED}">From ajay@gmail.com · 09:26</span></span></span>
+        <span style="display: flex; align-items: center; gap: 10px">{initial('M', bg='#F0F0ED', fg=PIC_INK, size=36)}<span style="display: flex; flex-direction: column"><span style="font-size: 14px; font-weight: 500">To Maya Chen</span><span style="font-size: 12px; color: {PIC_MUTED}">From ajay@outlook.com · 09:26</span></span></span>
         <span style="font-size: 15px; font-weight: 500">Invitation: call, Monday 10:00</span>
         <span style="font-size: 13px; line-height: 1.45; color: {PIC_MUTED}">Also free: Wednesday 9:30 or Friday 10:30. Pick whichever suits you.</span>
       </span>

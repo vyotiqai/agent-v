@@ -177,7 +177,7 @@ def NSign():
       </span>
     </div>
     <div style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 8px">
-      {pill(icon('mail', 15) + 'From ajay@gmail.com')}
+      {pill(icon('mail', 15) + 'From ajay@outlook.com')}
       {pill(icon('clock', 15) + 'Waits until 08:40 tomorrow')}
     </div>''') + f'''
   <article aria-label="The email" style="margin: 12px 12px 0; padding: 22px 22px 16px; {BLOCK}; display: flex; flex-direction: column; gap: 14px">
