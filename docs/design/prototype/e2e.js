@@ -147,7 +147,7 @@ const tests = {
   },
   async NPrivacy(p, ok) {
     await p.getByRole('button', { name: /Export everything/ }).click();
-    ok(await shown(p.getByText('Preparing… I’ll email a link to ajay@gmail.com')), 'export starts');
+    ok(await shown(p.getByText('Preparing… I’ll tell you when it’s ready')), 'export starts');
     await p.getByRole('button', { name: 'Sign out' }).click();
     ok(await shown(p.getByText('Sign out on this phone?')), 'Sign out asks first');
   },

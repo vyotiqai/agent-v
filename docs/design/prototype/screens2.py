@@ -274,7 +274,7 @@ def NComputer():
     extra = f'''
     <div style="margin-top: 22px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
       {stat('12', 'files')}
-      {stat('2.1', 'GB of 10 GB', left_rule=True)}
+      {stat('0.4', 'GB of 1 GB', left_rule=True)}
       {stat('38', 'commands', left_rule=True)}
     </div>'''
     body = jobs_header('Computer', extra) + f'''

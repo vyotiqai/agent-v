@@ -412,7 +412,7 @@ def NPrivacy():
     data = [
         f'''      <button type="button" onClick="{{{{export}}}}" disabled="{{{{exporting}}}}" style="width: 100%; padding: 8px 0; border: 0; background: transparent; display: flex; align-items: center; gap: 12px; min-height: 56px; text-align: left; font-family: inherit; color: {INK}">{mark('download')}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 15px; font-weight: 500">Export everything</span><span style="font-size: 13px; color: {MUTED}">{{{{exportSub}}}}</span></span>{chevron()}</button>''',
         srow('NMemory.dc.html', mark('memory'), 'What I remember', '46 things'),
-        srow('NComputer.dc.html', mark('file'), 'Files on my computer', '2.1 GB'),
+        srow('NComputer.dc.html', mark('file'), 'Files on my computer', '0.4 GB'),
     ]
     promises = f'''    <section style="padding: 16px 18px; {BLOCK}; display: flex; flex-direction: column; gap: 10px">
       <h2 style="{LABEL}">How your data is kept</h2>
@@ -434,10 +434,10 @@ def NPrivacy():
     head = settings_header('NYou.dc.html', 'Privacy and your data')
     return page('Privacy and your data', head + body_wrap(group(data), promises, danger) + undo_bar(28), script=logic("""    panels(['signout']);
     out.exporting = Boolean(st.exporting);
-    out.exportSub = st.exporting ? 'Preparing… I’ll email a link to ajay@gmail.com' : 'Jobs, files, memory and settings, as a zip';
+    out.exportSub = st.exporting ? 'Preparing… I’ll tell you when it’s ready' : 'Jobs, files, memory and settings, as a zip';
     out.export = () => {
       this.setState({ exporting: true });
-      this.flash('Preparing your export. The link comes by email, usually within an hour.');
+      this.flash('Preparing your export. I’ll notify you when it’s ready to download, usually within an hour.');
     };"""))
 
 

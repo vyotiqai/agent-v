@@ -278,7 +278,7 @@ and nothing is retried forever.
 | Step | Screen | What happens |
 |---|---|---|
 | 1 | You → Privacy and your data | Export everything, or delete the account |
-| 2 | Export | A zip of jobs, results, files, memory and settings, sent by email link when ready |
+| 2 | Export | A zip of jobs, results, files, memory and settings. When it's ready, a notification; it downloads in the app for 7 days *(changed by D111, stage 6: it was sent by email link, and Agent V sends no email since D100)* |
 | 3 | Delete my account | Like any can't-be-undone step: what will be lost, hold, then Face ID |
 | 4 | After deleting | Running jobs stop, connected accounts are disconnected, keys and saved logins are erased at once; everything else is erased within 30 days |
 

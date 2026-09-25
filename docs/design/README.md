@@ -10,7 +10,7 @@ and no code is written until the design is complete.
 | 3. Key journeys: first launch, asking, approving, following work, results | [03-journeys.md](03-journeys.md) | Agreed 2026-09-25 |
 | 4. Every screen in detail, including empty, loading, error and offline states | [04-screens.md](04-screens.md) | Agreed 2026-09-25 |
 | 5. Design system: colour, type, spacing, components, icons, motion, accessibility | [05-design-system.md](05-design-system.md) | Agreed 2026-09-25 |
-| 6. Technical design: part 1 the system; part 2 running it safely | [06-technical-design.md](06-technical-design.md) | Part 1 agreed 2026-09-25; part 2 in progress |
+| 6. Technical design: part 1 the system; part 2 running it safely | [06-technical-design.md](06-technical-design.md) | Part 1 agreed 2026-09-25; part 2 proposed, in review |
 | 7. Build plan: small slices, each working and verified before the next | — | Not started |
 
 Stages 2 to 5 come with clickable phone mockups.
