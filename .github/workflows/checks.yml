@@ -64,6 +64,36 @@ jobs:
         working-directory: tools/gallery
       - run: node --test tools/gallery/interact.ts
 
+  android:
+    name: Android build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CI: 1
+      EXPO_OFFLINE: 1
+      # A compile check only: the real package name follows the domain (D124), and the real
+      # settings come with the release builds (D115).
+      AGENT_V_ANDROID_PACKAGE: ci.agentv.check
+      EXPO_PUBLIC_API_URL: https://api.invalid
+      EXPO_PUBLIC_GOOGLE_CLIENT_ID: ci.apps.googleusercontent.invalid
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: npm ci
+      # The native project is generated, never kept (Expo's prebuild), then compiled: this is what
+      # checks our own Kotlin modules (sign-in and the signing key) against Android and Expo.
+      - run: npx expo prebuild --platform android --no-install --clean
+        working-directory: app
+      - run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
+        working-directory: app/android
+
   server-image:
     name: Server image
     runs-on: ubuntu-24.04

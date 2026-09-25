@@ -8,6 +8,8 @@
 // - Switch: a press turns it on and off, and screen readers are told which.
 // - Filters: a press chooses one, and only one, option.
 // - The focus ring: 2px in `focus`, 2px away, on a control reached by the keyboard (D77).
+// - Welcome and Privacy and your data (slice 1): what each says when signing in fails, and signing
+//   out, here and of another phone.
 
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
@@ -126,6 +128,73 @@ test('a control reached by the keyboard shows the 2px focus ring, 2px away', asy
     style: 'solid',
     color: 'rgb(51, 85, 255)',
   });
+  await page.close();
+});
+
+async function openScreen(query: string): Promise<Page> {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await page.goto(`${base}/?${query}`);
+  await page.locator('[data-testid="screen"]').waitFor();
+  return page;
+}
+
+const log = (page: Page) =>
+  page.evaluate(() => (globalThis as { galleryLog?: string[] }).galleryLog ?? []);
+
+test('Welcome: a failed sign-in says so under the button, with Try again', async () => {
+  const page = await openScreen('s=Welcome&state=failed');
+  await page.getByRole('button', { name: 'Continue with Google' }).click();
+  await page.getByText('Couldn’t sign in with Google ·').waitFor();
+  await page.getByRole('button', { name: 'Try again' }).click();
+  await page.getByText('Couldn’t sign in with Google ·').waitFor();
+  await page.close();
+});
+
+test('Welcome: a cancelled sign-in says nothing', async () => {
+  const page = await openScreen('s=Welcome&state=cancelled');
+  await page.getByRole('button', { name: 'Continue with Google' }).click();
+  await page.waitForTimeout(300);
+  assert.equal(await page.getByText('Couldn’t sign in').count(), 0);
+  await page.close();
+});
+
+test('Welcome: a phone without a screen lock is told why', async () => {
+  const page = await openScreen('s=Welcome&state=no-screen-lock');
+  await page.getByRole('button', { name: 'Continue with Google' }).click();
+  await page.getByText('Set a screen lock on this phone first.', { exact: false }).waitFor();
+  await page.close();
+});
+
+test('Privacy: signing out another phone asks first, then it leaves the list and the bar says so', async () => {
+  const page = await openScreen('s=Privacy');
+  await page.getByText('Pixel 6a').waitFor();
+  await page.getByRole('button', { name: 'Sign out' }).first().click();
+  await page.getByText('Sign out Pixel 6a?').waitFor();
+  await page.getByRole('button', { name: 'Cancel' }).click();
+  assert.equal(await page.getByText('Sign out Pixel 6a?').count(), 0);
+  await page.getByRole('button', { name: 'Sign out' }).first().click();
+  await page.getByRole('alert').getByRole('button', { name: 'Sign out' }).click();
+  await page.getByText('Pixel 6a is signed out. It will need to sign in again.').waitFor();
+  assert.equal(await page.getByText('Pixel 6a', { exact: true }).count(), 0);
+  assert.deepEqual(await log(page), ['signOutPhone 0192c3a0-0000-7000-8000-000000000002']);
+  await page.close();
+});
+
+test('Privacy: signing out this phone asks first', async () => {
+  const page = await openScreen('s=Privacy');
+  await page.getByText('Pixel 8').waitFor();
+  await page.getByRole('button', { name: 'Sign out', exact: true }).last().click();
+  await page.getByText('Sign out on this phone?').waitFor();
+  await page.getByRole('alert').getByRole('button', { name: 'Sign out' }).click();
+  await page.waitForTimeout(100);
+  assert.deepEqual(await log(page), ['signOut']);
+  await page.close();
+});
+
+test('Privacy: phones that didn’t load say so, with Try again', async () => {
+  const page = await openScreen('s=Privacy&state=failed');
+  await page.getByText('Your phones didn’t load').waitFor();
+  assert.equal(await page.getByRole('button', { name: 'Try again' }).count(), 1);
   await page.close();
 });
 

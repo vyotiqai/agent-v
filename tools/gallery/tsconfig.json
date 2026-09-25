@@ -8,5 +8,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["index.tsx", "previews.tsx", "compare.ts", "interact.ts"]
+  "include": ["index.tsx", "previews.tsx", "screens.tsx", "compare.ts", "interact.ts"]
 }

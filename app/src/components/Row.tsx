@@ -22,6 +22,8 @@ export interface RowProps {
   onPress?: () => void;
   /** A hairline above; Block sets it on every row after the first. */
   separator?: boolean;
+  /** `settings` rows are 56 tall rather than 62 (stage 5, section 4). */
+  size?: 'block' | 'settings';
 }
 
 /** One line in a block: a mark, a title and a detail, and where it leads. */
@@ -35,6 +37,7 @@ export function Row({
   trailing,
   onPress,
   separator = false,
+  size: rowSize = 'block',
 }: RowProps) {
   const { colors } = useTheme();
   const detailColor = detailTone
@@ -43,7 +46,7 @@ export function Row({
   const body = (
     <>
       {icon ? <Mark icon={icon} {...(markTone ? { tone: markTone } : {})} /> : (lead ?? null)}
-      <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+      <View style={{ flex: 1, minWidth: 0, gap: rowSize === 'settings' ? 1 : 2 }}>
         <Text variant="row" natural numberOfLines={1}>
           {title}
         </Text>
@@ -61,8 +64,8 @@ export function Row({
     </>
   );
   const style = {
-    minHeight: size.row,
-    paddingVertical: 10,
+    minHeight: rowSize === 'settings' ? 56 : size.row,
+    paddingVertical: rowSize === 'settings' ? 8 : 10,
     borderTopWidth: separator ? 1 : 0,
     borderTopColor: colors.line,
     flexDirection: 'row' as const,

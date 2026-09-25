@@ -15,6 +15,8 @@ export interface DarkTopProps {
   sub?: string;
   /** The soft blue light at the top right; on by default. */
   glow?: boolean;
+  /** Settings pages set their title 18 below the top row, where main screens use 22. */
+  variant?: 'main' | 'settings';
   children?: ReactNode;
 }
 
@@ -30,12 +32,15 @@ export function DarkTop({
   title,
   sub,
   glow = true,
+  variant = 'main',
   children,
 }: DarkTopProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [box, setBox] = useState({ width: 0, height: 0 });
-  const spacer = <View style={{ width: size.target, flexShrink: 0 }} />;
+  // A 44px space where a button isn't, so the chip stays centred and the title sits where it does
+  // on every other screen.
+  const spacer = <View style={{ width: size.target, height: size.target, flexShrink: 0 }} />;
   return (
     <View
       accessibilityRole="header"
@@ -80,7 +85,12 @@ export function DarkTop({
         {trailing ?? spacer}
       </View>
       {title ? (
-        <Text variant="title" color="onNight" accessibilityRole="header" style={{ marginTop: 22 }}>
+        <Text
+          variant="title"
+          color="onNight"
+          accessibilityRole="header"
+          style={{ marginTop: variant === 'settings' ? 18 : 22 }}
+        >
           {title}
         </Text>
       ) : null}

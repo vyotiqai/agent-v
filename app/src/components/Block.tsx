@@ -9,7 +9,17 @@ import { Text } from './Text.tsx';
  * A white block on the ground, holding rows under an optional label. Rows after the first get a
  * hairline above them.
  */
-export function Block({ label, children }: { label?: string; children?: ReactNode }) {
+export function Block({
+  label,
+  variant = 'block',
+  children,
+}: {
+  label?: string;
+  /** `settings`: the tighter groups of settings pages, 4 above and below. */
+  variant?: 'block' | 'settings';
+  children?: ReactNode;
+}) {
+  const settings = variant === 'settings';
   const { colors } = useTheme();
   let rows = 0;
   const items = Children.map(children, (child) => {
@@ -23,7 +33,7 @@ export function Block({ label, children }: { label?: string; children?: ReactNod
     <View
       accessibilityLabel={label}
       style={{
-        paddingTop: 12,
+        paddingTop: settings ? 4 : 12,
         paddingHorizontal: 18,
         paddingBottom: 4,
         borderRadius: radius.block,
@@ -36,7 +46,11 @@ export function Block({ label, children }: { label?: string; children?: ReactNod
           color="inkMuted"
           natural
           accessibilityRole="header"
-          style={{ marginBottom: 2, fontFamily: fonts.sans500 }}
+          style={
+            settings
+              ? { paddingTop: 10, fontFamily: fonts.sans500 }
+              : { marginBottom: 2, fontFamily: fonts.sans500 }
+          }
         >
           {label}
         </Text>
