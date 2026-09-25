@@ -6,7 +6,7 @@ and no code is written until the design is complete.
 | Stage | Document | Status |
 |---|---|---|
 | 1. Foundations: vision, audience, principles, launch scope | [01-foundations.md](01-foundations.md) | Agreed 2026-09-25 |
-| 2. App map: every screen and how you move between them | [02-app-map.md](02-app-map.md) | Redrawn in Ledger, in review |
+| 2. App map: every screen and how you move between them | [02-app-map.md](02-app-map.md) | Ledger rebalanced (less text), in review |
 | 3. Key journeys: first launch, asking, approving, following work, results | — | Not started |
 | 4. Every screen in detail, including empty, loading, error and offline states | — | Not started |
 | 5. Design system: colour, type, spacing, components, icons, motion, accessibility | — | Not started |
@@ -14,6 +14,9 @@ and no code is written until the design is complete.
 | 7. Build plan: small slices, each working and verified before the next | — | Not started |
 
 Stages 2 to 5 come with clickable phone mockups.
+
+Reference images collected for inspiration, and what we take from them and leave behind, are in
+[references/](references/README.md).
 
 ## How decisions are recorded
 

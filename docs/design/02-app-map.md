@@ -1,9 +1,11 @@
 # Stage 2 — App map
 
-**Status:** proposed on 2026-09-25, redrawn in the Ledger direction, waiting for review.
+**Status:** proposed on 2026-09-25; Ledger rebalanced to be less text-heavy, waiting for review.
 **Mockups:** [Agent V — App map](https://claude.ai/artifact/7Y2irrycwGs5zc2bZ1oEf9), a canvas
-at phone size. The page **"Ledger (chosen direction)"** is current; press Play on a screen to
-click through. The other two pages are kept as history.
+at phone size. The page **"Rebalanced (proposal)"** is the latest: six screens showing the
+rebalanced look. The page "Ledger (chosen direction)" has every screen in the earlier, wordier
+version; it will be redrawn once the rebalanced look is agreed. Press Play on a screen to click
+through. The other pages are kept as history.
 
 This stage lists every screen in the app and how you move between them. What each screen
 contains in every state (empty, loading, error, offline) is stage 4; the full design system is
@@ -30,10 +32,22 @@ delegated earlier choices to the recommendation, so the recommended direction, L
 forward (D23). Every screen was redrawn in it, and the gaps in the first draft were filled: a
 question from the agent, a filed result, and a working hold-to-sign.
 
+**2026-09-25, rebalanced.** Feedback: the Ledger screens were a little text-heavy; the look
+should be balanced. The owner shared new reference images (kept, with notes, in
+[references/](references/README.md)). Their ideas, not their looks, were brought into Ledger:
+numbers as anchors, blocks with rhythm, icons in place of labels, round icon buttons, a
+full-screen voice page and a warm night appearance (D28–D33, proposed). Six screens are drawn
+on the page "Rebalanced (proposal)": Today, Today at night, Hand something off, Speaking to
+Agent V, the Job page and For your signature. Two earlier slips against D27 were fixed on the
+way: the voice button and the step in progress were blue. They are now ink, because blue only
+means waiting on you.
+
 ## 1. Ledger at a glance
 
-- **Paper and ink.** Warm paper, near-black ink, fine rules between items. No cards, no shadows,
-  no floating chrome.
+- **Paper and ink.** Warm paper, near-black ink, fine rules between items. No shadows and no
+  floating chrome. Flat paper-tone blocks group things (D29).
+- **Glance first, read second.** Each main screen leads with numbers, marks or small pictures.
+  Full sentences are kept for what the agent writes: its drafts, answers and reports (D28).
 - **Two voices in type.** A serif (Newsreader) for what the agent says and for content; a clean
   sans (Instrument Sans) for controls, labels and data. Small letter-spaced labels head each
   section: WAITING ON YOU, ON MY DESK, FILED THIS MORNING.
@@ -50,8 +64,10 @@ The exact colours, sizes and spacing are settled in stage 5.
 
 ## 2. How you move around
 
-- **No tab bar.** Every main screen ends with a **"Hand something off…"** line and a voice
-  button, because handing work off is the main action.
+- **No tab bar.** Every main screen ends with a **"Hand something off…"** line, with a +
+  (attach) and a voice button, because handing work off is the main action.
+- **Speaking** opens a full page (D31): your words in large type as you speak, a live voice
+  level, and three buttons: Type, Hand it off, Cancel.
 - **The masthead.** The wordmark AGENT V at the top left always returns to **Today** (the home
   screen). Search, Jobs and your initial (You) sit at the top right.
 - **Decisions are pages, in order.** Opening something waiting on you shows it full screen with
@@ -67,7 +83,8 @@ The exact colours, sizes and spacing are settled in stage 5.
 
 ## 3. Every screen
 
-Screens marked ◆ are drawn on the Ledger page of the canvas.
+Screens marked ◆ are drawn on the canvas: on the Ledger page, and for Today, Hand something
+off, Speaking, the Job page and For your signature, also on the Rebalanced page.
 
 ### Getting started
 
@@ -88,7 +105,8 @@ Screens marked ◆ are drawn on the Ledger page of the canvas.
 | Screen | Purpose |
 |---|---|
 | ◆ Today | The date, a short briefing, then Waiting on you, On my desk, Filed this morning |
-| ◆ Hand something off | Type or speak; attach a photo, file or link; suggestions |
+| ◆ Hand something off | Type or speak; attach a photo, file or link; suggestion cards |
+| ◆ Speaking to Agent V | Full-page voice: your words as you speak, a live level, Type, Hand it off or Cancel |
 | ◆ Before I start | Only when it matters (D2): the plan, which steps need your signature, Start or Change |
 | ◆ Job page | Goal, the plan with live progress, the record of what was done, the result; follow-up line |
 | Job menu | Pause, stop, change how it repeats, share the result, delete |
@@ -158,3 +176,9 @@ The hold lasts under a second, fills visibly while held, and cancels if released
 | D25 | Approvals are signatures: press and hold to sign; can't-undo adds Face ID or fingerprint; accessible alternatives in section 4 | Deliberate without being slow; one gesture across the app |
 | D26 | Everything waiting on you opens as a full page, numbered in a queue (1 of 3) with Next | Clearing decisions becomes one pass; nothing gets lost behind a sheet |
 | D27 | Colour carries meaning: blue only for "waiting on you", deep red only for "can't be undone" and sign out, green only for a working connection | People learn what matters at a glance |
+| D28 | *Proposed.* Glance first: each main screen leads with numbers, marks or small pictures (Today's tally, a job's 3/5, a price chart, a picture of what the agent saw). Sentences are for what the agent writes | Owner feedback: too text-heavy. People should understand a screen in a second |
+| D29 | *Proposed.* Flat paper-tone blocks, with no shadows, group related things. At most one coloured block per screen, and its colour keeps its D27 meaning | Rhythm without clutter; colour still means one thing |
+| D30 | *Proposed.* Every item carries a mark for its kind (email, question, web, watch, file) and fits on one line. A second line appears only for risk, such as "Can't be undone" | Marks replace words; risk is never hidden |
+| D31 | *Proposed.* Speaking is a full page, always in the night palette: your words large, older words fading, a live voice level drawn as fine rules | Voice is a main way to hand work off, so it gets a proper screen |
+| D32 | *Proposed.* Night appearance: warm ink with a soft desk-lamp light at the top of main screens. Blue, red and green keep their meanings; the lamp is never used on controls | Dark mode is already in settings. This makes it feel crafted and warm, not just inverted |
+| D33 | *Proposed.* Secondary actions are round icon buttons with a short label under them; the one primary action stays a full-width button | Fewer words, bigger targets, a clear main action |
