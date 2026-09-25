@@ -1,7 +1,8 @@
 # Agent V design
 
 The design is written in stages. Each stage is reviewed and agreed before the next one starts,
-and no code is written until the design is complete.
+and no code is written until the design is complete. All seven stages are agreed (2026-09-25):
+the design is complete, and building follows the plan in stage 7.
 
 | Stage | Document | Status |
 |---|---|---|
@@ -11,7 +12,7 @@ and no code is written until the design is complete.
 | 4. Every screen in detail, including empty, loading, error and offline states | [04-screens.md](04-screens.md) | Agreed 2026-09-25 |
 | 5. Design system: colour, type, spacing, components, icons, motion, accessibility | [05-design-system.md](05-design-system.md) | Agreed 2026-09-25 |
 | 6. Technical design: part 1 the system; part 2 running it safely | [06-technical-design.md](06-technical-design.md) | Agreed 2026-09-25 |
-| 7. Build plan: small slices, each working and verified before the next | [07-build-plan.md](07-build-plan.md) | Proposed, in review |
+| 7. Build plan: small slices, each working and verified before the next | [07-build-plan.md](07-build-plan.md) | Agreed 2026-09-25 |
 
 Stages 2 to 5 come with clickable phone mockups.
 

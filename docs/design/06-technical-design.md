@@ -865,8 +865,8 @@ Everything is verified end to end with real services (rule 3), and nothing in th
 
 ## Open questions for stage 7
 
-| Question |
-|---|
-| The order of the build slices, each one working end to end and verified before the next |
-| Which slice first reaches real people (a small closed test), and when the stores come in |
-| When to start the outside processes that take weeks: Google's security assessment for Gmail, Google's and Microsoft's app verification, the Apple and Google developer accounts, the name and trademark check, Google for Startups |
+| Question | Answered in |
+|---|---|
+| The order of the build slices, each one working end to end and verified before the next | Stage 7 (D117, D118) |
+| Which slice first reaches real people (a small closed test), and when the stores come in | Stage 7 (D119, D120) |
+| When to start the outside processes that take weeks: Google's security assessment for Gmail, Google's and Microsoft's app verification, the Apple and Google developer accounts, the name and trademark check, Google for Startups | Stage 7 (D121, D122) |

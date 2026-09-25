@@ -1,6 +1,6 @@
 # Stage 7 — Build plan
 
-**Status:** proposed on 2026-09-25, waiting for review.
+**Status:** agreed on 2026-09-25. The design is complete; building starts with slice 0.
 **Builds on:** stages [1](01-foundations.md) to [6](06-technical-design.md), and the
 [rules for building Agent V](README.md#rules-for-building-agent-v).
 
