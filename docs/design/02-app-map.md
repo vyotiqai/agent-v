@@ -1,7 +1,6 @@
 # Stage 2 — App map
 
-**Status:** proposed on 2026-09-25. The visual direction (D34) was agreed on 2026-09-25, and every
-screen is now drawn in it. Waiting for approval of the stage as a whole.
+**Status:** agreed on 2026-09-25. Every screen is drawn in the agreed visual direction (D34).
 **Mockups:** [Agent V — App map](https://claude.ai/artifact/7Y2irrycwGs5zc2bZ1oEf9), a canvas
 at phone size. The page **"New direction"** is current. It has five rows: every day; finding
 your work, goals and ideas; you and settings; getting started; and menus and surfaces outside the

@@ -6,8 +6,8 @@ and no code is written until the design is complete.
 | Stage | Document | Status |
 |---|---|---|
 | 1. Foundations: vision, audience, principles, launch scope | [01-foundations.md](01-foundations.md) | Agreed 2026-09-25 |
-| 2. App map: every screen and how you move between them | [02-app-map.md](02-app-map.md) | New visual direction agreed (D34); everyday flow redrawn, the rest in progress |
-| 3. Key journeys: first launch, asking, approving, following work, results | — | Not started |
+| 2. App map: every screen and how you move between them | [02-app-map.md](02-app-map.md) | Agreed 2026-09-25 |
+| 3. Key journeys: first launch, asking, approving, following work, results | [03-journeys.md](03-journeys.md) | Proposed, in review |
 | 4. Every screen in detail, including empty, loading, error and offline states | — | Not started |
 | 5. Design system: colour, type, spacing, components, icons, motion, accessibility | — | Not started |
 | 6. Technical design | — | Not started |
