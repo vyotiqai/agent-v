@@ -586,6 +586,15 @@
    "x": 4230,
    "y": 2488
   },
+  "NSearchKey.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "clean",
+   "title": "Brave Search key",
+   "w": 390,
+   "x": 4700,
+   "y": 2488
+  },
   "NProfile.dc.html": {
    "h": 844,
    "is_interactive": true,
@@ -1205,6 +1214,15 @@
    "title": "Privacy and your data (dark)",
    "w": 390,
    "x": 4230,
+   "y": 2488
+  },
+  "NSearchKeyDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "dark",
+   "title": "Brave Search key (dark)",
+   "w": 390,
+   "x": 4700,
    "y": 2488
   },
   "NProfileDark.dc.html": {
@@ -1899,6 +1917,7 @@
   "NNotifs.dc.html",
   "NBriefing.dc.html",
   "NPrivacy.dc.html",
+  "NSearchKey.dc.html",
   "NWelcome.dc.html",
   "NConnect.dc.html",
   "NGetKey.dc.html",
@@ -1962,6 +1981,7 @@
   "NNotifyAskDark.dc.html",
   "NPlanDark.dc.html",
   "NPrivacyDark.dc.html",
+  "NSearchKeyDark.dc.html",
   "NProfileDark.dc.html",
   "NQuestionDark.dc.html",
   "NReadyDark.dc.html",

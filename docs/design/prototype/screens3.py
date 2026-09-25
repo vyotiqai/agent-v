@@ -33,6 +33,12 @@ def group(rows, label=None, pad='4px 18px'):
     return f'    <section style="padding: {pad}; {BLOCK}">{head}\n' + '\n'.join(rows) + '\n    </section>'
 
 
+def shown_group(rows, key, label=None):
+    """A group that shows or hides as a whole, by the state-driven show_<key>."""
+    html = group(rows, label)
+    return html.replace('<section style="', f'<section style="display: {{{{show_{key}}}}}; flex-direction: column; ', 1)
+
+
 def body_wrap(*parts):
     return ('\n  <div style="padding: 12px 12px 0; display: flex; flex-direction: column; gap: 8px">\n'
             + '\n'.join(parts) + '\n  </div>')
@@ -148,13 +154,17 @@ def NAI():
         srow('NModels.dc.html', mark('sparkle'), 'For quick steps', 'Claude Haiku 4.5'),
     ]
     others = [srow('NConnect.dc.html', mark('plus'), 'Add another provider', 'OpenAI, Google or any other', first=True)]
+    # Web search (D105, D161): only needed when the AI provider can't search for itself.
+    search = [srow('NSearchKey.dc.html', mark('search'), 'Brave Search key', 'Not needed with Anthropic', first=True)]
+    # After the only key is removed (D162): the one step that's missing.
+    connect = [srow('NConnect.dc.html', mark('sparkle'), 'Connect your AI', 'No AI connected · jobs wait until one works', first=True)]
     head = settings_header('NYou.dc.html', 'Your AI', extra=f'''
     <div style="margin-top: 20px; display: flex; align-items: flex-end; justify-content: space-between">
       <span style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 44px; line-height: 1; font-weight: 500; letter-spacing: -0.035em">$3.10</span><span style="font-size: 13px; color: {MUTED_DARK}">this month, of your {{{{limitText}}}} limit</span></span>
       <span style="font-size: 20px; font-weight: 500; color: {MUTED_DARK}">{{{{pct}}}}%</span>
     </div>
     <div style="margin-top: 14px"><span role="img" aria-label="{{{{pct}}}}% of the limit used" style="display: block; height: 6px; border-radius: 999px; background: rgba(255,255,255,0.14); overflow: hidden"><span style="display: block; width: {{{{pct}}}}%; height: 100%; border-radius: 999px; background: {ON_DARK}"></span></span></div>''')
-    provider = f'''    <section style="padding: 18px; {BLOCK}; display: flex; flex-direction: column; gap: 14px">
+    provider = f'''    <section style="padding: 18px; {BLOCK}; display: {{{{show_key}}}}; flex-direction: column; gap: 14px">
       <div style="display: flex; align-items: center; gap: 12px">
         {initial('A', bg=INK, fg=ON_INK, size=40, fs=16)}
         <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 16px; font-weight: 500">Anthropic</span><span style="font-size: 13px; color: {MUTED}">Key ···9Qx2 · billed by Anthropic</span></span>
@@ -163,12 +173,29 @@ def NAI():
       <div style="display: flex; gap: 8px">
         <a href="NKey.dc.html" style="height: 40px; padding: 0 16px; border-radius: 999px; background: {SURFACE_2}; display: flex; align-items: center; font-size: 14px; font-weight: 500; color: {INK}">Replace key</a>
         <button type="button" onClick="{{{{flipLimits}}}}" aria-expanded="{{{{limitsOpen}}}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: {SURFACE_2}; font-family: inherit; font-size: 14px; font-weight: 500; color: {INK}">Change limit</button>
+        <button type="button" onClick="{{{{open_remove}}}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: {SURFACE_2}; font-family: inherit; font-size: 14px; font-weight: 500; color: {INK}">Remove</button>
       </div>
+      <sc-if value="{{{{p_remove}}}}" hint-placeholder-val="{{{{ false }}}}">
+        <div role="alertdialog" aria-label="Remove your Anthropic key?" style="padding: 14px; border-radius: 18px; background: {SURFACE_2}; display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 14px; line-height: 1.4"><b style="font-weight: 600">Remove your Anthropic key?</b> It’s deleted at once. Jobs wait until a key works.</span>
+          <span style="display: flex; gap: 8px">{act('Cancel', 'closePanel', bg=SURFACE)}{act('Remove', 'remove_key', bg=INK, fg=ON_INK)}</span>
+        </div>
+      </sc-if>
       <sc-if value="{{{{limitsOpen}}}}" hint-placeholder-val="{{{{ false }}}}">
         <div role="group" aria-label="Monthly limit" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">{LIMIT_CHIPS}</div>
       </sc-if>
     </section>'''
-    return page('Your AI', head + body_wrap(provider, group(models, 'Models'), group(others)) + undo_bar(28), script=logic("""
+    return page('Your AI', head + body_wrap(provider, shown_group(connect, 'connect'), shown_group(models, 'models', 'Models'), group(others), group(search, 'Web search')) + undo_bar(28), script=logic("""
+    // Remove asks first (D162); the key is deleted at once, and the page shows the one missing step.
+    panels(['remove']);
+    out.show_key = gone.key ? 'none' : 'flex';
+    out.show_models = gone.key ? 'none' : 'flex';
+    out.show_connect = gone.key ? 'flex' : 'none';
+    out.remove_key = () => {
+      this.setGone('key', true);
+      this.setState({ panel: null });
+      this.flash('Your Anthropic key is removed.');
+    };
     // Change limit: pick a new monthly limit; spend and the bar update at once.
     const limits = [10, 20, 50, 100];
     const lim = st.limit ?? 20;

@@ -4,7 +4,7 @@ from build import (RED_TEXT, ON_BLUE_MUTED, ON_INK, ON_BLUE, ON_RED, ON_GREEN, S
                    spacer, top_row, write_all)
 from screens import BLOCK, H1, LABEL, SUB_DARK, initial, mark, primary, secondary
 import screens3  # noqa: F401  (registers earlier batches)
-from screens3 import GREEN, account_row, accounts_vals, body_wrap, dot_status, group, srow, switch, toggle_script
+from screens3 import GREEN, account_row, accounts_vals, body_wrap, dot_status, group, settings_header, srow, switch, toggle_script
 
 STEPS = 4
 
@@ -16,8 +16,15 @@ def steps_bar(n):
 
 
 def setup_header(back, step, title, sub=None):
+    """The first step has no Back (you've just signed in): it has Not now instead, which goes to You (D46, D160)."""
     sub_html = f'\n    <p style="{SUB_DARK}; margin-top: 8px">{sub}</p>' if sub else ''
-    return dark_header(f'''{top_row(round_link(back, 'back', 'Back'), f'<span style="font-size: 13px; color: {MUTED_DARK}">Step {step} of {STEPS}</span>', spacer())}
+    if back:
+        left, right = round_link(back, 'back', 'Back'), spacer()
+    else:
+        left = spacer(64)
+        right = (f'<a href="NYou.dc.html" style="width: 64px; height: 44px; flex-shrink: 0; display: flex; align-items: center; '
+                 f'justify-content: flex-end; font-size: 15px; font-weight: 500; color: {MUTED_DARK}">Not now</a>')
+    return dark_header(f'''{top_row(left, f'<span style="font-size: 13px; color: {MUTED_DARK}">Step {step} of {STEPS}</span>', right)}
     <div style="margin-top: 16px">{steps_bar(step)}</div>
     <h1 style="{H1}; margin-top: 22px">{title}</h1>{sub_html}''', bottom_pad=24)
 
@@ -65,7 +72,7 @@ def NConnect():
         radio_card('p2', initial('G', bg=INK, fg=ON_INK, size=40, fs=16), 'Google', 'Gemini models', 'provider'),
         radio_card('p3', mark('plus', size=40), 'Another provider', 'OpenRouter, Groq, your own server…', 'provider'),
     ]
-    head = setup_header('NWelcome.dc.html', 1, 'Connect your AI', 'Agent V is free. I run on your own AI account, and your provider bills you for what you use.')
+    head = setup_header(None, 1, 'Connect your AI', 'Agent V is free. I run on your own AI account, and your provider bills you for what you use.')
     body = f'''
   <fieldset style="margin: 12px 12px 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px">
     <legend style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Choose your AI provider</legend>
@@ -114,6 +121,34 @@ def NKey():
     <p style="margin: 6px 12px 0; display: flex; gap: 8px; font-size: 13px; line-height: 1.45; color: {MUTED}">{icon('lock', 15)}<span>Stored encrypted and used only on our servers. I never show it again.</span></p>
   </div>''' + bottom(primary('NModels.dc.html', 'Continue'))
     return page('Paste your key', head + body)
+
+
+# ---------------------------------------------------------------- Brave Search key (D105, D161)
+
+@screen
+def NSearchKey():
+    def step(n, title, sub, first=False):
+        rule = '' if first else f'border-top: 1px solid {LINE}; '
+        return (f'      <li style="{rule}display: flex; gap: 14px; padding: 14px 0">'
+                f'<span style="width: 30px; height: 30px; flex-shrink: 0; border-radius: 999px; background: {SURFACE_2}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500">{n}</span>'
+                f'<span style="display: flex; flex-direction: column; gap: 2px; padding-top: 4px"><span style="font-size: 15px; font-weight: 500">{title}</span>'
+                f'<span style="font-size: 13px; line-height: 1.4; color: {MUTED}">{sub}</span></span></li>')
+    steps = [step(1, 'Open the Brave Search API', 'Sign in, or create an account.', True),
+             step(2, 'Choose the free plan', 'About 1,000 searches a month, billed to you by Brave if you go over.'),
+             step(3, 'Create a key and copy it', 'API keys → Add. Name it “Agent V”.')]
+    head = settings_header('NAI.dc.html', 'Brave Search key', sub='For searching the web when your AI provider can’t. Anthropic, OpenAI and Google search for themselves.')
+    body = f'''
+  <div style="padding: 12px 12px 0; display: flex; flex-direction: column; gap: 8px">
+    <ol style="margin: 0; padding: 4px 18px; list-style: none; {BLOCK}">
+{chr(10).join(steps)}
+    </ol>
+    <label for="brave" style="padding: 16px 18px; border-radius: 24px; background: {SURFACE}; display: flex; flex-direction: column; gap: 8px">
+      <span style="{LABEL}">Brave Search API key</span>
+      <input id="brave" type="password" placeholder="Paste your key" style="height: 32px; padding: 0; border: 0; outline: 0; background: transparent; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 16px; letter-spacing: 0.08em; color: {INK}">
+    </label>
+    <p style="margin: 6px 12px 0; display: flex; gap: 8px; font-size: 13px; line-height: 1.45; color: {MUTED}">{icon('lock', 15)}<span>I test it with a real search, then keep it encrypted. I never show it again.</span></p>
+  </div>''' + bottom(secondary('NSearchKey.dc.html', 'Open Brave'), primary('NAI.dc.html', 'Test and save', trailing=None))
+    return page('Brave Search key', head + body)
 
 
 # ---------------------------------------------------------------- Choose models

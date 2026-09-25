@@ -112,6 +112,15 @@ const tests = {
     await p.getByRole('button', { name: 'Change limit' }).click();
     await p.getByRole('button', { name: '$50' }).click();
     ok(await shown(p.getByText('this month, of your $50 limit')) && await shown(p.getByText('6%')), 'a new limit updates the numbers');
+    await p.getByRole('button', { name: 'Remove', exact: true }).click();
+    ok(await shown(p.getByText('Remove your Anthropic key?')), 'Remove asks first');
+    await p.getByRole('button', { name: 'Cancel' }).click();
+    ok(await shown(p.getByText('Key ···9Qx2 · billed by Anthropic')), 'Cancel keeps the key');
+    await p.getByRole('button', { name: 'Remove', exact: true }).click();
+    await p.getByRole('alertdialog').getByRole('button', { name: 'Remove' }).click();
+    ok(!(await shown(p.getByText('Key ···9Qx2 · billed by Anthropic'))), 'Remove removes the key');
+    ok(await shown(p.getByText('No AI connected · jobs wait until one works')), 'the missing step shows');
+    ok((await bar(p).innerText()).includes('Your Anthropic key is removed.'), 'removing says so');
   },
   async NAccounts(p, ok) {
     const before = await p.getByText('ajay@outlook.com', { exact: true }).count();
