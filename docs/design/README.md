@@ -9,7 +9,7 @@ and no code is written until the design is complete.
 | 2. App map: every screen and how you move between them | [02-app-map.md](02-app-map.md) | Agreed 2026-09-25 |
 | 3. Key journeys: first launch, asking, approving, following work, results | [03-journeys.md](03-journeys.md) | Agreed 2026-09-25 |
 | 4. Every screen in detail, including empty, loading, error and offline states | [04-screens.md](04-screens.md) | Agreed 2026-09-25 |
-| 5. Design system: colour, type, spacing, components, icons, motion, accessibility | [05-design-system.md](05-design-system.md) | Proposed, in review |
+| 5. Design system: colour, type, spacing, components, icons, motion, accessibility | [05-design-system.md](05-design-system.md) | Agreed 2026-09-25 |
 | 6. Technical design | — | Not started |
 | 7. Build plan: small slices, each working and verified before the next | — | Not started |
 

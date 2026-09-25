@@ -12,6 +12,7 @@ This is design tooling: it is not part of the app, and nothing here ships.
 | File | What it does |
 |---|---|
 | `tokens.py` | Every design token (colour for light and dark, type, space, radius, sizes, shadows) and the contrast check. The one source for everything else |
+| `doc_tables.py` | Keeps the token tables in [05-design-system.md](../05-design-system.md) equal to `tokens.py`; `--write` rewrites them after a token changes |
 | `build.py` | Shared pieces: the tokens as CSS variables, the icons, the page template, the shared logic (the Undo bar, hide and restore, panels, confirmations, the Theme switch) and `write_all()` |
 | `screens.py` … `screens7.py` | The screens, in the batches they were designed in. `screens7.py` loads all of them |
 | `hand/` | The two full dark screens kept as templates (Hand something off, Speaking) |
@@ -27,6 +28,7 @@ This is design tooling: it is not part of the app, and nothing here ships.
 python3 screens7.py   # every screen, light and dark, into appmap/project/
 python3 ds_build.py   # the design system's files, into ds/project/
 python3 ds_index.py   # its index (after any new icon or logo is uploaded and added to ds-assets.json)
+python3 doc_tables.py --write   # the token tables in 05-design-system.md, after a token changes
 ```
 
 Each screen is written twice: `NToday.dc.html` (light) and `NTodayDark.dc.html` (dark). The dark
@@ -46,6 +48,7 @@ It needs Python 3, Node with Playwright, and the canvas's own runtime saved as
 | Check | What it proves |
 |---|---|
 | `tokens.py` | Every text and control pair meets its WCAG 2.2 AA minimum in both themes |
+| `doc_tables.py` | The stage 5 document's colour, contrast, type, spacing, radius and size tables are exactly what `tokens.py` holds |
 | `audit.py` | Every link on the live canvas pages goes to a screen that exists |
 | `e2e.js --links` | With the canvas's real runtime, in a browser: every screen boots with no errors; every button has an action or is disabled on purpose; every link is clicked and lands on its screen (in the same theme); and every in-place action (Undo, Restore, Connect, Rename, Replay, filters, forms…) is exercised and its result checked |
 | `contrast-audit.js` | Every piece of visible text on every screen, as rendered, against the real background behind it, meets WCAG 2 AA |

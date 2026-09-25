@@ -1,6 +1,6 @@
 # Stage 5 — Design system
 
-**Status:** proposed on 2026-09-25, waiting for review.
+**Status:** agreed on 2026-09-25.
 **Builds on:** stages [1](01-foundations.md) to [4](04-screens.md); the look agreed in D34 and D35.
 
 The design system is everything the screens are made of, written down once: colour for the light
@@ -110,7 +110,7 @@ edges of controls and for the focus ring. It is checked twice, by script:
 | `on-night` on `night-2` | text on a dark tile | 4.5:1 | 16.40 | 14.87 |
 | `on-night-muted` on `night` | details on the dark top | 4.5:1 | 5.69 | 5.65 |
 | `on-night-muted` on `night-2` | details on a dark tile | 4.5:1 | 5.21 | 4.98 |
-| `on-night-dim` on `night` | the quiet part of Today’s sentence (28px) | 3.0:1 | 3.64 | 4.08 |
+| `on-night-dim` on `night` | the quiet part of Today’s sentence (28px) | 3:1 | 3.64 | 4.08 |
 | `on-blue` on `blue` | text on the Needs you block | 4.5:1 | 5.41 | 5.41 |
 | `on-blue-muted` on `blue` | secondary text on the Needs you block | 4.5:1 | 4.77 | 4.77 |
 | `on-blue` on `blue-deep` | a chip inside the Needs you block | 4.5:1 | 7.26 | 7.26 |
@@ -122,11 +122,11 @@ edges of controls and for the focus ring. It is checked twice, by script:
 | `red-text` on `surface` | red words in a block | 4.5:1 | 5.29 | 6.92 |
 | `green-text` on `surface` | Connected, Working | 4.5:1 | 5.16 | 7.92 |
 | `green-text` on `surface-2` | Connected on a tinted row | 4.5:1 | 4.52 | 6.80 |
-| `on-green` on `green` | the check on a green mark (icon) | 3.0:1 | 4.38 | 6.19 |
+| `on-green` on `green` | the check on a green mark (icon) | 3:1 | 4.38 | 6.19 |
 | `on-toast` on `toast` | the Undo bar | 4.5:1 | 13.80 | 10.34 |
-| `control-off` on `surface` | the edge of a switch that is off | 3.0:1 | 3.43 | 5.39 |
-| `focus` on `surface` | the focus ring on a block | 3.0:1 | 5.41 | 7.39 |
-| `focus` on `ground` | the focus ring on the ground | 3.0:1 | 4.69 | 8.29 |
+| `control-off` on `surface` | the edge of a switch that is off | 3:1 | 3.43 | 5.39 |
+| `focus` on `surface` | the focus ring on a block | 3:1 | 5.41 | 7.39 |
+| `focus` on `ground` | the focus ring on the ground | 3:1 | 4.69 | 8.29 |
 | `ink` on `skeleton` | text never sits on a skeleton; checked so a stray label stays legible | 4.5:1 | 15.49 | 13.43 |
 
 ### What the checks found in the agreed screens, and the fixes
@@ -262,7 +262,8 @@ are built in the framework chosen in stage 6, to this same specification and the
 
 The screens on the canvas are generated, not drawn by hand, from
 [`docs/design/prototype`](prototype/README.md): the tokens, the screens, the design system and the
-checks. `./check.sh` builds everything and runs every check; the README there says how.
+checks. `./check.sh` builds everything and runs every check, including that the token tables in this
+document equal `tokens.py`; the README there says how.
 
 ---
 

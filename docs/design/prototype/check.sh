@@ -4,6 +4,7 @@
 set -e
 cd "$(dirname "$0")"
 python3 tokens.py > /dev/null                 # every token pair meets its contrast minimum, both themes
+python3 doc_tables.py                         # the token tables in 05-design-system.md equal tokens.py
 python3 screens7.py > /dev/null               # write every screen, light and dark
 python3 ds_build.py > /dev/null               # write the design system's files
 python3 audit.py                              # every link on the live pages resolves to a board
