@@ -169,7 +169,18 @@ Whatever the settings, it never:
 | **Follow-ups** | "Remind me if Sam hasn't replied by Friday"; keeps track of loose ends |
 | **Memory** (underneath everything) | Learns your preferences; you can see and delete everything it remembers |
 
-**Later, one at a time:** a cloud computer for data and spreadsheet work; shopping and payments;
+**Added on 2026-09-25**, after comparing Agent V with OpenMuse (decisions D36–D43 in
+[stage 2](02-app-map.md#5-decisions-in-this-stage)):
+
+| Ability | What it covers |
+|---|---|
+| **Ideas** | Suggests jobs on its own, with why and the evidence; you decide |
+| **Goals** | Goals with milestones and a target date; jobs roll up into them |
+| **Saved logins** | The cloud browser stays signed in to sites you signed in to once |
+| **The agent's computer** | A private cloud computer with a terminal and files, for data, spreadsheets and scripts |
+| **Spending summary** | Import a statement; totals by category, recurring charges, a savings goal. Read-only |
+
+**Later, one at a time:** shopping and payments;
 phone calls on your behalf; bills and banking; travel booking; messaging apps; smart home.
 
 Known outside limits on the later list:
@@ -293,7 +304,7 @@ someone else's trademark.
 | D7 | Act-as-you approvals from notifications; Spend and Can't undo need the app plus biometrics | Fast where it's safe, deliberate where it's risky |
 | D8 | It offers to ask less after repeated approvals, only with your yes; never for Spend or Can't undo | Earns autonomy instead of assuming it |
 | D9 | First audience: busy professionals | Immediate value through a few reliable integrations |
-| D10 | Launch abilities: email, calendar, research and the web, documents, watching and routines, follow-ups, memory | Covers most professional work; each can be made reliable |
+| D10 | Launch abilities: email, calendar, research and the web, documents, watching and routines, follow-ups, memory. Extended on 2026-09-25 by D36–D40 (stage 2) | Covers most professional work; each can be made reliable |
 | D11 | Gmail from the start; the security review begins during the build | Most people use Gmail; the review takes weeks |
 | D12 | Free at launch; people bring their own API key for any provider or OpenAI-compatible endpoint; pricing decided later | The user's decision: free to start, AI costs paid by each person's own provider account |
 | D13 | Launch in English in the US, UK, Canada, Australia and India; built for translation and GDPR-level privacy | A focused start without blocking later expansion |

@@ -85,13 +85,16 @@ The exact colours, sizes and spacing are settled in stage 5.
   (attach) and a voice button, because handing work off is the main action.
 - **Speaking** opens a full page (D31): your words in large type as you speak, a live voice
   level, and three buttons: Type, Hand it off, Cancel.
-- **The masthead.** The wordmark AGENT V at the top left always returns to **Today** (the home
+- **The top of Today.** The V mark at the top left always returns to **Today** (the home
   screen). Search, Jobs and your initial (You) sit at the top right.
 - **Decisions are pages, in order.** Opening something waiting on you shows it full screen with
   its place in the queue (1 of 3). After signing or answering, "Next" takes you to the following
   one, so clearing everything is a single pass. Closing never approves anything.
 - **Things are pages too.** A job, a result, a file and the live browser open with a back
-  button. Each ends with "Ask about this, or change it…" so follow-ups stay with the job.
+  button. Each ends with "Ask about this, or change it…" so follow-ups stay with the job. While
+  a job is working, follow-ups wait in a visible queue on the job page (D42).
+- **Ideas** appear on Today, one at a time, when Agent V has one worth your attention; all of them
+  are in Ideas (D36). **Goals** and the **agent's computer** are tabs in Jobs (D37, D39).
 - **Every notification opens exactly what it is about.** Signatures for acting as you, and
   answers with fixed choices, can be given straight from the notification. Anything that can't
   be undone always opens the app.
@@ -100,16 +103,16 @@ The exact colours, sizes and spacing are settled in stage 5.
 
 ## 3. Every screen
 
-Screens marked ◆ are drawn on the canvas: on the Ledger page, and for Today, Hand something
-off, Speaking, the Job page and For your signature, also on the Rebalanced page.
+Screens marked ◆ are drawn in the new direction (D34). Screens marked ✚ were added on
+2026-09-25 after comparing Agent V with OpenMuse (D36–D43).
 
 ### Getting started
 
 | Screen | Purpose |
 |---|---|
-| ◆ Welcome | "Hand it off." What Agent V does in one sentence; sign-in choices |
+| Welcome | "Hand it off." What Agent V does in one sentence; sign-in choices |
 | Sign in / create account | Methods decided in stage 3 |
-| ◆ Connect your AI | Pick a provider: Anthropic, OpenAI, Google, or any OpenAI-compatible address |
+| Connect your AI | Pick a provider: Anthropic, OpenAI, Google, or any OpenAI-compatible address |
 | Get a key | A short guide per provider, with a button to the provider's key page |
 | Paste and test key | The key is tested with a real call before continuing |
 | Choose models | Suggested models for jobs and for quick steps, changeable later |
@@ -121,35 +124,43 @@ off, Speaking, the Job page and For your signature, also on the Rebalanced page.
 
 | Screen | Purpose |
 |---|---|
-| ◆ Today | The date, a short briefing, then Waiting on you, On my desk, Filed this morning |
+| ◆ Today | Your day in one sentence; what needs you; what is running; an idea when there is one |
 | ◆ Hand something off | Type or speak; attach a photo, file or link; suggestion cards |
 | ◆ Speaking to Agent V | Full-page voice: your words as you speak, a live level, Type, Hand it off or Cancel |
 | ◆ Before I start | Only when it matters (D2): the plan, which steps need your signature, Start or Change |
-| ◆ Job page | Goal, the plan with live progress, the record of what was done, the result; follow-up line |
-| Job menu | Pause, stop, change how it repeats, share the result, delete |
+| ◆ Job page | Goal, the plan with live progress, the record of what was done, the result; follow-up line with its queue |
+| Job menu | Pause, stop, change how it repeats, rename, add to a goal, share the result, archive, delete |
+| ✚ Replay | A finished job step by step from its record, with what the agent saw at each step |
+| ✚ An idea | What it suggests, why, and the evidence; Do it (becomes a job), Change, or Not now |
 | ◆ A question | The agent's question with its reason, fixed choices, or an answer by voice |
 | ◆ For your signature | The exact message or action; hold to sign; edit or decline |
 | Spend | The exact amount and what it buys; hold to sign, then Face ID. Not used until spending arrives |
 | ◆ Can't be undone | What will be lost; hold, then Face ID |
 | ◆ Live browser | The agent's browser, live, with where it's pointing; Take control |
-| ◆ A filed result | A finished report in the same editorial style; share or save as PDF; follow up |
+| ◆ A filed result | A finished report; share or save as PDF; follow up |
+| ✚ Spending summary | A filed result from an imported statement: totals by category, recurring charges, a savings goal |
 
 ### Find your work
 
 | Screen | Purpose |
 |---|---|
-| ◆ Jobs | Active (Waiting on you, Working, Next up), Repeating, Done (including Couldn't finish), Files |
-| ◆ Search | One search across jobs, files and what it remembers, with filters; forget a memory in place |
+| Jobs | Tabs: Active (needs you, working, next up, repeating), Goals, Done (including Couldn't finish and Archived), Computer |
+| ✚ Ideas | Every open idea, and the ones you set aside |
+| ✚ Goal | A goal's milestones and target date, the jobs under it, overall progress, suggested next jobs |
+| ✚ Computer | The agent's own cloud computer: its files (open, edit, share) and the record of commands it ran |
+| Search | One search across jobs, files and what it remembers, with filters; forget a memory in place |
 
 ### You and settings
 
 | Screen | Purpose |
 |---|---|
-| ◆ You | Hub for everything below |
-| ◆ Your AI | The provider and key status, models per role, other providers, this month's usage and limit |
+| You | Hub for everything below |
+| ✚ Profile and tone | Your name and photo; how it writes for you: brief, warm, formal, or in your own words |
+| ✚ Saved logins | Sites the cloud browser stays signed in to; when each was last used; remove any |
+| Your AI | The provider and key status, models per role, other providers, this month's usage and limit |
 | Add provider | The same steps as getting started: guide, paste, test, models |
 | Connected accounts | Each account, what it may access, reconnect, remove |
-| ◆ What needs your signature | The five action levels, their settings, learned exceptions (each can be undone), hard limits |
+| What needs your signature | The five action levels, their settings, learned exceptions (each can be undone), hard limits |
 | What I remember | Everything it remembers and where it learned it; edit, forget, or turn learning off |
 | Morning briefing | Time, days, and what it includes |
 | Notifications | What may interrupt you; signatures and questions are always on |
@@ -161,7 +172,7 @@ off, Speaking, the Job page and For your signature, also on the Rebalanced page.
 
 | Surface | Purpose |
 |---|---|
-| ◆ Notifications | Signatures (sign from the notification), questions with fixed answers, can't-undo requests (open the app), the briefing, finished jobs, key problems |
+| Notifications | Signatures (sign from the notification), questions with fixed answers, can't-undo requests (open the app), the briefing, finished jobs, key problems |
 | Share into Agent V | Start a job from a link, file or photo in any app |
 
 **Later (not at launch):** home-screen widgets, iPhone Live Activities for running jobs, Siri
@@ -201,3 +212,13 @@ The hold lasts under a second, fills visibly while held, and cancels if released
 | D33 | *Rejected with the rebalanced Ledger (2026-09-25).* Secondary actions are round icon buttons with a short label under them; the one primary action stays a full-width button | Fewer words, bigger targets, a clear main action |
 | D34 | *Agreed 2026-09-25.* New visual direction: one modern sans (Geist), near-black and warm white, one strong blue. Main screens pair a dark top (your day in one sentence, with the key numbers in white) with a light area of a few large rounded blocks. Speaking and handing off are dark, full-screen, with a soft blue light. Blue keeps D27's meaning: it marks what needs you | The owner's choice after the Ledger rounds: clean, structured and modern, drawing on all four groups of references |
 | D35 | Refines D27. Blue marks what needs you **and** the agent itself: the microphone, the voice orb, and where it points in the live browser. Red stays only for what can't be undone; green only for a working connection | The agent's presence and your decisions are the two things to notice; a live "recording" dot is blue, not red, so red keeps its single meaning |
+| D36 | *Scope, 2026-09-25.* **Ideas.** Agent V suggests jobs on its own, each with why and the evidence. You do it (it becomes a job), change it, or set it aside; it learns from what you set aside. It never acts on an idea without you | Comparison with OpenMuse; an agent that works 24/7 should also notice what's worth doing |
+| D37 | *Scope.* **Goals.** A goal has milestones and a target date; jobs can belong to it and its progress rolls up from them; ideas can suggest its next jobs | Longer aims, like saving for something or a job search, need more than single jobs |
+| D38 | *Scope.* **Saved logins.** The cloud browser keeps a private, encrypted profile per person. You sign in to a site once through Take control, and it stays signed in. Passwords and two-step codes are always typed by you; each saved site is listed in settings and can be removed. Using a login still follows the action levels | Real tasks happen on sites that need you signed in |
+| D39 | *Scope.* **The agent's computer**, moved up from "later": a private cloud computer per person with a terminal and workspace files, for data, spreadsheets and scripts. You can open its files and see every command it ran. It is isolated from Agent V's own systems; its fair-use limits (time, storage) are ours to set in stage 6 | Much real work is data work; keys cover the AI, but this compute is Agent V's cost |
+| D40 | *Scope.* **Spending summary.** Import a bank or card statement (CSV or PDF) to get totals by category, recurring charges and a savings goal (D37). Read-only: no bank connection and no payments at launch. Statements are kept like other documents, encrypted and deletable | Useful money help without the risk and regulation of connecting to banks |
+| D41 | Jobs can be renamed, archived and restored; a finished job can be replayed step by step | Keeps Jobs tidy without losing anything; replay builds trust |
+| D42 | Follow-ups sent while a job runs wait in a visible queue on the job page, are taken in order, and can be edited or removed before they're picked up | You can keep talking to a busy agent without interrupting it |
+| D43 | You set your name, photo, and the tone it writes in for you (brief, warm, formal, or described in your own words) | Drafts should sound like you |
+
+A web app was considered in the same comparison and not added; phones stay first (D15).
