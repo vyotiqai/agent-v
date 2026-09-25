@@ -1,6 +1,6 @@
 # Stage 6 — Technical design
 
-**Status:** part 1 proposed on 2026-09-25, waiting for review. Part 2 follows once part 1 is agreed.
+**Status:** part 1 agreed on 2026-09-25. Part 2 in progress.
 **Builds on:** stages [1](01-foundations.md) to [5](05-design-system.md), and the
 [rules for building Agent V](README.md#rules-for-building-agent-v).
 
@@ -8,7 +8,7 @@ Stage 6 decides how Agent V is built. It comes in two parts, reviewed one at a t
 
 | Part | What it covers |
 |---|---|
-| **1. The system** (this proposal) | The parts and how they fit: the app, the server, how a job runs, signatures, AI providers, connected accounts, the cloud browser, the agent's computer, memory, live updates, files, the data model, and answers to the questions earlier stages left for stage 6 |
+| **1. The system** (agreed 2026-09-25) | The parts and how they fit: the app, the server, how a job runs, signatures, AI providers, connected accounts, the cloud browser, the agent's computer, memory, live updates, files, the data model, and answers to the questions earlier stages left for stage 6 |
 | **2. Running it safely** | Security and privacy in depth (threats, encryption, prompt injection), the data flows for the stores' privacy forms, export and deletion, fair-use limits and running costs, monitoring and support, backups, how everything is tested and verified end to end, releases |
 
 ### The owner's choices for this stage
