@@ -10,7 +10,7 @@ and no code is written until the design is complete.
 | 3. Key journeys: first launch, asking, approving, following work, results | [03-journeys.md](03-journeys.md) | Agreed 2026-09-25 |
 | 4. Every screen in detail, including empty, loading, error and offline states | [04-screens.md](04-screens.md) | Agreed 2026-09-25 |
 | 5. Design system: colour, type, spacing, components, icons, motion, accessibility | [05-design-system.md](05-design-system.md) | Agreed 2026-09-25 |
-| 6. Technical design | — | Not started |
+| 6. Technical design: part 1 the system; part 2 running it safely | [06-technical-design.md](06-technical-design.md) | Part 1 in draft |
 | 7. Build plan: small slices, each working and verified before the next | — | Not started |
 
 Stages 2 to 5 come with clickable phone mockups.
@@ -37,6 +37,14 @@ build plan (stage 7) and all code that follows.
    the next person will look for it.
 5. **Ask or recommend; don't rush.** Choices that belong to the owner are asked, with a
    recommendation. Each stage is reviewed and agreed before the next starts.
+6. **Built by us, with no AI agent SDKs.** The agent is our own code: its loop, planning, tools,
+   tool calling, streaming, retries and record. No AI agent SDK or framework is used (for
+   example the Vercel AI SDK, LangChain, LlamaIndex, Mastra, the OpenAI Agents SDK or the Claude
+   Agent SDK), and no AI vendor's client library: every AI provider is called over plain HTTPS
+   by our own small client. Other services (the cloud browser, the sandbox computers, Gmail,
+   Outlook) are also called by our own code over their standard protocols and REST APIs. Only
+   general-purpose libraries are used, such as a Postgres driver, Playwright to drive a browser
+   over the Chrome DevTools Protocol, and a PDF library. *Set by the owner on 2026-09-25.*
 
 ### How the design prototypes follow these rules
 
