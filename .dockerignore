@@ -9,3 +9,4 @@
 !shared/src
 server/src/**/*.test.ts
 shared/src/**/*.test.ts
+server/src/ai/captures

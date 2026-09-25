@@ -21,8 +21,9 @@ build step: the code in the image is the code in this folder.
 | Ids | `src/ids.ts` | Random, unguessable UUID version 7 |
 | Settings | `src/config.ts` | Read from the environment; a missing setting stops the process at start |
 | Database | `src/db/` | [`postgres`](https://github.com/porsager/postgres) as the driver; our own migration runner (see [migrations/README.md](migrations/README.md)) |
-| Encryption | `src/crypto/envelope.ts` | A data key per person; secrets sealed with AES-256-GCM, bound to what they are; data keys kept only wrapped by Cloud KMS, in a store where deletion is final (D126) |
-| Egress | `src/egress/` | Public addresses only: every address of a name is checked, the checked address is the one connected to, redirects are never followed, nothing about destinations is logged |
+| Encryption | `src/crypto/envelope.ts`, `src/crypto/cloud.ts` | A data key per person; secrets sealed with AES-256-GCM, bound to what they are; data keys kept only wrapped by Cloud KMS, in a bucket where deletion is final (D126). Our own small clients for Cloud KMS and Cloud Storage, with the service's own token from the metadata server (`src/cloud/token.ts`) |
+| Egress | `src/egress/` | Public addresses only: every address of a name is checked, the checked address is the one connected to, redirects are never followed, nothing about destinations is logged. `client.ts` is how the server calls out on someone's behalf: always tunnelled through the gateway, https only, TLS end to end with the provider |
+| AI providers (slice 2) | `src/ai/` | Our own clients for the four wire formats (D88): Anthropic Messages, OpenAI Responses (storage off), Google's Gemini Interactions (storage off, D147) and Chat Completions for every other provider. One shape for a conversation, the streamed answer and usage (`types.ts`); a model's own turn goes back to it exactly as it came; each provider's errors become our few kinds. The streamed answers are read by our own server-sent events reader (`sse.ts`). `catalog.ts` holds the recommended models and their prices |
 | Processes | `src/process.ts` | Crashes logged by kind before exiting; an orderly stop on SIGTERM |
 | Accounts | `src/auth/` | Google identity tokens checked by our own code against Google's published keys (`jwt.ts`, `google.ts`); people, phones, sessions and one-time nonces (`accounts.ts`) |
 | Rate limits | `src/ratelimit.ts` | Counted in Postgres per minute, so every API instance agrees; addresses kept only as hashes |
@@ -73,6 +74,25 @@ may create databases: each test makes its own database and drops it afterwards. 
 ```sh
 docker run -d --name agent-v-pg -p 5432:5432 -e POSTGRES_HOST_AUTH_METHOD=trust postgres:17.10-trixie
 ```
+
+## The real providers
+
+`live/` checks each AI client against its real provider, with the owner's test keys, through a
+real egress gateway (`live/providers.test.ts`), and the catalog's prices against the published
+ones (`live/prices.ts`). It spends real money (well under a cent a run), so it isn't part of
+`npm test`; the Providers workflow (`.github/workflows/providers.yml`) runs it when the clients
+change, every night, and on request. Locally, with keys in the environment:
+
+```sh
+cd server
+ANTHROPIC_TEST_KEY=… node --test --test-concurrency=1 live/providers.test.ts
+```
+
+Settings: `ANTHROPIC_TEST_KEY`, `OPENAI_TEST_KEY`, `GOOGLE_TEST_KEY`, and
+`COMPATIBLE_TEST_ENDPOINTS` (one endpoint per line: `<base URL> <model> <key>`); a provider
+without a key is skipped, apart from the check that needs none. The same checks run in every
+`npm test` against responses captured from the providers (`src/ai/captures/`, and its README for
+refreshing them).
 
 ## The image
 

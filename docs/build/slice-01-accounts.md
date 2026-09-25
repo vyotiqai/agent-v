@@ -1,7 +1,8 @@
 # Slice 1 — Accounts
 
-**Status:** in progress, local part first. Started on 2026-09-25, while slice 0's cloud part waits
-for the Google Cloud billing account (D136).
+**Status:** local part done on 2026-09-25 (the Android build compiles in CI). It is done when real
+Google sign-in works on staging, which waits for slice 0's cloud part, and on a real phone, which
+waits for the domain (D124).
 
 Slice 1 is signing in and out (stage 7, section 3): Sign in with Google; sessions with rotating
 tokens; each phone and its signing key; the Welcome screen; signing out, on this phone and on
@@ -37,7 +38,7 @@ others. Sign in with Apple arrives with the iPhone slice (D125).
 |---|---|---|
 | D136 | A slice's local part may start while an earlier slice's cloud part waits for the owner's outside steps; each slice is still done only when all of stage 7, section 1 is true, including staging. **Changes D117** | The owner's choice on 2026-09-25: the Google Cloud billing account comes later, and the build shouldn't stand still meanwhile |
 | D137 | The phones signed in to an account are listed on Privacy and your data, under "Your phones": "This phone" marked, the others with when they were last used, each with Sign out, which asks first and can't be undone. **Adds to stage 4** | The owner's choice. Stage 6 promised the list (section 3) but no screen showed it; it sits beside Sign out, where people look for it |
-| D138 | Until slice 2, signing in lands on Privacy and your data, showing only what works: your phones and Sign out. From slice 2, signing in continues to Connect your AI as designed (J1) | The owner's choice: the next screen of J1 belongs to slice 2, and a screen whose slice hasn't come isn't in the app |
+| D138 | Until slice 2, signing in lands on Privacy and your data, showing only what works: your phones and Sign out. From slice 2, signing in continues to Connect your AI as designed (J1). *Replaced by [D154](slice-02-your-ai.md#decisions-made-in-this-slice) in slice 2* | The owner's choice: the next screen of J1 belongs to slice 2, and a screen whose slice hasn't come isn't in the app |
 | D139 | Each sign-in is one `phones` row, holding the phone's session (its access token hash and expiry) and its signing key; refresh tokens are rows of their own, kept after use so a second use is recognised. Stage 6's separate `devices` and `sessions` (section 12) are this one table | A phone that signs out and in again gets a new key, so phone and session always go together; one table can't disagree with itself |
 | D140 | Access and refresh tokens are random 32-byte values, stored only as SHA-256 hashes; an access token is checked against the database on each request | Signing out, on this phone or from another, takes effect at once; there is no signing key for tokens to keep safe |
 | D141 | A sign-in carries a one-time nonce from the API inside Google's token; the nonce is used up by the sign-in | A Google token caught on the way can't be replayed to sign in |

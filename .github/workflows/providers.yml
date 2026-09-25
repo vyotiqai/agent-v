@@ -1,0 +1,72 @@
+# Each AI provider client against the real provider, with the owner's test keys (stage 6,
+# section 22; slice 2). It spends a little real money (well under a cent a run), so it runs when
+# the clients or the gateway change, every night, and when asked; not on every change.
+#
+# Capturing: run it by hand with "capture" ticked, or push a commit whose message contains
+# "[capture providers]". The real responses are then written to server/src/ai/captures and
+# committed to the same branch, dated, for the clients' unit tests to replay.
+name: Providers
+
+on:
+  push:
+    paths:
+      - server/src/ai/**
+      - server/src/egress/**
+      - server/live/**
+      - .github/workflows/providers.yml
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      capture:
+        description: Write the real responses as test files and commit them
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: providers-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  providers:
+    name: Real providers
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      CAPTURE: ${{ (github.event_name == 'workflow_dispatch' && inputs.capture) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[capture providers]')) }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Each client against its provider
+        working-directory: server
+        run: |
+          if [ "$CAPTURE" = "true" ]; then export CAPTURE_DIR="$PWD/src/ai/captures"; rm -f "$CAPTURE_DIR"/*.json; fi
+          node --test --test-concurrency=1 live/providers.test.ts
+        env:
+          ANTHROPIC_TEST_KEY: ${{ secrets.ANTHROPIC_TEST_KEY }}
+          OPENAI_TEST_KEY: ${{ secrets.OPENAI_TEST_KEY }}
+          GOOGLE_TEST_KEY: ${{ secrets.GOOGLE_TEST_KEY }}
+          COMPATIBLE_TEST_ENDPOINTS: ${{ secrets.COMPATIBLE_TEST_ENDPOINTS }}
+      - name: Commit the captures
+        # Also after a failed check: its real responses are what show what went wrong.
+        if: ${{ !cancelled() && env.CAPTURE == 'true' && github.ref_type == 'branch' }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add server/src/ai/captures
+          if git diff --cached --quiet; then echo 'Nothing new to commit.'; exit 0; fi
+          git commit -m "Provider captures from the real providers, $(date -u +%F)"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+      - name: The catalog's prices against the published ones
+        if: ${{ !cancelled() }}
+        working-directory: server
+        run: node live/prices.ts
