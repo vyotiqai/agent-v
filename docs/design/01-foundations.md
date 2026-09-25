@@ -108,6 +108,11 @@ three sections, always in this order:
 Example briefing: "Good morning, Ajay. I finished 2 things overnight, 1 needs your OK, and I'm
 watching 3 prices for you."
 
+> **Changed in stage 2 (D23, D26).** The dark top area described above came from the reference
+> images and was replaced by the original Ledger look. The content is the same (a short briefing,
+> then what waits on you, what is in progress, and what is done), labelled **Waiting on you**,
+> **On my desk** and **Filed**. See [02-app-map.md](02-app-map.md).
+
 ## 6. What it may do without asking
 
 ### Action levels
