@@ -44,7 +44,15 @@ references reads in about a second, and they get there the same few ways:
 
 ## How Agent V uses these ideas
 
-| Idea | In Agent V (drawn on the canvas page "Rebalanced (proposal)") |
+**Update, 2026-09-25:** the table below was a first attempt that kept Ledger's paper and serif.
+It was rejected as not clean or structured enough, and Ledger was dropped. The new direction
+(D34 in [02-app-map.md](../02-app-map.md), canvas page "New direction (proposal)") uses the
+references more directly: a dark top with your day in one sentence, a light area of large
+rounded blocks, one modern typeface, and dark, full-screen voice with a soft blue light. It stays
+original in its content, wording and structure; it does not reproduce any single reference's
+layout.
+
+| Idea | In the first attempt (canvas page "Rebalanced Ledger (rejected)") |
 |---|---|
 | Numbers as anchors | Today opens with a tally, three large figures: waiting on you, on my desk, filed overnight. A job shows its step as 3/5 |
 | Blocks with rhythm | Flat paper-tone blocks with no shadows. At most one **coloured** block per screen: on Today it is the blue "Waiting on you" block, because blue only ever means that |
@@ -55,6 +63,9 @@ references reads in about a second, and they get there the same few ways:
 | Few words | One line per item. A second line appears only when it carries risk ("Can't be undone") |
 
 ## What we deliberately leave behind
+
+(Written for the first attempt. The owner has since chosen a dark top with a light content area
+and a blue glow, so those two are now in; the rest still holds.)
 
 - Pastel colour tiles. Colour in Agent V always means something (decision D27).
 - Blue or purple glow backgrounds, glass bars, grain and blur effects.

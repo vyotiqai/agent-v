@@ -1,11 +1,11 @@
 # Stage 2 — App map
 
-**Status:** proposed on 2026-09-25; Ledger rebalanced to be less text-heavy, waiting for review.
+**Status:** proposed on 2026-09-25. Ledger was replaced by a new, cleaner direction (D34); its
+first screens are waiting for review.
 **Mockups:** [Agent V — App map](https://claude.ai/artifact/7Y2irrycwGs5zc2bZ1oEf9), a canvas
-at phone size. The page **"Rebalanced (proposal)"** is the latest: six screens showing the
-rebalanced look. The page "Ledger (chosen direction)" has every screen in the earlier, wordier
-version; it will be redrawn once the rebalanced look is agreed. Press Play on a screen to click
-through. The other pages are kept as history.
+at phone size. The page **"New direction (proposal)"** is the latest: Today, Hand something
+off and Speaking. Once the look is agreed, every other screen is redrawn in it. The Ledger pages
+keep the full list of screens and are kept as history. Press Play on a screen to click through.
 
 This stage lists every screen in the app and how you move between them. What each screen
 contains in every state (empty, loading, error, offline) is stage 4; the full design system is
@@ -42,7 +42,21 @@ Agent V, the Job page and For your signature. Two earlier slips against D27 were
 way: the voice button and the step in progress were blue. They are now ink, because blue only
 means waiting on you.
 
-## 1. Ledger at a glance
+**2026-09-25, rebalanced Ledger rejected; Ledger dropped.** Feedback: "not clean, not
+structured, and not as good as the references." The cause: Ledger's paper and serif, with
+blocks, chips and icons added on top, made the screens busier rather than cleaner. The owner
+chose, when asked:
+- drop the Ledger look and start a clean, modern one;
+- a mix: dark top areas with light content areas;
+- all four groups of references are close to what they want (stat blocks, voice and AI, glow
+  screens, day summary);
+- see two screens first, checked visually before review.
+
+The first screens of the new direction are drawn (D34, proposed). Sections 1 and 4 below still
+describe Ledger; they are rewritten once the new direction is agreed. Screens, navigation and
+signing (sections 2 and 3, D18, D20–D22, D24–D26) do not depend on the look and stand.
+
+## 1. Ledger at a glance (replaced by D34)
 
 - **Paper and ink.** Warm paper, near-black ink, fine rules between items. No shadows and no
   floating chrome. Flat paper-tone blocks group things (D29).
@@ -171,14 +185,15 @@ The hold lasts under a second, fills visibly while held, and cancels if released
 | D20 | Files live as a tab in Jobs, and in Search | Every file belongs to a job; one less place to learn |
 | D21 | Sharing into Agent V from other apps is available at launch | Starting from the thing itself is the fastest way to hand work off |
 | D22 | Widgets, Live Activities, assistant shortcuts and tablets come later | Focus; each is added once the core is solid |
-| D23 | The visual direction is **Ledger**: editorial, paper and ink, serif content with a sans for controls | Original, calm and premium; its signing idea matches the approval rules (stage 1, section 6) |
+| D23 | ~~The visual direction is Ledger~~ Replaced by D34. It was: editorial, paper and ink, serif content with a sans for controls | Original, calm and premium; its signing idea matches the approval rules (stage 1, section 6) |
 | D24 | No tab bar: a "Hand something off…" line at the bottom of main screens; the masthead holds Today, Search, Jobs and You | Handing work off is the main action; fewer controls on screen |
 | D25 | Approvals are signatures: press and hold to sign; can't-undo adds Face ID or fingerprint; accessible alternatives in section 4 | Deliberate without being slow; one gesture across the app |
 | D26 | Everything waiting on you opens as a full page, numbered in a queue (1 of 3) with Next | Clearing decisions becomes one pass; nothing gets lost behind a sheet |
 | D27 | Colour carries meaning: blue only for "waiting on you", deep red only for "can't be undone" and sign out, green only for a working connection | People learn what matters at a glance |
-| D28 | *Proposed.* Glance first: each main screen leads with numbers, marks or small pictures (Today's tally, a job's 3/5, a price chart, a picture of what the agent saw). Sentences are for what the agent writes | Owner feedback: too text-heavy. People should understand a screen in a second |
-| D29 | *Proposed.* Flat paper-tone blocks, with no shadows, group related things. At most one coloured block per screen, and its colour keeps its D27 meaning | Rhythm without clutter; colour still means one thing |
-| D30 | *Proposed.* Every item carries a mark for its kind (email, question, web, watch, file) and fits on one line. A second line appears only for risk, such as "Can't be undone" | Marks replace words; risk is never hidden |
-| D31 | *Proposed.* Speaking is a full page, always in the night palette: your words large, older words fading, a live voice level drawn as fine rules | Voice is a main way to hand work off, so it gets a proper screen |
-| D32 | *Proposed.* Night appearance: warm ink with a soft desk-lamp light at the top of main screens. Blue, red and green keep their meanings; the lamp is never used on controls | Dark mode is already in settings. This makes it feel crafted and warm, not just inverted |
-| D33 | *Proposed.* Secondary actions are round icon buttons with a short label under them; the one primary action stays a full-width button | Fewer words, bigger targets, a clear main action |
+| D28 | *Rejected with the rebalanced Ledger (2026-09-25).* Glance first: each main screen leads with numbers, marks or small pictures (Today's tally, a job's 3/5, a price chart, a picture of what the agent saw). Sentences are for what the agent writes | Owner feedback: too text-heavy. People should understand a screen in a second |
+| D29 | *Rejected with the rebalanced Ledger (2026-09-25).* Flat paper-tone blocks, with no shadows, group related things. At most one coloured block per screen, and its colour keeps its D27 meaning | Rhythm without clutter; colour still means one thing |
+| D30 | *Rejected with the rebalanced Ledger (2026-09-25).* Every item carries a mark for its kind (email, question, web, watch, file) and fits on one line. A second line appears only for risk, such as "Can't be undone" | Marks replace words; risk is never hidden |
+| D31 | *Rejected with the rebalanced Ledger (2026-09-25).* Speaking is a full page, always in the night palette: your words large, older words fading, a live voice level drawn as fine rules | Voice is a main way to hand work off, so it gets a proper screen |
+| D32 | *Rejected with the rebalanced Ledger (2026-09-25).* Night appearance: warm ink with a soft desk-lamp light at the top of main screens. Blue, red and green keep their meanings; the lamp is never used on controls | Dark mode is already in settings. This makes it feel crafted and warm, not just inverted |
+| D33 | *Rejected with the rebalanced Ledger (2026-09-25).* Secondary actions are round icon buttons with a short label under them; the one primary action stays a full-width button | Fewer words, bigger targets, a clear main action |
+| D34 | *Proposed.* New visual direction: one modern sans (Geist), near-black and warm white, one strong blue. Main screens pair a dark top (your day in one sentence, with the key numbers in white) with a light area of a few large rounded blocks. Speaking and handing off are dark, full-screen, with a soft blue light. Blue keeps D27's meaning: it marks what needs you | The owner's choice after the Ledger rounds: clean, structured and modern, drawing on all four groups of references |
